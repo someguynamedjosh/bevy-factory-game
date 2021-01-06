@@ -1,12 +1,4 @@
 use crate::prelude::*;
-use scones::make_constructor;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Axis {
-    A,
-    B,
-    C,
-}
 
 /// The distance from any vertex of a grid cell to its centroid.
 pub const GRID_TRIANGLE_RADIUS: f32 = 74.0;
@@ -27,26 +19,39 @@ pub const GRID_MEDIAN_LENGTH: f32 = GRID_EDGE_LENGTH * 0.8660254;
 /// The difference in x coordinate between the centroids of two cells stacked on top of each other.
 pub const OPPOSING_DISTANCE: f32 = GRID_TRIANGLE_RADIUS * 2.0 - GRID_MEDIAN_LENGTH;
 
-impl Axis {
-    pub fn positive_direction(self) -> Direction {
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum IsoAxis {
+    A,
+    B,
+    C,
+}
+
+impl Default for IsoAxis {
+    fn default() -> Self {
+        Self::A
+    }
+}
+
+impl IsoAxis {
+    pub fn positive_direction(self) -> IsoDirection {
         match self {
-            Self::A => Direction::PosA,
-            Self::B => Direction::PosB,
-            Self::C => Direction::PosC,
+            Self::A => IsoDirection::PosA,
+            Self::B => IsoDirection::PosB,
+            Self::C => IsoDirection::PosC,
         }
     }
 
-    pub fn negative_direction(self) -> Direction {
+    pub fn negative_direction(self) -> IsoDirection {
         match self {
-            Self::A => Direction::NegA,
-            Self::B => Direction::NegB,
-            Self::C => Direction::NegC,
+            Self::A => IsoDirection::NegA,
+            Self::B => IsoDirection::NegB,
+            Self::C => IsoDirection::NegC,
         }
     }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Direction {
+pub enum IsoDirection {
     PosA,
     NegC,
     PosB,
@@ -55,12 +60,18 @@ pub enum Direction {
     NegB,
 }
 
-impl Direction {
-    pub fn axis(self) -> Axis {
+impl Default for IsoDirection {
+    fn default() -> Self {
+        Self::PosA
+    }
+}
+
+impl IsoDirection {
+    pub fn axis(self) -> IsoAxis {
         match self {
-            Self::PosA | Self::NegA => Axis::A,
-            Self::PosB | Self::NegB => Axis::B,
-            Self::PosC | Self::NegC => Axis::C,
+            Self::PosA | Self::NegA => IsoAxis::A,
+            Self::PosB | Self::NegB => IsoAxis::B,
+            Self::PosC | Self::NegC => IsoAxis::C,
         }
     }
 
@@ -76,7 +87,7 @@ impl Direction {
     }
 
     /// Returns the direction which points 60 degrees clockwise from this one.
-    pub fn clockwise(self) -> Direction {
+    pub fn clockwise(self) -> IsoDirection {
         match self {
             Self::PosA => Self::NegB,
             Self::NegC => Self::PosA,
@@ -88,7 +99,7 @@ impl Direction {
     }
 
     /// Returns the direction which points 60 degrees counter-clockwise from this one.
-    pub fn counter_clockwise(self) -> Direction {
+    pub fn counter_clockwise(self) -> IsoDirection {
         match self {
             Self::PosA => Self::NegC,
             Self::NegC => Self::PosB,
@@ -107,14 +118,14 @@ impl Direction {
 /// points down to the left. We only need two coordinates to uniquely describe a position, so we
 /// store x, y coordinates instead of A, B, C.
 #[make_constructor]
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct IsoCoord {
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct IsoPos {
     x: i32,
     /// +y points towards the top of the screen.
     y: i32,
 }
 
-impl IsoCoord {
+impl IsoPos {
     /// Equivalent to new(0, 0)
     pub fn origin() -> Self {
         Self::new(0, 0)
@@ -190,19 +201,87 @@ impl IsoCoord {
     }
 
     /// Move the coordinate along an arbitrary axis.
-    pub fn offset_axis(self, axis: Axis, offset: i32) -> Self {
+    pub fn offset_axis(self, axis: IsoAxis, offset: i32) -> Self {
         match axis {
-            Axis::A => self.offset_a(offset),
-            Axis::B => self.offset_b(offset),
-            Axis::C => self.offset_c(offset),
+            IsoAxis::A => self.offset_a(offset),
+            IsoAxis::B => self.offset_b(offset),
+            IsoAxis::C => self.offset_c(offset),
         }
     }
 
     /// Move the coordinate in an arbitrary direction.
-    pub fn offset_direction(self, direction: Direction, offset: i32) -> Self {
+    pub fn offset_direction(self, direction: IsoDirection, offset: i32) -> Self {
         self.offset_axis(
             direction.axis(),
             if direction.is_positive() {
+                offset
+            } else {
+                -offset
+            },
+        )
+    }
+
+    /// Move the coordinate along the axis perpendicular to +A.
+    pub const fn offset_perp_a(self, offset: i32) -> Self {
+        // Just like the offset_a algorithm, but with x and y swapped.
+        Self {
+            x: self.x,
+            y: self.y + offset,
+        }
+    }
+
+    /// Move the coordinate along the axis perpendicular to +B.
+    pub fn offset_perp_b(self, offset: i32) -> Self {
+        // Like the offset_b algorithm, but different. (I just fiddled until it worked.)
+        let first_axis_amount = offset / 2 + offset % 2;
+        let second_axis_amount = offset / 2;
+
+        if self.points_left() != (offset < 0) {
+            Self {
+                x: self.x - second_axis_amount,
+                y: self.y - first_axis_amount,
+            }
+        } else {
+            Self {
+                x: self.x - first_axis_amount,
+                y: self.y - second_axis_amount,
+            }
+        }
+    }
+
+    /// Move the coordinate along the axis perpendicular to +C.
+    pub fn offset_perp_c(self, offset: i32) -> Self {
+        // Like the offset_b algorithm, but different. (I just fiddled until it worked.)
+        let first_axis_amount = offset / 2 + offset % 2;
+        let second_axis_amount = offset / 2;
+
+        if self.points_left() != (offset < 0) {
+            Self {
+                x: self.x + first_axis_amount,
+                y: self.y - second_axis_amount,
+            }
+        } else {
+            Self {
+                x: self.x + second_axis_amount,
+                y: self.y - first_axis_amount,
+            }
+        }
+    }
+
+    /// Move the coordinate along an arbitrary perpendicular axis.
+    pub fn offset_perp_axis(self, perp_axis: IsoAxis, offset: i32) -> Self {
+        match perp_axis {
+            IsoAxis::A => self.offset_perp_a(offset),
+            IsoAxis::B => self.offset_perp_b(offset),
+            IsoAxis::C => self.offset_perp_c(offset),
+        }
+    }
+
+    /// Move the coordinate in an arbitrary perpendicular direction.
+    pub fn offset_perp_direction(self, perp_direction: IsoDirection, offset: i32) -> Self {
+        self.offset_perp_axis(
+            perp_direction.axis(),
+            if perp_direction.is_positive() {
                 offset
             } else {
                 -offset
@@ -225,13 +304,13 @@ impl IsoCoord {
     }
 
     /// Returns a transform which places a building at centroid_pos with the correct rotation.
-    pub fn building_transform(self, facing: Axis) -> Transform {
+    pub fn building_transform(self, facing: IsoAxis) -> Transform {
         let mut t = Transform::identity();
         t.translation = (self.centroid_pos(), 0.0).into();
         let facing_angle = match facing {
-            Axis::A => 0.0,
-            Axis::B => PI * 2.0 / 3.0,
-            Axis::C => -PI * 2.0 / 3.0,
+            IsoAxis::A => 0.0,
+            IsoAxis::B => PI * 2.0 / 3.0,
+            IsoAxis::C => -PI * 2.0 / 3.0,
         };
         let pointing_angle = if self.points_left() { 0.0 } else { PI };
         t.rotation = Quat::from_rotation_z(facing_angle + pointing_angle);
@@ -250,40 +329,40 @@ mod tests {
 
     #[test]
     fn pointiness() {
-        assert!(IsoCoord::new(0, 0).points_left());
-        assert!(IsoCoord::new(0, 1).points_right());
-        assert!(IsoCoord::new(1, 0).points_right());
-        assert!(IsoCoord::new(-1, 0).points_right());
-        assert!(IsoCoord::new(-2, 0).points_left());
+        assert!(IsoPos::new(0, 0).points_left());
+        assert!(IsoPos::new(0, 1).points_right());
+        assert!(IsoPos::new(1, 0).points_right());
+        assert!(IsoPos::new(-1, 0).points_right());
+        assert!(IsoPos::new(-2, 0).points_left());
         for i in -10..10 {
-            assert!(IsoCoord::new(i, i).points_left());
+            assert!(IsoPos::new(i, i).points_left());
         }
     }
 
     #[test]
     fn axis_offsets() {
-        assert_eq!(IsoCoord::new(0, 0).offset_a(1), IsoCoord::new(1, 0));
-        assert_eq!(IsoCoord::new(0, 0).offset_a(-2), IsoCoord::new(-2, 0));
+        assert_eq!(IsoPos::new(0, 0).offset_a(1), IsoPos::new(1, 0));
+        assert_eq!(IsoPos::new(0, 0).offset_a(-2), IsoPos::new(-2, 0));
 
-        assert_eq!(IsoCoord::new(0, 0).offset_b(4), IsoCoord::new(-2, 2));
-        assert_eq!(IsoCoord::new(0, 0).offset_b(5), IsoCoord::new(-2, 3));
-        assert_eq!(IsoCoord::new(-1, 0).offset_b(5), IsoCoord::new(-4, 2));
-        assert_eq!(IsoCoord::new(1, 0).offset_b(-2), IsoCoord::new(2, -1));
+        assert_eq!(IsoPos::new(0, 0).offset_b(4), IsoPos::new(-2, 2));
+        assert_eq!(IsoPos::new(0, 0).offset_b(5), IsoPos::new(-2, 3));
+        assert_eq!(IsoPos::new(-1, 0).offset_b(5), IsoPos::new(-4, 2));
+        assert_eq!(IsoPos::new(1, 0).offset_b(-2), IsoPos::new(2, -1));
 
-        assert_eq!(IsoCoord::new(0, 0).offset_c(4), IsoCoord::new(-2, -2));
-        assert_eq!(IsoCoord::new(0, 0).offset_c(5), IsoCoord::new(-2, -3));
-        assert_eq!(IsoCoord::new(-1, 0).offset_c(5), IsoCoord::new(-4, -2));
-        assert_eq!(IsoCoord::new(1, 0).offset_c(-2), IsoCoord::new(2, 1));
+        assert_eq!(IsoPos::new(0, 0).offset_c(4), IsoPos::new(-2, -2));
+        assert_eq!(IsoPos::new(0, 0).offset_c(5), IsoPos::new(-2, -3));
+        assert_eq!(IsoPos::new(-1, 0).offset_c(5), IsoPos::new(-4, -2));
+        assert_eq!(IsoPos::new(1, 0).offset_c(-2), IsoPos::new(2, 1));
 
-        let mut direction = Direction::PosA;
-        let mut pos = IsoCoord::origin();
+        let mut direction = IsoDirection::PosA;
+        let mut pos = IsoPos::origin();
         // Move an equal number of steps in each of the 6 directions, should take us back to the
         // place we started from.
         for _ in 0..6 {
             pos = pos.offset_direction(direction, 12);
             direction = direction.clockwise();
         }
-        assert_eq!(direction, Direction::PosA);
-        assert_eq!(pos, IsoCoord::origin());
+        assert_eq!(direction, IsoDirection::PosA);
+        assert_eq!(pos, IsoPos::origin());
     }
 }
