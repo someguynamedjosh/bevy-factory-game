@@ -2,6 +2,7 @@ pub mod iso_coord;
 pub mod prelude;
 
 use bevy::prelude::*;
+use prelude::Axis;
 use prelude::*;
 
 fn hello_world(
@@ -15,17 +16,17 @@ fn hello_world(
         .spawn(Camera2dBundle::default())
         .spawn(SpriteBundle {
             material: material.clone(),
-            transform: IsoCoord::origin().building_transform(),
+            transform: IsoCoord::origin().building_transform(Axis::C),
             ..Default::default()
         })
         .spawn(SpriteBundle {
             material: material.clone(),
-            transform: IsoCoord::origin().offset_a(1).building_transform(),
+            transform: IsoCoord::origin().offset_b(-1).building_transform(Axis::C),
             ..Default::default()
         })
         .spawn(SpriteBundle {
             material: material.clone(),
-            transform: IsoCoord::origin().offset_b(1).building_transform(),
+            transform: IsoCoord::origin().offset_b(1).building_transform(Axis::C),
             ..Default::default()
         });
 }

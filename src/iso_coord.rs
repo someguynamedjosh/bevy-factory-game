@@ -225,14 +225,16 @@ impl IsoCoord {
     }
 
     /// Returns a transform which places a building at centroid_pos with the correct rotation.
-    pub fn building_transform(self) -> Transform {
+    pub fn building_transform(self, facing: Axis) -> Transform {
         let mut t = Transform::identity();
         t.translation = (self.centroid_pos(), 0.0).into();
-        t.rotation = if self.points_left() {
-            Quat::from_rotation_z(0.0)
-        } else {
-            Quat::from_rotation_z(PI)
+        let facing_angle = match facing {
+            Axis::A => 0.0,
+            Axis::B => PI * 2.0 / 3.0,
+            Axis::C => -PI * 2.0 / 3.0,
         };
+        let pointing_angle = if self.points_left() { 0.0 } else { PI };
+        t.rotation = Quat::from_rotation_z(facing_angle + pointing_angle);
         t
     }
 
