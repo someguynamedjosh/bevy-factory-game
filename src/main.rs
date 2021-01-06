@@ -11,10 +11,10 @@ struct TickClock {
 }
 
 impl TickClock {
-    const TICK_SPEED: f32 = 0.5;
+    const TICK_SPEED: f32 = 60.0 / 360.0;
 
     pub fn get_tick_progress(&self) -> f32 {
-        self.tick_progress
+        self.tick_progress / Self::TICK_SPEED
     }
 
     pub fn is_tick_this_frame(&self) -> bool {
@@ -43,6 +43,8 @@ struct Conveyor;
 struct UnlinkedConveyor;
 /// Conveyors that do not have any downstream.
 struct TailConveyor;
+/// It takes this many ticks for an item to ride one unit of a conveyor.
+const CONVEYOR_DURATION: u8 = 4;
 
 #[derive(Clone, Copy, Debug, Default)]
 struct BuildingPos {
@@ -50,20 +52,62 @@ struct BuildingPos {
     pub facing: IsoDirection,
 }
 
-#[derive(Default)]
+enum ItemAnim {
+    Stay(Vec2),
+    Lerp {
+        from: Vec2,
+        to: Vec2,
+        total_ticks: u8,
+        remaining_ticks: u8,
+    },
+}
+
 struct Item {
-    anim: Vec3,
+    anim: ItemAnim,
 }
 
 impl Item {
-    pub fn anim_conveyor(&mut self, target_pos: &BuildingPos) {
-        self.anim = (target_pos.origin.centroid_pos(), 0.1).into();
+    pub fn new(start_pos: Vec2) -> Self {
+        Self {
+            anim: ItemAnim::Stay(start_pos),
+        }
+    }
+
+    pub fn current_rest_position(&self) -> Vec2 {
+        match &self.anim {
+            ItemAnim::Stay(pos) => pos.clone(),
+            ItemAnim::Lerp {
+                to,
+                remaining_ticks,
+                ..
+            } => {
+                debug_assert_eq!(*remaining_ticks, 0);
+                to.clone()
+            }
+        }
+    }
+
+    pub fn anim_conveyor(&mut self, conveyor_pos: &BuildingPos, anim_duration: u8) {
+        let target_pos = conveyor_pos
+            .origin
+            .axis_aligned_pos(conveyor_pos.facing.axis());
+        self.anim = ItemAnim::Lerp {
+            from: self.current_rest_position(),
+            to: target_pos,
+            total_ticks: anim_duration,
+            remaining_ticks: anim_duration,
+        };
+    }
+
+    pub fn anim_stationary(&mut self) {
+        self.anim = ItemAnim::Stay(self.current_rest_position());
     }
 }
 
 #[derive(Default)]
 struct ItemHolder {
     incoming: Option<Entity>,
+    ticks_until_arrived: u8,
 }
 
 fn spawn_conveyor(
@@ -86,7 +130,10 @@ fn spawn_conveyor(
         })
         .with(BuildingPos { origin, facing })
         .with(Conveyor)
-        .with(ItemHolder { incoming })
+        .with(ItemHolder {
+            incoming,
+            ticks_until_arrived: 0,
+        })
         .with(ConveyorData::default())
         .with(UnlinkedConveyor);
 }
@@ -96,15 +143,12 @@ fn spawn_item(
     common_assets: &mut ResMut<CommonAssets>,
     origin: IsoPos,
 ) -> Option<Entity> {
-    let mut transform = origin.building_transform(Default::default());
-    transform.translation += Vec3::unit_z() * 0.1;
-    let anim = origin.building_transform(Default::default()).translation + Vec3::unit_z() * 0.1;
     commands
         .spawn(SpriteBundle {
             material: common_assets.item_mat.clone(),
             ..Default::default()
         })
-        .with(Item { anim })
+        .with(Item::new(origin.centroid_pos()))
         .current_entity()
 }
 
@@ -118,14 +162,19 @@ fn hello_world(
     common_assets.conveyor_mat = materials.add(texture_handle.into());
     let texture_handle = asset_server.load("item.png");
     common_assets.item_mat = materials.add(texture_handle.into());
-    commands.spawn(Camera2dBundle::default());
+
+    let mut bundle = Camera2dBundle::default();
+    bundle.transform.scale *= 2.0;
+    commands.spawn(bundle);
 
     let mut pos = IsoPos::origin();
     let mut facing = IsoDirection::PosA;
     spawn_conveyor(commands, &mut common_assets, pos, facing, true);
-    for turn in &[0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0] {
+    for turn in &[
+        0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0,
+    ] {
         if *turn == 1 {
-            facing = facing.counter_clockwise();
+            facing = facing.clockwise();
         }
         pos = pos.offset_perp_direction(facing, 1);
 
@@ -180,7 +229,7 @@ fn tick_conveyors(
     mut all_conveyors: Query<(&BuildingPos, &ConveyorData, &mut ItemHolder)>,
     mut all_items: Query<&mut Item>,
 ) {
-    if !tick_clock.tick_this_frame {
+    if !tick_clock.is_tick_this_frame() {
         return;
     }
     for (mut current,) in tail_conveyors.iter() {
@@ -193,23 +242,61 @@ fn tick_conveyors(
                 break;
             };
             drop(data);
-            drop(item_holder);
             if empty {
                 let pos = pos.clone();
-                let item = all_conveyors.get_mut(next).unwrap().2.incoming.take();
-                item.map(|e| {
-                    all_items.get_mut(e).unwrap().anim_conveyor(&pos);
+                let mut upstream_holder = all_conveyors.get_mut(next).unwrap().2;
+                if upstream_holder.ticks_until_arrived == 0 {
+                    let item = upstream_holder.incoming.take();
+                    item.map(|e| {
+                        let mut item = all_items.get_mut(e).unwrap();
+                        item.anim_conveyor(&pos, CONVEYOR_DURATION);
+                    });
+                    let mut this_holder = all_conveyors.get_mut(current).unwrap().2;
+                    this_holder.incoming = item;
+                    this_holder.ticks_until_arrived = CONVEYOR_DURATION;
+                }
+            } else if item_holder.ticks_until_arrived == 0 {
+                item_holder.incoming.map(|e| {
+                    let mut item = all_items.get_mut(e).unwrap();
+                    item.anim_stationary();
                 });
-                all_conveyors.get_mut(current).unwrap().2.incoming = item;
             }
             current = next;
         }
     }
 }
 
-fn animate_items(mut items: Query<(&mut Transform, &Item)>) {
-    for (mut transform, item) in items.iter_mut() {
-        transform.translation = item.anim.clone();
+fn animate_items(tick_clock: Res<TickClock>, mut items: Query<(&mut Transform, &mut Item)>) {
+    for (mut transform, mut item) in items.iter_mut() {
+        let pos = match &mut item.anim {
+            ItemAnim::Stay(pos) => pos.clone(),
+            ItemAnim::Lerp {
+                from,
+                to,
+                total_ticks,
+                remaining_ticks,
+            } => {
+                if tick_clock.is_tick_this_frame() && *remaining_ticks > 0 {
+                    *remaining_ticks -= 1;
+                }
+                let progress = ((*total_ticks - *remaining_ticks - 1) as f32
+                    + tick_clock.get_tick_progress())
+                    / *total_ticks as f32;
+                from.lerp(*to, progress)
+            }
+        };
+        transform.translation = (pos, 0.1).into();
+    }
+}
+
+fn tick_item_holders(tick_clock: Res<TickClock>, mut item_holders: Query<(&mut ItemHolder,)>) {
+    if !tick_clock.is_tick_this_frame() {
+        return;
+    }
+    for (mut item_holder,) in item_holders.iter_mut() {
+        if item_holder.ticks_until_arrived > 0 {
+            item_holder.ticks_until_arrived -= 1;
+        }
     }
 }
 
@@ -220,6 +307,7 @@ fn main() {
         .add_resource(TickClock::default())
         .add_startup_system(hello_world.system())
         .add_system(update_tick_clock.system())
+        .add_system(tick_item_holders.system())
         .add_system(link_unlinked_conveyors.system())
         .add_system(tick_conveyors.system())
         .add_system(animate_items.system())

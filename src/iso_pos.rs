@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 /// The distance from any vertex of a grid cell to its centroid.
-pub const GRID_TRIANGLE_RADIUS: f32 = 74.0;
+pub const GRID_TRIANGLE_RADIUS: f32 = 64.0;
 
 // cos 30deg = (edge / 2) / radius
 // cos 30deg = 0.8660254
@@ -18,6 +18,8 @@ pub const GRID_MEDIAN_LENGTH: f32 = GRID_EDGE_LENGTH * 0.8660254;
 
 /// The difference in x coordinate between the centroids of two cells stacked on top of each other.
 pub const OPPOSING_DISTANCE: f32 = GRID_TRIANGLE_RADIUS * 2.0 - GRID_MEDIAN_LENGTH;
+
+pub const CENTROID_TO_MEDMID_DISTANCE: f32 = GRID_MEDIAN_LENGTH / 2.0 - GRID_TRIANGLE_RADIUS;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum IsoAxis {
@@ -47,6 +49,23 @@ impl IsoAxis {
             Self::B => IsoDirection::NegB,
             Self::C => IsoDirection::NegC,
         }
+    }
+
+    pub fn facing_angle(self) -> f32 {
+        match self {
+            Self::A => 0.0,
+            Self::B => (PI * 2.0 / 3.0),
+            Self::C => (-PI * 2.0 / 3.0),
+        }
+    }
+
+    pub fn unit_vec(self) -> Vec2 {
+        let angle = self.facing_angle();
+        (angle.cos(), angle.sin()).into()
+    }
+
+    pub fn perp_unit_vec(self) -> Vec2 {
+        self.unit_vec().perp()
     }
 }
 
@@ -84,6 +103,14 @@ impl IsoDirection {
 
     pub fn is_negative(self) -> bool {
         !self.is_positive()
+    }
+
+    pub fn unit_vec(self) -> Vec2 {
+        self.axis().unit_vec() * if self.is_positive() { 1.0 } else { -1.0 }
+    }
+
+    pub fn perp_unit_vec(self) -> Vec2 {
+        self.unit_vec().perp()
     }
 
     /// Returns the direction which points 60 degrees clockwise from this one.
@@ -303,17 +330,21 @@ impl IsoPos {
         )
     }
 
+    /// Returns a coordinate which bisects the median perpendicular to the given axis, with the
+    /// result being that points returned by this function line up when the underlying IsoPos
+    /// instances are also on an axis. This behavior does not occur with centroid_pos(), it appears
+    /// jagged. This function is useful for animating things traveling on rails.
+    pub fn axis_aligned_pos(self, axis: IsoAxis) -> Vec2 {
+        let offset = CENTROID_TO_MEDMID_DISTANCE * if self.points_left() { 1.0 } else { -1.0 };
+        self.centroid_pos() + axis.unit_vec() * offset
+    }
+
     /// Returns a transform which places a building at centroid_pos with the correct rotation.
     pub fn building_transform(self, facing: IsoAxis) -> Transform {
         let mut t = Transform::identity();
         t.translation = (self.centroid_pos(), 0.0).into();
-        let facing_angle = match facing {
-            IsoAxis::A => 0.0,
-            IsoAxis::B => PI * 2.0 / 3.0,
-            IsoAxis::C => -PI * 2.0 / 3.0,
-        };
         let pointing_angle = if self.points_left() { 0.0 } else { PI };
-        t.rotation = Quat::from_rotation_z(facing_angle + pointing_angle);
+        t.rotation = Quat::from_rotation_z(facing.facing_angle() + pointing_angle);
         t
     }
 
