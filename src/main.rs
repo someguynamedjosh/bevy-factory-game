@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+pub mod iso_coord;
+
 fn hello_world() {
     println!("Hello world!");
 }

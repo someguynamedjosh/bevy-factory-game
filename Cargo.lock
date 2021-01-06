@@ -5,6 +5,10 @@ name = "Inflector"
 version = "0.11.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fe438c63458706e03479442743baae6c88256498e6431708f6dfc520a26515d3"
+dependencies = [
+ "lazy_static",
+ "regex",
+]
 
 [[package]]
 name = "ab_glyph"
@@ -1351,6 +1355,7 @@ name = "fav-genre"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "scones",
 ]
 
 [[package]]
@@ -2907,6 +2912,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "93fc1dc3aaa9bfed95e02e6eadabb4baf7e3078b0bd1b4d7b6b0b68378900502"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "scones"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c27886d4ee79c1daf5be1409dada995c4afc044ee65df1dec280e3a82a095a00"
+dependencies = [
+ "scones_macros",
+]
+
+[[package]]
+name = "scones_macros"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ab548c8a11278694f101fc4e34d0c2ef4287cd98da948234c126d7eb6f9f24c"
+dependencies = [
+ "Inflector",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
