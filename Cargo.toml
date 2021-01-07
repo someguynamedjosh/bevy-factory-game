@@ -4,6 +4,14 @@ version = "0.1.0"
 authors = ["Joshua Maros <60271685+joshua-maros@users.noreply.github.com>"]
 edition = "2018"
 
+[features]
+# Disables animation interpolation to more easily verify the soundness of ticking mechanisms.
+no-interpolation = []
+# Makes ticks run four times slower than normal.
+quarter-speed = []
+# Draw green circles around open containers and red circles around blocked containers.
+draw-containers = []
+
 [dependencies]
 scones = "^0.1.2"
 

@@ -1,4 +1,4 @@
-use crate::item::{Item, ItemHolder, ItemHolderAlignment};
+use crate::item::{Item, ItemContainer, ItemContainerAlignment};
 use crate::prelude::*;
 use bevy::prelude::*;
 
@@ -20,7 +20,7 @@ pub fn spawn_conveyor(
     facing: IsoDirection,
     start_with_item: bool,
 ) -> Entity {
-    let alignment = ItemHolderAlignment::AxisAligned(facing.axis());
+    let alignment = ItemContainerAlignment::AxisAligned(facing.axis());
     let item = if start_with_item {
         Some(crate::item::spawn_item(
             commands,
@@ -39,7 +39,7 @@ pub fn spawn_conveyor(
         })
         .with(origin)
         .with(facing)
-        .with(ItemHolder::new_maybe_preloaded(alignment, item))
+        .with(ItemContainer::new_maybe_preloaded(alignment, item))
         .with(Conveyor::default())
         .with(SetupNeeded)
         .current_entity()
@@ -86,7 +86,7 @@ fn setup(
 fn tick(
     tick_clock: Res<TickClock>,
     tail_conveyors: Query<(Entity,), With<TailConveyor>>,
-    mut all_conveyors: Query<(&IsoPos, &mut Conveyor, &mut ItemHolder)>,
+    mut all_conveyors: Query<(&IsoPos, &mut Conveyor, &mut ItemContainer)>,
     mut all_items: Query<&mut Item>,
 ) {
     if !tick_clock.is_tick_this_frame() {
@@ -94,16 +94,16 @@ fn tick(
     }
     for (mut current,) in tail_conveyors.iter() {
         loop {
-            let (pos, mut conveyor, mut item_holder) = all_conveyors.get_mut(current).unwrap();
-            let empty = item_holder.item.is_none();
+            let (pos, mut conveyor, mut item_container) = all_conveyors.get_mut(current).unwrap();
+            let empty = item_container.item.is_none();
             // True if the downstream belt could have taken an item we have but didn't.
             let not_taken = conveyor.incoming_timer == 0;
             conveyor.incoming_timer = conveyor.incoming_timer.saturating_sub(1);
             conveyor.outgoing_timer = conveyor.outgoing_timer.saturating_sub(1);
             // Don't allow placing items into the conveyor or moving items out of the conveyor if
             // there are items partially inside the conveyor.
-            item_holder.blocked = conveyor.incoming_timer > 0 || conveyor.outgoing_timer > 0;
-            let alignment = item_holder.alignment;
+            item_container.blocked = conveyor.incoming_timer > 0 || conveyor.outgoing_timer > 0;
+            let alignment = item_container.alignment;
             let upstream = if let Some(upstream) = conveyor.upstream {
                 upstream
             } else {
@@ -112,21 +112,21 @@ fn tick(
             // if we are empty that also means our incoming_timer has to be at zero.
             if empty {
                 let pos = pos.clone();
-                let (_, mut upstream, mut up_holder) = all_conveyors.get_mut(upstream).unwrap();
-                if let Some(ientity) = up_holder.try_take() {
+                let (_, mut upstream, mut up_container) = all_conveyors.get_mut(upstream).unwrap();
+                if let Some(ientity) = up_container.try_take() {
                     let mut item = all_items.get_mut(ientity).unwrap();
-                    item.anim_to_holder(pos, alignment, DURATION);
-                    upstream.outgoing_timer = DURATION - 1;
+                    item.anim_to_container(pos, alignment, DURATION);
+                    upstream.outgoing_timer = DURATION;
 
-                    let (_, mut this, mut this_holder) = all_conveyors.get_mut(current).unwrap();
+                    let (_, mut this, mut this_container) = all_conveyors.get_mut(current).unwrap();
                     this.incoming_timer = DURATION - 1;
-                    this_holder.item = Some(ientity);
-                    this_holder.blocked = true;
+                    this_container.item = Some(ientity);
+                    this_container.blocked = true;
                 }
             } else if not_taken {
-                item_holder.item.map(|e| {
+                item_container.item.map(|e| {
                     let mut item = all_items.get_mut(e).unwrap();
-                    item.anim_stationary_in_holder(*pos, alignment);
+                    item.anim_stationary_in_container(*pos, alignment);
                 });
             }
             current = upstream;

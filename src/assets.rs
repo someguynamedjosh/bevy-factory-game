@@ -7,6 +7,9 @@ pub struct CommonAssets {
     pub claw_mat: Handle<ColorMaterial>,
     pub spawner_mat: Handle<ColorMaterial>,
     pub destroyer_mat: Handle<ColorMaterial>,
+
+    pub debug_container_mat: Handle<ColorMaterial>,
+    pub debug_blocked_container_mat: Handle<ColorMaterial>,
 }
 
 fn startup(
@@ -24,6 +27,11 @@ fn startup(
     common_assets.spawner_mat = materials.add(texture_handle.into());
     let texture_handle = asset_server.load("destroyer.png");
     common_assets.destroyer_mat = materials.add(texture_handle.into());
+
+    let texture_handle = asset_server.load("debug_container.png");
+    common_assets.debug_container_mat = materials.add(texture_handle.into());
+    let texture_handle = asset_server.load("debug_blocked_container.png");
+    common_assets.debug_blocked_container_mat = materials.add(texture_handle.into());
 }
 
 pub struct Plug;

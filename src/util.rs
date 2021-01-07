@@ -1,4 +1,4 @@
-use crate::item::{ItemHolder, ItemHolderAlignment};
+use crate::item::{ItemContainer, ItemContainerAlignment};
 use crate::prelude::*;
 use bevy::prelude::*;
 
@@ -25,7 +25,7 @@ pub fn spawn_spawner(
             rate,
             spawn_cycle: 0,
         })
-        .with(ItemHolder::new_empty(ItemHolderAlignment::Centroid))
+        .with(ItemContainer::new_empty(ItemContainerAlignment::Centroid))
         .current_entity()
         .unwrap()
 }
@@ -43,7 +43,7 @@ pub fn spawn_destroyer(
         })
         .with(origin)
         .with(DebugDestroyer)
-        .with(ItemHolder::new_empty(ItemHolderAlignment::Centroid))
+        .with(ItemContainer::new_empty(ItemContainerAlignment::Centroid))
         .current_entity()
         .unwrap()
 }
@@ -52,14 +52,14 @@ fn tick_spawners(
     commands: &mut Commands,
     common_assets: Res<CommonAssets>,
     tick_clock: Res<TickClock>,
-    mut spawners: Query<(&mut DebugSpawner, &mut ItemHolder, &IsoPos)>,
+    mut spawners: Query<(&mut DebugSpawner, &mut ItemContainer, &IsoPos)>,
 ) {
     if !tick_clock.is_tick_this_frame() {
         return;
     }
 
-    for (mut spawner, mut holder, pos) in spawners.iter_mut() {
-        if holder.item.is_none() {
+    for (mut spawner, mut container, pos) in spawners.iter_mut() {
+        if container.item.is_none() {
             spawner.spawn_cycle += 1;
             if spawner.spawn_cycle >= spawner.rate {
                 spawner.spawn_cycle = 0;
@@ -67,10 +67,10 @@ fn tick_spawners(
                     commands,
                     &common_assets,
                     *pos,
-                    ItemHolderAlignment::Centroid,
+                    ItemContainerAlignment::Centroid,
                 );
-                holder.item = Some(item);
-                holder.blocked = false;
+                container.item = Some(item);
+                container.blocked = false;
             }
         }
     }
@@ -79,17 +79,17 @@ fn tick_spawners(
 fn tick_destroyers(
     commands: &mut Commands,
     tick_clock: Res<TickClock>,
-    mut destroyers: Query<(&mut ItemHolder,), With<DebugDestroyer>>,
+    mut destroyers: Query<(&mut ItemContainer,), With<DebugDestroyer>>,
 ) {
     if !tick_clock.is_tick_this_frame() {
         return;
     }
 
-    for (mut holder,) in destroyers.iter_mut() {
-        if holder.blocked {
+    for (mut container,) in destroyers.iter_mut() {
+        if container.blocked {
             continue;
         }
-        if let Some(item) = holder.item.take() {
+        if let Some(item) = container.item.take() {
             commands.despawn(item);
         }
     }

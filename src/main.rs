@@ -18,7 +18,7 @@ fn test_scene(commands: &mut Commands, common_assets: Res<CommonAssets>) {
     let mut pos = IsoPos::origin();
     let mut facing = IsoDirection::PosA;
     let first = spawn::conveyor(commands, &common_assets, pos, facing, true);
-    let spawner = spawn::spawner(commands, &common_assets, pos.offset_a(-1), 5);
+    let spawner = spawn::spawner(commands, &common_assets, pos.offset_a(-1), 9);
     spawn::claw(commands, &common_assets, spawner, first, 1);
 
     let mut claw_from = None;

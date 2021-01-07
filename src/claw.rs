@@ -1,4 +1,4 @@
-use crate::item::{Item, ItemHolder};
+use crate::item::{Item, ItemContainer};
 use crate::prelude::*;
 use bevy::prelude::*;
 
@@ -49,7 +49,8 @@ pub fn spawn_claw(
 fn tick(
     tick_clock: Res<TickClock>,
     mut claws: Query<(&mut Claw,)>,
-    mut holders: Query<(&mut ItemHolder,)>,
+    mut containers: Query<(&mut ItemContainer, &IsoPos)>,
+    mut items: Query<&mut Item>,
 ) {
     if !tick_clock.is_tick_this_frame() {
         return;
@@ -63,8 +64,8 @@ fn tick(
         claw.blocked = false;
         if claw.current_anim_tick == 0 {
             // Trying to pick up an item.
-            let mut from = holders
-                .get_component_mut::<ItemHolder>(claw.take_from)
+            let mut from = containers
+                .get_component_mut::<ItemContainer>(claw.take_from)
                 .unwrap();
             if let Some(item) = from.try_take() {
                 claw.held_item = Some(item);
@@ -72,10 +73,8 @@ fn tick(
                 claw.blocked = true;
             }
         } else if claw.current_anim_tick == anim_length / 2 {
-            let mut to = holders
-                .get_component_mut::<ItemHolder>(claw.move_to)
-                .unwrap();
-            to.try_put_from(&mut claw.held_item);
+            let (mut to, to_pos) = containers.get_mut(claw.move_to).unwrap();
+            to.try_put_from(&mut claw.held_item, *to_pos, &mut items);
             claw.blocked = claw.held_item.is_some();
         }
     }
@@ -84,18 +83,18 @@ fn tick(
 fn animate(
     tick_clock: Res<TickClock>,
     mut claws: Query<(&Claw, &mut Transform)>,
-    item_holders: Query<(&ItemHolder, &IsoPos)>,
+    item_containers: Query<(&ItemContainer, &IsoPos)>,
     mut items: Query<(&mut Item,)>,
 ) {
     for (claw, mut transform) in claws.iter_mut() {
-        let (from_holder, from_pos) = item_holders.get(claw.take_from).unwrap();
-        let (to_holder, to_pos) = item_holders.get(claw.move_to).unwrap();
-        let from_pos = from_holder.alignment.get_item_pos(*from_pos);
-        let to_pos = to_holder.alignment.get_item_pos(*to_pos);
+        let (from_container, from_pos) = item_containers.get(claw.take_from).unwrap();
+        let (to_container, to_pos) = item_containers.get(claw.move_to).unwrap();
+        let from_pos = from_container.alignment.get_item_pos(*from_pos);
+        let to_pos = to_container.alignment.get_item_pos(*to_pos);
         let anim_length = claw.anim_length();
         let current_tick = claw.current_anim_tick;
         let mut progress = current_tick as f32;
-        if !claw.blocked {
+        if !claw.blocked && !cfg!(feature = "no-interpolation") {
             progress += tick_clock.get_tick_progress();
         }
         progress /= anim_length as f32 / 2.0;

@@ -15,7 +15,10 @@ pub struct TickClock {
 }
 
 impl TickClock {
+    #[cfg(not(feature="quarter-speed"))]
     const TICK_SPEED: f32 = 60.0 / 360.0;
+    #[cfg(feature="quarter-speed")]
+    const TICK_SPEED: f32 = 60.0 / 360.0 * 4.0;
 
     pub fn get_tick_progress(&self) -> f32 {
         self.tick_progress / Self::TICK_SPEED
