@@ -98,7 +98,7 @@ pub struct Plug;
 
 impl Plugin for Plug {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_system_to_stage(MAIN_STAGE, tick_spawners.system())
-            .add_system_to_stage(MAIN_STAGE, tick_destroyers.system());
+        app.add_system_to_stage(fstage::TICK, tick_spawners.system())
+            .add_system_to_stage(fstage::TICK, tick_destroyers.system());
     }
 }

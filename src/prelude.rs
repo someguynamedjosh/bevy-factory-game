@@ -1,5 +1,5 @@
 pub use crate::assets::CommonAssets;
-pub use crate::common::{SetupNeeded, TickClock, MAIN_STAGE};
+pub use crate::common::{SetupNeeded, TickClock, fstage};
 pub use crate::iso_pos::{IsoAxis, IsoDirection, IsoPos};
 use bevy::ecs::{Commands, DynamicBundle};
 pub use bevy::math::Vec2;

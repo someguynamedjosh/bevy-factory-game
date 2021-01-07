@@ -62,7 +62,7 @@ impl Item {
             from: self.current_rest_position(),
             to: target_pos,
             total_ticks: anim_duration,
-            remaining_ticks: anim_duration - 1,
+            remaining_ticks: anim_duration,
         };
     }
 
@@ -168,6 +168,6 @@ pub struct Plug;
 
 impl Plugin for Plug {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_system_to_stage(MAIN_STAGE, animate_items.system());
+        app.add_system_to_stage(fstage::ANIMATION, animate_items.system());
     }
 }

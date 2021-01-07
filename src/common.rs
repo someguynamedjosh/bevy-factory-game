@@ -1,6 +1,10 @@
 use bevy::prelude::*;
 
-pub const MAIN_STAGE: &'static str = "prototype_main_stage";
+pub mod fstage {
+    pub const SETUP: &'static str = "factory_setup";
+    pub const TICK: &'static str = "factory_tick";
+    pub const ANIMATION: &'static str = "factory_animation";
+}
 
 pub struct SetupNeeded;
 
@@ -36,8 +40,10 @@ pub struct Plug;
 
 impl Plugin for Plug {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_stage_after(stage::UPDATE, MAIN_STAGE, SystemStage::serial())
+        app.add_stage_after(stage::UPDATE, fstage::SETUP, SystemStage::serial())
+            .add_stage_after(fstage::SETUP, fstage::TICK, SystemStage::serial())
+            .add_stage_after(fstage::TICK, fstage::ANIMATION, SystemStage::serial())
             .add_resource(TickClock::default())
-            .add_system_to_stage(MAIN_STAGE, update_clock.system());
+            .add_system_to_stage(fstage::SETUP, update_clock.system());
     }
 }
