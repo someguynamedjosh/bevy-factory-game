@@ -32,6 +32,7 @@ impl TickClock {
 struct CommonAssets {
     pub conveyor_mat: Handle<ColorMaterial>,
     pub item_mat: Handle<ColorMaterial>,
+    pub claw_mat: Handle<ColorMaterial>,
 }
 
 #[derive(Default)]
@@ -87,10 +88,13 @@ impl Item {
         }
     }
 
-    pub fn anim_conveyor(&mut self, conveyor_pos: &BuildingPos, anim_duration: u8) {
-        let target_pos = conveyor_pos
-            .origin
-            .axis_aligned_pos(conveyor_pos.facing.axis());
+    pub fn anim_to_holder(
+        &mut self,
+        pos: IsoPos,
+        alignment: ItemHolderAlignment,
+        anim_duration: u8,
+    ) {
+        let target_pos = alignment.get_item_pos(pos);
         self.anim = ItemAnim::Lerp {
             from: self.current_rest_position(),
             to: target_pos,
@@ -99,15 +103,53 @@ impl Item {
         };
     }
 
-    pub fn anim_stationary(&mut self) {
-        self.anim = ItemAnim::Stay(self.current_rest_position());
+    pub fn anim_stationary_in_holder(&mut self, pos: IsoPos, alignment: ItemHolderAlignment) {
+        self.anim = ItemAnim::Stay(alignment.get_item_pos(pos));
+    }
+
+    pub fn anim_stationary_exact(&mut self, pos: Vec2) {
+        self.anim = ItemAnim::Stay(pos);
     }
 }
 
-#[derive(Default)]
+#[derive(Clone, Copy)]
+enum ItemHolderAlignment {
+    Centroid,
+    AxisAligned(IsoAxis),
+}
+
+impl ItemHolderAlignment {
+    pub fn get_item_pos(&self, coarse_pos: IsoPos) -> Vec2 {
+        match self {
+            Self::Centroid => coarse_pos.centroid_pos(),
+            Self::AxisAligned(axis) => coarse_pos.axis_aligned_pos(*axis),
+        }
+    }
+}
+
 struct ItemHolder {
+    alignment: ItemHolderAlignment,
     incoming: Option<Entity>,
     ticks_until_arrived: u8,
+}
+
+struct Claw {
+    take_from: Entity,
+    move_to: Entity,
+    held_item: Option<Entity>,
+    /// Length of the gantry in grid cells.
+    length: u8,
+    current_anim_tick: u8,
+    blocked: bool,
+}
+// How long it takes for the claw to traverse a segment of its path.
+const CLAW_SEGMENT_DURATION: u8 = 2;
+
+impl Claw {
+    pub fn anim_length(&self) -> u8 {
+        // A 1 length claw has to traverse 4 segments, 2 length 6 segments, 3/8, etc.
+        (self.length + 1) * 2 * CLAW_SEGMENT_DURATION
+    }
 }
 
 fn spawn_conveyor(
@@ -116,9 +158,10 @@ fn spawn_conveyor(
     origin: IsoPos,
     facing: IsoDirection,
     start_with_item: bool,
-) {
+) -> Option<Entity> {
+    let alignment = ItemHolderAlignment::AxisAligned(facing.axis());
     let incoming = if start_with_item {
-        spawn_item(commands, common_assets, origin)
+        spawn_item(commands, common_assets, origin, alignment)
     } else {
         None
     };
@@ -131,25 +174,51 @@ fn spawn_conveyor(
         .with(BuildingPos { origin, facing })
         .with(Conveyor)
         .with(ItemHolder {
+            alignment,
             incoming,
             ticks_until_arrived: 0,
         })
         .with(ConveyorData::default())
-        .with(UnlinkedConveyor);
+        .with(UnlinkedConveyor)
+        .current_entity()
 }
 
 fn spawn_item(
     commands: &mut Commands,
     common_assets: &mut ResMut<CommonAssets>,
     origin: IsoPos,
+    alignment: ItemHolderAlignment,
 ) -> Option<Entity> {
     commands
         .spawn(SpriteBundle {
             material: common_assets.item_mat.clone(),
             ..Default::default()
         })
-        .with(Item::new(origin.centroid_pos()))
+        .with(Item::new(alignment.get_item_pos(origin)))
         .current_entity()
+}
+
+fn spawn_claw(
+    commands: &mut Commands,
+    common_assets: &mut ResMut<CommonAssets>,
+    from: Entity,
+    to: Entity,
+    length: u8,
+) {
+    commands
+        .spawn(SpriteBundle {
+            material: common_assets.claw_mat.clone(),
+            ..Default::default()
+        })
+        .with(Claw {
+            // We can't guarantee that there is an item ready to pick up when we spawn.
+            blocked: true,
+            current_anim_tick: 0,
+            held_item: None,
+            take_from: from,
+            move_to: to,
+            length,
+        });
 }
 
 fn hello_world(
@@ -162,6 +231,8 @@ fn hello_world(
     common_assets.conveyor_mat = materials.add(texture_handle.into());
     let texture_handle = asset_server.load("item.png");
     common_assets.item_mat = materials.add(texture_handle.into());
+    let texture_handle = asset_server.load("claw.png");
+    common_assets.claw_mat = materials.add(texture_handle.into());
 
     let mut bundle = Camera2dBundle::default();
     bundle.transform.scale *= 2.0;
@@ -170,16 +241,31 @@ fn hello_world(
     let mut pos = IsoPos::origin();
     let mut facing = IsoDirection::PosA;
     spawn_conveyor(commands, &mut common_assets, pos, facing, true);
+    let mut claw_from = None;
+    let mut claw_to = None;
     for turn in &[
-        0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0,
+        0, 2, 0, 1, 0, 0, 1, 0, 0, 1, 3, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0,
     ] {
         if *turn == 1 {
             facing = facing.clockwise();
         }
         pos = pos.offset_perp_direction(facing, 1);
 
-        spawn_conveyor(commands, &mut common_assets, pos, facing, false);
+        let conveyor = spawn_conveyor(commands, &mut common_assets, pos, facing, false);
+        if *turn == 2 {
+            claw_to = conveyor;
+        } else if *turn == 3 {
+            claw_from = conveyor;
+        }
     }
+
+    spawn_claw(
+        commands,
+        &mut common_assets,
+        claw_from.unwrap(),
+        claw_to.unwrap(),
+        3,
+    );
 }
 
 fn update_tick_clock(time: Res<Time>, mut tick_clock: ResMut<TickClock>) {
@@ -223,6 +309,77 @@ fn link_unlinked_conveyors(
     }
 }
 
+fn tick_claws(
+    tick_clock: Res<TickClock>,
+    mut claws: Query<(&mut Claw,)>,
+    mut holders: Query<(&mut ItemHolder,)>,
+) {
+    if !tick_clock.is_tick_this_frame() {
+        return;
+    }
+
+    for (mut claw,) in claws.iter_mut() {
+        let anim_length = claw.anim_length();
+        if !claw.blocked {
+            claw.current_anim_tick = (claw.current_anim_tick + 1) % anim_length;
+        }
+        claw.blocked = false;
+        if claw.current_anim_tick == 0 {
+            // Trying to pick up an item.
+            let mut from = holders
+                .get_component_mut::<ItemHolder>(claw.take_from)
+                .unwrap();
+            if from.incoming.is_some() && from.ticks_until_arrived == 0 {
+                claw.held_item = from.incoming.take();
+            } else {
+                claw.blocked = true;
+            }
+        } else if claw.current_anim_tick == anim_length / 2 {
+            let mut to = holders
+                .get_component_mut::<ItemHolder>(claw.move_to)
+                .unwrap();
+            if to.incoming.is_none() {
+                to.incoming = claw.held_item.take();
+                to.ticks_until_arrived = 0;
+            } else {
+                claw.blocked = true;
+            }
+        }
+    }
+}
+
+fn animate_claws(
+    tick_clock: Res<TickClock>,
+    mut claws: Query<(&Claw, &mut Transform)>,
+    item_holders: Query<(&ItemHolder, &BuildingPos)>,
+    mut items: Query<(&mut Item,)>,
+) {
+    for (claw, mut transform) in claws.iter_mut() {
+        let (from_holder, from_pos) = item_holders.get(claw.take_from).unwrap();
+        let (to_holder, to_pos) = item_holders.get(claw.move_to).unwrap();
+        let from_pos = from_holder.alignment.get_item_pos(from_pos.origin);
+        let to_pos = to_holder.alignment.get_item_pos(to_pos.origin);
+        let anim_length = claw.anim_length();
+        let current_tick = claw.current_anim_tick;
+        let mut progress = current_tick as f32;
+        if !claw.blocked {
+            progress += tick_clock.get_tick_progress();
+        }
+        progress /= anim_length as f32 / 2.0;
+        if progress > 1.0 {
+            progress = 2.0 - progress;
+        }
+        let position_now = from_pos.lerp(to_pos, progress);
+        transform.translation = (position_now, 0.2).into();
+        if let Some(item) = claw.held_item {
+            items
+                .get_component_mut::<Item>(item)
+                .unwrap()
+                .anim_stationary_exact(position_now);
+        }
+    }
+}
+
 fn tick_conveyors(
     tick_clock: Res<TickClock>,
     tail_conveyors: Query<(Entity,), With<TailConveyor>>,
@@ -236,12 +393,12 @@ fn tick_conveyors(
         loop {
             let (pos, data, item_holder) = all_conveyors.get_mut(current).unwrap();
             let empty = item_holder.incoming.is_none();
+            let alignment = item_holder.alignment;
             let next = if let Some(next) = data.upstream {
                 next
             } else {
                 break;
             };
-            drop(data);
             if empty {
                 let pos = pos.clone();
                 let mut upstream_holder = all_conveyors.get_mut(next).unwrap().2;
@@ -249,7 +406,7 @@ fn tick_conveyors(
                     let item = upstream_holder.incoming.take();
                     item.map(|e| {
                         let mut item = all_items.get_mut(e).unwrap();
-                        item.anim_conveyor(&pos, CONVEYOR_DURATION);
+                        item.anim_to_holder(pos.origin, alignment, CONVEYOR_DURATION);
                     });
                     let mut this_holder = all_conveyors.get_mut(current).unwrap().2;
                     this_holder.incoming = item;
@@ -258,7 +415,7 @@ fn tick_conveyors(
             } else if item_holder.ticks_until_arrived == 0 {
                 item_holder.incoming.map(|e| {
                     let mut item = all_items.get_mut(e).unwrap();
-                    item.anim_stationary();
+                    item.anim_stationary_in_holder(pos.origin, alignment);
                 });
             }
             current = next;
@@ -308,8 +465,10 @@ fn main() {
         .add_startup_system(hello_world.system())
         .add_system(update_tick_clock.system())
         .add_system(tick_item_holders.system())
+        .add_system(tick_claws.system())
         .add_system(link_unlinked_conveyors.system())
         .add_system(tick_conveyors.system())
+        .add_system(animate_claws.system())
         .add_system(animate_items.system())
         .run();
 }
