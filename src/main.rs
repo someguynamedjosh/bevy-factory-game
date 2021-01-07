@@ -59,10 +59,10 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(common::Plug)
         .add_plugin(assets::Plug)
-        .add_plugin(item::Plug)
-        // .add_plugin(util::Plug)
-        // .add_plugin(claw::Plug)
+        .add_plugin(util::Plug)
+        .add_plugin(claw::Plug)
         .add_plugin(conveyor::Plug)
+        .add_plugin(item::Plug)
         .add_startup_system(test_scene.system())
         .run();
 }
