@@ -33,6 +33,8 @@ struct CommonAssets {
     pub conveyor_mat: Handle<ColorMaterial>,
     pub item_mat: Handle<ColorMaterial>,
     pub claw_mat: Handle<ColorMaterial>,
+    pub spawner_mat: Handle<ColorMaterial>,
+    pub destroyer_mat: Handle<ColorMaterial>,
 }
 
 #[derive(Default)]
@@ -133,6 +135,12 @@ struct ItemHolder {
     ticks_until_arrived: u8,
 }
 
+struct DebugSpawner {
+    rate: u8,
+    spawn_cycle: u8,
+}
+struct DebugDestroyer;
+
 struct Claw {
     take_from: Entity,
     move_to: Entity,
@@ -221,6 +229,58 @@ fn spawn_claw(
         });
 }
 
+fn spawn_spawner(
+    commands: &mut Commands,
+    common_assets: &mut ResMut<CommonAssets>,
+    origin: IsoPos,
+    rate: u8,
+) -> Option<Entity> {
+    commands
+        .spawn(SpriteBundle {
+            material: common_assets.spawner_mat.clone(),
+            transform: origin.building_transform(Default::default()),
+            ..Default::default()
+        })
+        .with(BuildingPos {
+            origin,
+            facing: Default::default(),
+        })
+        .with(DebugSpawner {
+            rate,
+            spawn_cycle: 0,
+        })
+        .with(ItemHolder {
+            alignment: ItemHolderAlignment::Centroid,
+            incoming: None,
+            ticks_until_arrived: 0,
+        })
+        .current_entity()
+}
+
+fn spawn_destroyer(
+    commands: &mut Commands,
+    common_assets: &mut ResMut<CommonAssets>,
+    origin: IsoPos,
+) -> Option<Entity> {
+    commands
+        .spawn(SpriteBundle {
+            material: common_assets.destroyer_mat.clone(),
+            transform: origin.building_transform(Default::default()),
+            ..Default::default()
+        })
+        .with(BuildingPos {
+            origin,
+            facing: Default::default(),
+        })
+        .with(DebugDestroyer)
+        .with(ItemHolder {
+            alignment: ItemHolderAlignment::Centroid,
+            incoming: None,
+            ticks_until_arrived: 0,
+        })
+        .current_entity()
+}
+
 fn hello_world(
     commands: &mut Commands,
     asset_server: Res<AssetServer>,
@@ -233,6 +293,10 @@ fn hello_world(
     common_assets.item_mat = materials.add(texture_handle.into());
     let texture_handle = asset_server.load("claw.png");
     common_assets.claw_mat = materials.add(texture_handle.into());
+    let texture_handle = asset_server.load("spawner.png");
+    common_assets.spawner_mat = materials.add(texture_handle.into());
+    let texture_handle = asset_server.load("destroyer.png");
+    common_assets.destroyer_mat = materials.add(texture_handle.into());
 
     let mut bundle = Camera2dBundle::default();
     bundle.transform.scale *= 2.0;
@@ -240,11 +304,16 @@ fn hello_world(
 
     let mut pos = IsoPos::origin();
     let mut facing = IsoDirection::PosA;
-    spawn_conveyor(commands, &mut common_assets, pos, facing, true);
+    let first = spawn_conveyor(commands, &mut common_assets, pos, facing, true).unwrap();
+    let spawner = spawn_spawner(commands, &mut common_assets, pos.offset_a(-1), 5).unwrap();
+    spawn_claw(commands, &mut common_assets, spawner, first, 1);
+
     let mut claw_from = None;
     let mut claw_to = None;
+    let mut last = None;
     for turn in &[
-        0, 2, 0, 1, 0, 0, 1, 0, 0, 1, 3, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0,
+        0, 2, 0, 1, 0, 0, 1, 0, 0, 1, 3, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
+        0, 0, 4,
     ] {
         if *turn == 1 {
             facing = facing.clockwise();
@@ -256,6 +325,8 @@ fn hello_world(
             claw_to = conveyor;
         } else if *turn == 3 {
             claw_from = conveyor;
+        } else if *turn == 4 {
+            last = conveyor;
         }
     }
 
@@ -265,6 +336,18 @@ fn hello_world(
         claw_from.unwrap(),
         claw_to.unwrap(),
         3,
+    );
+    let destroyer = spawn_destroyer(
+        commands,
+        &mut common_assets,
+        pos.offset_direction(facing, 1),
+    );
+    spawn_claw(
+        commands,
+        &mut common_assets,
+        last.unwrap(),
+        destroyer.unwrap(),
+        1,
     );
 }
 
@@ -305,6 +388,54 @@ fn link_unlinked_conveyors(
         commands.remove_one::<UnlinkedConveyor>(id);
         if !has_downstream {
             commands.insert_one(id, TailConveyor);
+        }
+    }
+}
+
+fn tick_spawners(
+    commands: &mut Commands,
+    mut common_assets: ResMut<CommonAssets>,
+    tick_clock: Res<TickClock>,
+    mut spawners: Query<(&mut DebugSpawner, &mut ItemHolder, &BuildingPos)>,
+) {
+    if !tick_clock.is_tick_this_frame() {
+        return;
+    }
+
+    for (mut spawner, mut holder, pos) in spawners.iter_mut() {
+        if holder.incoming.is_none() {
+            spawner.spawn_cycle += 1;
+            if spawner.spawn_cycle >= spawner.rate {
+                spawner.spawn_cycle = 0;
+                let item = spawn_item(
+                    commands,
+                    &mut common_assets,
+                    pos.origin,
+                    ItemHolderAlignment::Centroid,
+                )
+                .unwrap();
+                holder.incoming = Some(item);
+                holder.ticks_until_arrived = 0;
+            }
+        }
+    }
+}
+
+fn tick_destroyers(
+    commands: &mut Commands,
+    tick_clock: Res<TickClock>,
+    mut destroyers: Query<(&mut ItemHolder,), With<DebugDestroyer>>,
+) {
+    if !tick_clock.is_tick_this_frame() {
+        return;
+    }
+
+    for (mut holder,) in destroyers.iter_mut() {
+        if holder.ticks_until_arrived != 0 {
+            continue;
+        }
+        if let Some(item) = holder.incoming.take() {
+            commands.despawn(item);
         }
     }
 }
@@ -470,5 +601,7 @@ fn main() {
         .add_system(tick_conveyors.system())
         .add_system(animate_claws.system())
         .add_system(animate_items.system())
+        .add_system(tick_spawners.system())
+        .add_system(tick_destroyers.system())
         .run();
 }
