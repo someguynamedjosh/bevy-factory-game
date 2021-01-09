@@ -51,13 +51,8 @@ pub fn spawn_destroyer(
 fn tick_spawners(
     commands: &mut Commands,
     common_assets: Res<CommonAssets>,
-    tick_clock: Res<TickClock>,
     mut spawners: Query<(&mut DebugSpawner, &mut ItemContainer, &IsoPos)>,
 ) {
-    if !tick_clock.is_tick_this_frame() {
-        return;
-    }
-
     for (mut spawner, mut container, pos) in spawners.iter_mut() {
         if container.item.is_none() {
             spawner.spawn_cycle += 1;
@@ -79,13 +74,8 @@ fn tick_spawners(
 
 fn tick_destroyers(
     commands: &mut Commands,
-    tick_clock: Res<TickClock>,
     mut destroyers: Query<(&mut ItemContainer,), With<DebugDestroyer>>,
 ) {
-    if !tick_clock.is_tick_this_frame() {
-        return;
-    }
-
     for (mut container,) in destroyers.iter_mut() {
         if container.blocked {
             continue;

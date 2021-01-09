@@ -178,6 +178,20 @@ impl ItemContainer {
             }
         }
     }
+
+    // Will panic if blocked or already has an item.
+    pub fn put_new_item(
+        &mut self,
+        commands: &mut Commands,
+        common_assets: &Res<CommonAssets>,
+        this_pos: IsoPos,
+        item: Item,
+    ) {
+        assert!(self.item.is_none());
+        assert!(!self.blocked);
+        let item = spawn::item(commands, common_assets, item, this_pos, self.alignment);
+        self.item = Some(item);
+    }
 }
 
 // #[cfg(feature = "draw-containers")]

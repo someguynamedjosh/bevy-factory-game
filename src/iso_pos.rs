@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 /// The distance from any vertex of a grid cell to its centroid.
-pub const GRID_TRIANGLE_RADIUS: f32 = 64.0;
+pub const GRID_TRIANGLE_RADIUS: f32 = 62.0;
 
 // cos 30deg = (edge / 2) / radius
 // cos 30deg = 0.8660254
@@ -170,6 +170,13 @@ impl IsoPos {
         !self.points_left()
     }
 
+    /// Returns true if the triangular grid cell this coordinate represents has a vertex that
+    /// visually appears to point in the specified direction.
+    pub fn has_vertex_pointing_in(self, dir: IsoDirection) -> bool {
+        // points left and negative, or points right and positive.
+        self.points_left() == dir.is_negative()
+    }
+
     /// Move the coordinate left or right (+A points to the right.)
     pub const fn offset_a(self, offset: i32) -> Self {
         Self {
@@ -180,29 +187,28 @@ impl IsoPos {
 
     /// Move the coordinate along the B axis (+ points top-left.)
     pub fn offset_b(self, offset: i32) -> Self {
-        // Offsetting along the B axis involves alternating steps up the x and y axes.
-        // On a grid cell which points left, the next step is to increase the x coord, followed by
-        // the y coord.
+        // Offsetting along the B axis involves alternating between moving 1 step along Y and moving
+        // -1 step along X, 2 steps along Y. Use the first pattern when moving up from the origin.
 
         // How much we should move along the first axis (first, third, fifth... step)
         // This is basically division rounding away from zero.
-        let first_axis_amount = offset / 2 + offset % 2;
+        let first_pattern_amount = offset / 2 + offset % 2;
         // How much we should move along the second axis (second, fourth, sixth... step)
         // Division rounding towards zero.
-        let second_axis_amount = offset / 2;
+        let second_pattern_amount = offset / 2;
 
         // if we are pointing left XOR the offset is negative.
         if self.points_left() != (offset < 0) {
             // Move along the y axis first, then the x axis.
             Self {
-                x: self.x - second_axis_amount,
-                y: self.y + first_axis_amount,
+                x: self.x - second_pattern_amount,
+                y: self.y + first_pattern_amount + 2 * second_pattern_amount,
             }
         } else {
-            // Move along the x axis first, then the y axis.
+            // Move along the x pattern first, then the y pattern.
             Self {
-                x: self.x - first_axis_amount,
-                y: self.y + second_axis_amount,
+                x: self.x - first_pattern_amount,
+                y: self.y + second_pattern_amount + 2 * first_pattern_amount,
             }
         }
     }
@@ -211,18 +217,18 @@ impl IsoPos {
     pub fn offset_c(self, offset: i32) -> Self {
         // Same thing as the B algorithm except mirrored effect on Y axis.
 
-        let first_axis_amount = offset / 2 + offset % 2;
-        let second_axis_amount = offset / 2;
+        let first_pattern_amount = offset / 2 + offset % 2;
+        let second_pattern_amount = offset / 2;
 
         if self.points_left() != (offset < 0) {
             Self {
-                x: self.x - second_axis_amount,
-                y: self.y - first_axis_amount,
+                x: self.x - second_pattern_amount,
+                y: self.y - first_pattern_amount - 2 * second_pattern_amount,
             }
         } else {
             Self {
-                x: self.x - first_axis_amount,
-                y: self.y - second_axis_amount,
+                x: self.x - first_pattern_amount,
+                y: self.y - second_pattern_amount - 2 * first_pattern_amount,
             }
         }
     }
@@ -375,15 +381,15 @@ mod tests {
         assert_eq!(IsoPos::new(0, 0).offset_a(1), IsoPos::new(1, 0));
         assert_eq!(IsoPos::new(0, 0).offset_a(-2), IsoPos::new(-2, 0));
 
-        assert_eq!(IsoPos::new(0, 0).offset_b(4), IsoPos::new(-2, 2));
-        assert_eq!(IsoPos::new(0, 0).offset_b(5), IsoPos::new(-2, 3));
-        assert_eq!(IsoPos::new(-1, 0).offset_b(5), IsoPos::new(-4, 2));
-        assert_eq!(IsoPos::new(1, 0).offset_b(-2), IsoPos::new(2, -1));
+        assert_eq!(IsoPos::new(0, 0).offset_b(4), IsoPos::new(-2, 6));
+        assert_eq!(IsoPos::new(0, 0).offset_b(5), IsoPos::new(-2, 7));
+        assert_eq!(IsoPos::new(-1, 0).offset_b(5), IsoPos::new(-4, 8));
+        assert_eq!(IsoPos::new(1, 0).offset_b(-2), IsoPos::new(2, -3));
 
-        assert_eq!(IsoPos::new(0, 0).offset_c(4), IsoPos::new(-2, -2));
-        assert_eq!(IsoPos::new(0, 0).offset_c(5), IsoPos::new(-2, -3));
-        assert_eq!(IsoPos::new(-1, 0).offset_c(5), IsoPos::new(-4, -2));
-        assert_eq!(IsoPos::new(1, 0).offset_c(-2), IsoPos::new(2, 1));
+        assert_eq!(IsoPos::new(0, 0).offset_c(4), IsoPos::new(-2, -6));
+        assert_eq!(IsoPos::new(0, 0).offset_c(5), IsoPos::new(-2, -7));
+        assert_eq!(IsoPos::new(-1, 0).offset_c(5), IsoPos::new(-4, -8));
+        assert_eq!(IsoPos::new(1, 0).offset_c(-2), IsoPos::new(2, 3));
 
         let mut direction = IsoDirection::PosA;
         let mut pos = IsoPos::origin();

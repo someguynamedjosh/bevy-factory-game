@@ -2,6 +2,8 @@ use bevy::prelude::*;
 
 #[derive(Default)]
 pub struct CommonAssets {
+    pub tiles: [Handle<ColorMaterial>; 4],
+
     pub conveyor_mat: (Handle<ColorMaterial>, Handle<ColorMaterial>),
     pub item_mat: Handle<ColorMaterial>,
     pub claw_mat: Handle<ColorMaterial>,
@@ -20,6 +22,19 @@ fn startup(
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut common_assets: ResMut<CommonAssets>,
 ) {
+    for (i, path) in [
+        "tile.png",
+        "tile_input.png",
+        "tile_output.png",
+        "tile_misc.png",
+    ]
+    .iter()
+    .enumerate()
+    {
+        let texture_handle = asset_server.load(*path);
+        common_assets.tiles[i] = materials.add(texture_handle.into());
+    }
+
     let texture_handle = asset_server.load("conveyor_up.png");
     common_assets.conveyor_mat.0 = materials.add(texture_handle.into());
     let texture_handle = asset_server.load("conveyor_down.png");

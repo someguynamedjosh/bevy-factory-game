@@ -2,6 +2,7 @@ mod assets;
 mod claw;
 mod common;
 mod conveyor;
+mod furnace;
 pub mod iso_pos;
 mod item;
 pub mod prelude;
@@ -23,9 +24,11 @@ fn test_scene(commands: &mut Commands, common_assets: Res<CommonAssets>) {
 
     let mut claw_from = None;
     let mut claw_to = None;
+    let mut fsupply: Option<Entity> = None;
+    let mut ftarget: Option<Entity> = None;
     let mut last = None;
     for turn in &[
-        0, 2, 0, 1, 0, 0, 1, 0, 0, 1, 3, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
+        0, 2, 0, 1, 0, 0, 1, 5, 0, 1, 3, 0, 1, 0, 0, 0, 6, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
         0, 0, 4,
     ] {
         if *turn == 1 {
@@ -40,6 +43,10 @@ fn test_scene(commands: &mut Commands, common_assets: Res<CommonAssets>) {
             claw_from = Some(conveyor);
         } else if *turn == 4 {
             last = Some(conveyor);
+        } else if *turn == 5 {
+            fsupply = Some(conveyor);
+        } else if *turn == 6 {
+            ftarget = Some(conveyor);
         }
     }
 
@@ -52,6 +59,33 @@ fn test_scene(commands: &mut Commands, common_assets: Res<CommonAssets>) {
     );
     let destroyer = spawn::destroyer(commands, &common_assets, pos.offset_direction(facing, 1));
     spawn::claw(commands, &common_assets, last.unwrap(), destroyer, 1);
+
+    spawn::furnace(
+        commands,
+        &common_assets,
+        IsoPos::origin().offset_a(6),
+        IsoDirection::PosA,
+    );
+    spawn::furnace(
+        commands,
+        &common_assets,
+        IsoPos::new(8, 2),
+        IsoDirection::PosC,
+    );
+    spawn::furnace(
+        commands,
+        &common_assets,
+        IsoPos::new(7, 2),
+        IsoDirection::NegB,
+    );
+    let (fin, fout) = spawn::furnace(
+        commands,
+        &common_assets,
+        IsoPos::new(1, 1),
+        IsoDirection::PosC,
+    );
+    spawn::claw(commands, &common_assets, fsupply.unwrap(), fin, 1);
+    spawn::claw(commands, &common_assets, fout, ftarget.unwrap(), 1);
 }
 
 fn main() {
@@ -60,6 +94,7 @@ fn main() {
         .add_plugin(common::Plug)
         .add_plugin(assets::Plug)
         .add_plugin(util::Plug)
+        .add_plugin(furnace::Plug)
         .add_plugin(claw::Plug)
         .add_plugin(conveyor::Plug)
         .add_plugin(item::Plug)

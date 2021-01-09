@@ -47,15 +47,10 @@ pub fn spawn_claw(
 }
 
 fn tick(
-    tick_clock: Res<TickClock>,
     mut claws: Query<(&mut Claw,)>,
     mut containers: Query<(&mut ItemContainer, &IsoPos)>,
     mut items: Query<&mut ItemAnimator>,
 ) {
-    if !tick_clock.is_tick_this_frame() {
-        return;
-    }
-
     for (mut claw,) in claws.iter_mut() {
         let anim_length = claw.anim_length();
         if !claw.blocked {

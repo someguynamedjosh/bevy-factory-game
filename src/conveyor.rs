@@ -91,14 +91,10 @@ fn setup(
 }
 
 fn tick(
-    tick_clock: Res<TickClock>,
     tail_conveyors: Query<(Entity,), With<TailConveyor>>,
     mut all_conveyors: Query<(&IsoPos, &mut Conveyor, &mut ItemContainer)>,
     mut all_items: Query<&mut ItemAnimator>,
 ) {
-    if !tick_clock.is_tick_this_frame() {
-        return;
-    }
     for (mut current,) in tail_conveyors.iter() {
         loop {
             let (pos, mut conveyor, mut item_container) = all_conveyors.get_mut(current).unwrap();

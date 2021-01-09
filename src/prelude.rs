@@ -1,5 +1,5 @@
 pub use crate::assets::CommonAssets;
-pub use crate::common::{fstage, SetupNeeded, TickClock};
+pub use crate::common::{fstage, start_tile, SetupNeeded, TickClock};
 pub use crate::iso_pos::{IsoAxis, IsoDirection, IsoPos};
 pub use crate::item::Item;
 use bevy::ecs::{Commands, DynamicBundle};
@@ -11,6 +11,7 @@ pub use std::f32::consts::PI;
 pub mod spawn {
     pub use crate::claw::spawn_claw as claw;
     pub use crate::conveyor::spawn_conveyor as conveyor;
+    pub use crate::furnace::spawn_furnace as furnace;
     pub use crate::item::spawn_item as item;
     pub use crate::util::spawn_destroyer as destroyer;
     pub use crate::util::spawn_spawner as spawner;
