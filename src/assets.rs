@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 #[derive(Default)]
 pub struct CommonAssets {
-    pub conveyor_mat: Handle<ColorMaterial>,
+    pub conveyor_mat: (Handle<ColorMaterial>, Handle<ColorMaterial>),
     pub item_mat: Handle<ColorMaterial>,
     pub claw_mat: Handle<ColorMaterial>,
     pub spawner_mat: Handle<ColorMaterial>,
@@ -17,8 +17,10 @@ fn startup(
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut common_assets: ResMut<CommonAssets>,
 ) {
-    let texture_handle = asset_server.load("conveyor.png");
-    common_assets.conveyor_mat = materials.add(texture_handle.into());
+    let texture_handle = asset_server.load("conveyor_up.png");
+    common_assets.conveyor_mat.0 = materials.add(texture_handle.into());
+    let texture_handle = asset_server.load("conveyor_down.png");
+    common_assets.conveyor_mat.1 = materials.add(texture_handle.into());
     let texture_handle = asset_server.load("item.png");
     common_assets.item_mat = materials.add(texture_handle.into());
     let texture_handle = asset_server.load("claw.png");

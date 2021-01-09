@@ -31,9 +31,15 @@ pub fn spawn_conveyor(
     } else {
         None
     };
+    // xor
+    let material = if origin.points_left() != facing.is_negative() {
+        common_assets.conveyor_mat.0.clone()
+    } else {
+        common_assets.conveyor_mat.1.clone()
+    };
     commands
         .spawn(SpriteBundle {
-            material: common_assets.conveyor_mat.clone(),
+            material,
             transform: origin.building_transform(facing.axis()),
             ..Default::default()
         })
