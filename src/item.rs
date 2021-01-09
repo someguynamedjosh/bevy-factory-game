@@ -26,6 +26,7 @@ impl ItemContainerAlignment {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Item {
     MetalRubble,
     Metal,

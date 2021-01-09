@@ -25,7 +25,7 @@ pub fn spawn_conveyor(
         Some(crate::item::spawn_item(
             commands,
             common_assets,
-            Item::Metal,
+            Item::MetalRubble,
             origin,
             alignment,
         ))
