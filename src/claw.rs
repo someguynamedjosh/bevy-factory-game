@@ -1,4 +1,4 @@
-use crate::item::{Item, ItemContainer};
+use crate::item::{ItemAnimator, ItemContainer};
 use crate::prelude::*;
 use bevy::prelude::*;
 
@@ -50,7 +50,7 @@ fn tick(
     tick_clock: Res<TickClock>,
     mut claws: Query<(&mut Claw,)>,
     mut containers: Query<(&mut ItemContainer, &IsoPos)>,
-    mut items: Query<&mut Item>,
+    mut items: Query<&mut ItemAnimator>,
 ) {
     if !tick_clock.is_tick_this_frame() {
         return;
@@ -84,7 +84,7 @@ fn animate(
     tick_clock: Res<TickClock>,
     mut claws: Query<(&Claw, &mut Transform)>,
     item_containers: Query<(&ItemContainer, &IsoPos)>,
-    mut items: Query<(&mut Item,)>,
+    mut items: Query<(&mut ItemAnimator,)>,
 ) {
     for (claw, mut transform) in claws.iter_mut() {
         let (from_container, from_pos) = item_containers.get(claw.take_from).unwrap();
@@ -105,7 +105,7 @@ fn animate(
         transform.translation = (position_now, 0.2).into();
         if let Some(item) = claw.held_item {
             items
-                .get_component_mut::<Item>(item)
+                .get_component_mut::<ItemAnimator>(item)
                 .unwrap()
                 .anim_stationary_exact(position_now);
         }

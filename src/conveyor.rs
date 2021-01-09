@@ -1,4 +1,4 @@
-use crate::item::{Item, ItemContainer, ItemContainerAlignment};
+use crate::item::{ItemAnimator, ItemContainer, ItemContainerAlignment};
 use crate::prelude::*;
 use bevy::prelude::*;
 
@@ -25,6 +25,7 @@ pub fn spawn_conveyor(
         Some(crate::item::spawn_item(
             commands,
             common_assets,
+            Item::Metal,
             origin,
             alignment,
         ))
@@ -93,7 +94,7 @@ fn tick(
     tick_clock: Res<TickClock>,
     tail_conveyors: Query<(Entity,), With<TailConveyor>>,
     mut all_conveyors: Query<(&IsoPos, &mut Conveyor, &mut ItemContainer)>,
-    mut all_items: Query<&mut Item>,
+    mut all_items: Query<&mut ItemAnimator>,
 ) {
     if !tick_clock.is_tick_this_frame() {
         return;

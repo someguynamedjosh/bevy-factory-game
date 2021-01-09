@@ -66,6 +66,7 @@ fn tick_spawners(
                 let item = spawn::item(
                     commands,
                     &common_assets,
+                    Item::MetalRubble,
                     *pos,
                     ItemContainerAlignment::Centroid,
                 );

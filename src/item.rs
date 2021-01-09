@@ -26,11 +26,16 @@ impl ItemContainerAlignment {
     }
 }
 
-pub struct Item {
+pub enum Item {
+    MetalRubble,
+    Metal,
+}
+
+pub struct ItemAnimator {
     anim: ItemAnim,
 }
 
-impl Item {
+impl ItemAnimator {
     pub fn new(start_pos: Vec2) -> Self {
         Self {
             anim: ItemAnim::Stay(start_pos),
@@ -78,20 +83,29 @@ impl Item {
 pub fn spawn_item(
     commands: &mut Commands,
     common_assets: &Res<CommonAssets>,
+    item: Item,
     origin: IsoPos,
     alignment: ItemContainerAlignment,
 ) -> Entity {
+    let material = match &item {
+        Item::MetalRubble => common_assets.metal_rubble_mat.clone(),
+        Item::Metal => common_assets.metal_mat.clone(),
+    };
     commands
         .spawn(SpriteBundle {
-            material: common_assets.item_mat.clone(),
+            material,
             ..Default::default()
         })
-        .with(Item::new(alignment.get_item_pos(origin)))
+        .with(item)
+        .with(ItemAnimator::new(alignment.get_item_pos(origin)))
         .current_entity()
         .unwrap()
 }
 
-fn animate_items(tick_clock: Res<TickClock>, mut items: Query<(&mut Transform, &mut Item)>) {
+fn animate_items(
+    tick_clock: Res<TickClock>,
+    mut items: Query<(&mut Transform, &mut ItemAnimator)>,
+) {
     for (mut transform, mut item) in items.iter_mut() {
         let pos = match &mut item.anim {
             ItemAnim::Stay(pos) => pos.clone(),
@@ -152,7 +166,7 @@ impl ItemContainer {
         &mut self,
         other: &mut Option<Entity>,
         this_pos: IsoPos,
-        item_query: &mut Query<&mut Item>,
+        item_query: &mut Query<&mut ItemAnimator>,
     ) {
         if !self.blocked && self.item.is_none() && other.is_some() {
             self.item = other.take();

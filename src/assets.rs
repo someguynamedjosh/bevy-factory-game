@@ -8,6 +8,9 @@ pub struct CommonAssets {
     pub spawner_mat: Handle<ColorMaterial>,
     pub destroyer_mat: Handle<ColorMaterial>,
 
+    pub metal_rubble_mat: Handle<ColorMaterial>,
+    pub metal_mat: Handle<ColorMaterial>,
+
     pub debug_container_mat: Handle<ColorMaterial>,
     pub debug_blocked_container_mat: Handle<ColorMaterial>,
 }
@@ -29,6 +32,11 @@ fn startup(
     common_assets.spawner_mat = materials.add(texture_handle.into());
     let texture_handle = asset_server.load("destroyer.png");
     common_assets.destroyer_mat = materials.add(texture_handle.into());
+
+    let texture_handle = asset_server.load("metal_rubble.png");
+    common_assets.metal_rubble_mat = materials.add(texture_handle.into());
+    let texture_handle = asset_server.load("metal.png");
+    common_assets.metal_mat = materials.add(texture_handle.into());
 
     let texture_handle = asset_server.load("debug_container.png");
     common_assets.debug_container_mat = materials.add(texture_handle.into());
