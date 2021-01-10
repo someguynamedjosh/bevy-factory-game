@@ -6,7 +6,7 @@ use bevy::ecs::{Commands, DynamicBundle};
 pub use bevy::math::Vec2;
 pub use bevy::prelude::{Entity, Quat, Transform};
 pub use scones::make_constructor;
-pub use std::f32::consts::PI;
+pub use std::f32::consts::{PI, TAU};
 
 pub mod spawn {
     pub use crate::claw::spawn_claw as claw;

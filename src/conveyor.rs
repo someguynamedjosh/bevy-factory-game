@@ -61,6 +61,7 @@ fn setup(
         With<SetupNeeded>,
     >,
 ) {
+    let mut check_has_setup_needed = Vec::new();
     for (id, mut conveyor, pos, facing) in unlinked_conveyors.iter_mut() {
         let upstream_pos = pos.offset_perp_direction(*facing, -1);
         let downstream_pos = pos.offset_perp_direction(*facing, 1);
@@ -77,6 +78,7 @@ fn setup(
             }
             // If they are in our downstream position and we are in their upstream position...
             if *cpos == downstream_pos {
+                check_has_setup_needed.push(cid);
                 let candidate_upstream_pos = cpos.offset_perp_direction(*cfacing, -1);
                 if candidate_upstream_pos == *pos {
                     has_downstream = true;
@@ -86,6 +88,11 @@ fn setup(
         commands.remove_one::<SetupNeeded>(id);
         if !has_downstream {
             commands.insert_one(id, TailConveyor);
+        }
+    }
+    for id in check_has_setup_needed {
+        if !unlinked_conveyors.get_mut(id).is_ok() {
+            commands.insert_one(id, SetupNeeded);
         }
     }
 }
