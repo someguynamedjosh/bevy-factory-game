@@ -138,6 +138,50 @@ impl IsoDirection {
     }
 }
 
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub enum PointsDirection {
+    Left,
+    Right,
+}
+
+impl PointsDirection {
+    pub fn pick(left: bool) -> Self {
+        if left {
+            Self::Left
+        } else {
+            Self::Right
+        }
+    }
+
+    pub fn is_left(&self) -> bool {
+        *self == Self::Left
+    }
+}
+
+pub enum Snapping {
+    None,
+    Points(PointsDirection),
+}
+
+impl Default for Snapping {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+impl Snapping {
+    pub fn require_vertex_pointing_in(direction: IsoDirection) -> Self {
+        // Negative directions point in the same directions as the vertices
+        // on left-pointing triangles.
+        Self::Points(PointsDirection::pick(direction.is_negative()))
+    }
+
+    pub fn require_edge_pointing_in(direction: IsoDirection) -> Self {
+        // The opposite of _vertex_
+        Self::Points(PointsDirection::pick(direction.is_positive()))
+    }
+}
+
 /// Defines a coordinate on a grid of equilateral triangles. The origin at 0, 0 is a triangle which
 /// appears to point left.
 ///
@@ -153,9 +197,9 @@ pub struct IsoPos {
 }
 
 impl IsoPos {
-    /// Returns the IsoPos that represents a grid cell containing the specified cartesian 
+    /// Returns the IsoPos that represents a grid cell containing the specified cartesian
     /// coordinate.
-    pub fn from_world_pos(pos: Vec2) -> Self {
+    pub fn from_world_pos(pos: Vec2, snapping: Snapping) -> Self {
         // I'm not going to bother adding comments to this because it would only become more
         // confusing. Consider debugging this function as an exercise for the reader.
         let x = (pos.x + GRID_MEDIAN_LENGTH - GRID_TRIANGLE_RADIUS) / GRID_MEDIAN_LENGTH;
@@ -175,9 +219,39 @@ impl IsoPos {
         } else {
             even_y
         };
-        Self {
+        let without_snapping = Self {
             x: x.floor() as i32,
             y: int_y,
+        };
+        match snapping {
+            Snapping::None => without_snapping,
+            Snapping::Points(dir) => {
+                if without_snapping.points_in(dir) {
+                    without_snapping
+                } else {
+                    let from_centroid: Vec2 = pos - without_snapping.centroid_pos();
+                    if without_snapping.points_right() {
+                        let angle = from_centroid.angle_between(Vec2::unit_x());
+                        if angle.abs() >= TAU * 1.0 / 3.0 {
+                            without_snapping.offset_a(-1)
+                        } else if angle > 0.0 {
+                            without_snapping.offset_b(-1)
+                        } else {
+                            without_snapping.offset_c(-1)
+                        }
+                    } else {
+                        assert!(without_snapping.points_left());
+                        let angle = from_centroid.angle_between(-Vec2::unit_x());
+                        if angle.abs() >= TAU * 1.0 / 3.0 {
+                            without_snapping.offset_a(1)
+                        } else if angle > 0.0 {
+                            without_snapping.offset_b(1)
+                        } else {
+                            without_snapping.offset_c(1)
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -196,6 +270,10 @@ impl IsoPos {
     /// The opposite of points_left.
     pub fn points_right(self) -> bool {
         !self.points_left()
+    }
+
+    pub fn points_in(self, dir: PointsDirection) -> bool {
+        self.points_left() == dir.is_left()
     }
 
     /// Returns true if the triangular grid cell this coordinate represents has a vertex that

@@ -34,6 +34,15 @@ impl MouseAction {
             _ => false,
         }
     }
+
+    fn get_snapping(&self, selected_direction: IsoDirection) -> Snapping {
+        match self {
+            Self::PlaceConveyor => Snapping::None,
+            Self::PlaceClaw => Snapping::None,
+            Self::PlaceClawEnd { .. } => Snapping::None,
+            Self::PlaceFurnace => Snapping::require_edge_pointing_in(selected_direction),
+        }
+    }
 }
 
 fn startup(commands: &mut Commands, assets: Res<CommonAssets>) {
@@ -73,16 +82,20 @@ fn update_mouse_pos(
     mut transforms: Query<&mut Transform>,
     windows: Res<Windows>,
 ) {
+    for event in state.event_reader.iter(&events) {
+        gui_state.mouse_pos = event.position;
+    }
+
     let camera = cameras.get(gui_state.primary_camera).unwrap();
     let inv_mat = camera.projection_matrix.inverse();
     let window = windows.get(camera.window).unwrap();
     let (width, height) = (window.width(), window.height());
-    for event in state.event_reader.iter(&events) {
-        gui_state.mouse_pos = event.position;
-        let output_pos = event.position / Vec2::new(width, height) * 2.0 - Vec2::one();
-        let world_pos = inv_mat.mul_vec4((output_pos.x, output_pos.y, 0.0, 1.0).into()) * 2.0;
-        gui_state.mouse_pos_in_world = IsoPos::from_world_pos((world_pos.x, world_pos.y).into());
-    }
+    let output_pos = gui_state.mouse_pos / Vec2::new(width, height) * 2.0 - Vec2::one();
+    let world_pos = inv_mat.mul_vec4((output_pos.x, output_pos.y, 0.0, 1.0).into()) * 2.0;
+    let world_pos_2 = (world_pos.x, world_pos.y).into();
+    let snapping = gui_state.action.get_snapping(gui_state.direction);
+    gui_state.mouse_pos_in_world = IsoPos::from_world_pos(world_pos_2, snapping);
+
     let mut cursor_transform = transforms.get_mut(gui_state.world_cursor).unwrap();
     *cursor_transform = gui_state.mouse_pos_in_world.building_transform(IsoAxis::A);
     cursor_transform.translation += Vec3::unit_z() * 0.05;
@@ -103,21 +116,6 @@ fn test(
     key_input: Res<Input<KeyCode>>,
     containers: Query<(Entity, &IsoPos), With<ItemContainer>>,
 ) {
-    if key_input.just_pressed(KeyCode::E) {
-        state.direction = state.direction.clockwise();
-    }
-    if key_input.just_pressed(KeyCode::Q) {
-        state.direction = state.direction.counter_clockwise();
-    }
-    if key_input.just_pressed(KeyCode::Key1) {
-        state.action = MouseAction::PlaceConveyor;
-    }
-    if key_input.just_pressed(KeyCode::Key2) {
-        state.action = MouseAction::PlaceClaw;
-    }
-    if key_input.just_pressed(KeyCode::Key3) {
-        state.action = MouseAction::PlaceFurnace;
-    }
     if input.just_pressed(MouseButton::Left) {
         let mut clicked_container = None;
         for (container, pos) in containers.iter() {
@@ -156,6 +154,21 @@ fn test(
                 );
             }
         }
+    }
+    if key_input.just_pressed(KeyCode::Key1) {
+        state.action = MouseAction::PlaceConveyor;
+    }
+    if key_input.just_pressed(KeyCode::Key2) {
+        state.action = MouseAction::PlaceClaw;
+    }
+    if key_input.just_pressed(KeyCode::Key3) {
+        state.action = MouseAction::PlaceFurnace;
+    }
+    if key_input.just_pressed(KeyCode::E) {
+        state.direction = state.direction.clockwise();
+    }
+    if key_input.just_pressed(KeyCode::Q) {
+        state.direction = state.direction.counter_clockwise();
     }
 }
 
