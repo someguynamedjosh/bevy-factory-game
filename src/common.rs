@@ -2,6 +2,7 @@ use crate::prelude::*;
 use bevy::{ecs::ShouldRun, prelude::*};
 
 pub mod fstage {
+    pub const UI: &'static str = "factory_ui";
     pub const SETUP: &'static str = "factory_setup";
     pub const TICK: &'static str = "factory_tick";
     pub const ANIMATION: &'static str = "factory_animation";
@@ -67,7 +68,8 @@ pub struct Plug;
 
 impl Plugin for Plug {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_stage_after(stage::UPDATE, fstage::SETUP, SystemStage::serial())
+        app.add_stage_after(stage::UPDATE, fstage::UI, SystemStage::serial())
+            .add_stage_after(fstage::UI, fstage::SETUP, SystemStage::serial())
             .add_stage_after(
                 fstage::SETUP,
                 fstage::TICK,

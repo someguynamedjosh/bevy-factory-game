@@ -153,6 +153,34 @@ pub struct IsoPos {
 }
 
 impl IsoPos {
+    /// Returns the IsoPos that represents a grid cell containing the specified cartesian 
+    /// coordinate.
+    pub fn from_world_pos(pos: Vec2) -> Self {
+        // I'm not going to bother adding comments to this because it would only become more
+        // confusing. Consider debugging this function as an exercise for the reader.
+        let x = (pos.x + GRID_MEDIAN_LENGTH - GRID_TRIANGLE_RADIUS) / GRID_MEDIAN_LENGTH;
+        let odd_y_percent = x.rem_euclid(2.0);
+        let odd_y_percent = if odd_y_percent > 1.0 {
+            2.0 - odd_y_percent
+        } else {
+            odd_y_percent
+        };
+        let y = pos.y / (GRID_EDGE_LENGTH / 2.0);
+        let pos_y_percent = (y + 1.0).rem_euclid(2.0) - 1.0;
+        let even_y = (y / 2.0).round() as i32 * 2;
+        let int_y = if pos_y_percent <= -odd_y_percent {
+            even_y - 1
+        } else if pos_y_percent >= odd_y_percent {
+            even_y + 1
+        } else {
+            even_y
+        };
+        Self {
+            x: x.floor() as i32,
+            y: int_y,
+        }
+    }
+
     /// Equivalent to new(0, 0)
     pub fn origin() -> Self {
         Self::new(0, 0)

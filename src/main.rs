@@ -6,20 +6,17 @@ mod furnace;
 pub mod iso_pos;
 mod item;
 pub mod prelude;
+mod ui;
 mod util;
 
 use bevy::prelude::*;
 use prelude::*;
 
 fn test_scene(commands: &mut Commands, common_assets: Res<CommonAssets>) {
-    let mut bundle = Camera2dBundle::default();
-    bundle.transform.scale *= 2.0;
-    commands.spawn(bundle);
-
     let mut pos = IsoPos::origin();
     let mut facing = IsoDirection::PosA;
     let first = spawn::conveyor(commands, &common_assets, pos, facing, true);
-    let spawner = spawn::spawner(commands, &common_assets, pos.offset_a(-1), 9);
+    let spawner = spawn::spawner(commands, &common_assets, pos.offset_a(-1), 8);
     spawn::claw(commands, &common_assets, spawner, first, 1);
 
     let mut claw_from = None;
@@ -90,9 +87,15 @@ fn test_scene(commands: &mut Commands, common_assets: Res<CommonAssets>) {
 
 fn main() {
     App::build()
+        .add_resource(WindowDescriptor {
+            width: 600.0,
+            height: 400.0,
+            ..Default::default()
+        })
         .add_plugins(DefaultPlugins)
         .add_plugin(common::Plug)
         .add_plugin(assets::Plug)
+        .add_plugin(ui::Plug)
         .add_plugin(util::Plug)
         .add_plugin(furnace::Plug)
         .add_plugin(claw::Plug)

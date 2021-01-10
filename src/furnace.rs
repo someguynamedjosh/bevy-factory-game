@@ -23,7 +23,7 @@ impl FurnaceRecipe {
 }
 
 // How long the recipe takes to cook.
-const COOK_TIME: u8 = 16;
+const COOK_TIME: u8 = 40;
 
 pub fn spawn_furnace(
     commands: &mut Commands,
