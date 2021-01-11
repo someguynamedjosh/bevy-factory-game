@@ -1,3 +1,4 @@
+use crate::iso_pos::GRID_MEDIAN_LENGTH;
 use crate::item::ItemContainer;
 use crate::prelude::*;
 use bevy::prelude::*;
@@ -23,7 +24,10 @@ struct GuiState {
 enum MouseAction {
     PlaceConveyor,
     PlaceClaw,
-    PlaceClawEnd { start_pos: Entity },
+    PlaceClawEnd {
+        start_pos: IsoPos,
+        start_container: Entity,
+    },
     PlaceFurnace,
 }
 
@@ -39,7 +43,9 @@ impl MouseAction {
         match self {
             Self::PlaceConveyor => Snapping::None,
             Self::PlaceClaw => Snapping::None,
-            Self::PlaceClawEnd { .. } => Snapping::None,
+            Self::PlaceClawEnd { start_pos, .. } => Snapping::AlongAnyLine {
+                through: *start_pos,
+            },
             Self::PlaceFurnace => Snapping::require_edge_pointing_in(selected_direction),
         }
     }
@@ -120,7 +126,7 @@ fn test(
         let mut clicked_container = None;
         for (container, pos) in containers.iter() {
             if *pos == state.mouse_pos_in_world {
-                clicked_container = Some(container);
+                clicked_container = Some((*pos, container));
                 break;
             }
         }
@@ -135,13 +141,22 @@ fn test(
                 );
             }
             MouseAction::PlaceClaw => {
-                if let Some(c) = clicked_container {
-                    state.action = MouseAction::PlaceClawEnd { start_pos: c };
+                if let Some((p, c)) = clicked_container {
+                    state.action = MouseAction::PlaceClawEnd {
+                        start_pos: p,
+                        start_container: c,
+                    };
                 }
             }
-            MouseAction::PlaceClawEnd { start_pos } => {
-                if let Some(c) = clicked_container {
-                    spawn::claw(commands, &common_assets, start_pos, c, 3);
+            MouseAction::PlaceClawEnd {
+                start_container,
+                start_pos,
+            } => {
+                if let Some((p, c)) = clicked_container {
+                    let distance = p.centroid_pos().distance(start_pos.centroid_pos()) - 0.01;
+                    assert!(distance > 0.0 && distance < 255.0);
+                    let length = (distance / GRID_MEDIAN_LENGTH).ceil() as u8;
+                    spawn::claw(commands, &common_assets, start_container, c, length);
                     state.action = MouseAction::PlaceClaw;
                 }
             }

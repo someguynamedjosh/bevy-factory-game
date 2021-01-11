@@ -161,6 +161,8 @@ impl PointsDirection {
 pub enum Snapping {
     None,
     Points(PointsDirection),
+    AlongLine { through: IsoPos, axis: IsoAxis },
+    AlongAnyLine { through: IsoPos },
 }
 
 impl Default for Snapping {
@@ -200,6 +202,49 @@ impl IsoPos {
     /// Returns the IsoPos that represents a grid cell containing the specified cartesian
     /// coordinate.
     pub fn from_world_pos(pos: Vec2, snapping: Snapping) -> Self {
+        if let Snapping::AlongLine { through, axis } = snapping {
+            let centroid = through.centroid_pos();
+            let axis_unit = axis.unit_vec();
+            let distance_along_axis = (pos - centroid).dot(axis_unit);
+            return Self::from_world_pos(
+                centroid + axis_unit * distance_along_axis + Vec2::new(0.0, 0.01),
+                Snapping::None,
+            );
+        } else if let Snapping::AlongAnyLine { through } = snapping {
+            let closest_a = Self::from_world_pos(
+                pos,
+                Snapping::AlongLine {
+                    through,
+                    axis: IsoAxis::A,
+                },
+            );
+            let closest_b = Self::from_world_pos(
+                pos,
+                Snapping::AlongLine {
+                    through,
+                    axis: IsoAxis::B,
+                },
+            );
+            let closest_c = Self::from_world_pos(
+                pos,
+                Snapping::AlongLine {
+                    through,
+                    axis: IsoAxis::C,
+                },
+            );
+            let dist_a = closest_a.centroid_pos().distance_squared(pos);
+            let dist_b = closest_b.centroid_pos().distance_squared(pos);
+            let dist_c = closest_c.centroid_pos().distance_squared(pos);
+            let least = dist_a.min(dist_b.min(dist_c));
+            if dist_a <= least {
+                return closest_a;
+            } else if dist_b <= least {
+                return closest_b;
+            } else {
+                assert!(dist_c <= least);
+                return closest_c;
+            }
+        }
         // I'm not going to bother adding comments to this because it would only become more
         // confusing. Consider debugging this function as an exercise for the reader.
         let x = (pos.x + GRID_MEDIAN_LENGTH - GRID_TRIANGLE_RADIUS) / GRID_MEDIAN_LENGTH;
@@ -252,6 +297,7 @@ impl IsoPos {
                     }
                 }
             }
+            Snapping::AlongLine { .. } | Snapping::AlongAnyLine { .. } => unreachable!(),
         }
     }
 
