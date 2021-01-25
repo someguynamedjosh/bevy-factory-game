@@ -2,6 +2,8 @@ use bevy::prelude::*;
 
 #[derive(Default)]
 pub struct CommonAssets {
+    pub font: Handle<Font>,
+
     pub tiles: [Handle<ColorMaterial>; 4],
 
     pub conveyor_mat: (Handle<ColorMaterial>, Handle<ColorMaterial>),
@@ -24,6 +26,7 @@ fn startup(
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut common_assets: ResMut<CommonAssets>,
 ) {
+    common_assets.font = asset_server.load("LiberationMono-Regular.ttf");
     for (i, path) in [
         "tile.png",
         "tile_input.png",

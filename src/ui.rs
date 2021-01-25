@@ -14,6 +14,8 @@ struct GuiState {
     mouse_pos_in_world: IsoPos,
 
     primary_camera: Entity,
+    tool_text: Entity,
+
     world_cursor: Entity,
     arrow: Entity,
 
@@ -56,6 +58,30 @@ fn startup(commands: &mut Commands, assets: Res<CommonAssets>) {
     bundle.transform.scale *= 2.0;
     commands.spawn(bundle);
     let primary_camera = commands.current_entity().unwrap();
+    commands.spawn(CameraUiBundle::default());
+
+    commands.spawn(TextBundle {
+        style: Style {
+            align_self: AlignSelf::FlexStart,
+            position_type: PositionType::Absolute,
+            position: Rect {
+                top: Val::Px(5.0),
+                left: Val::Px(5.0),
+                ..Default::default()
+            },
+            ..Default::default()
+        },
+        text: Text {
+            value: "Hello world!".to_owned(),
+            style: TextStyle {
+                font_size: 16.0,
+                ..Default::default()
+            },
+            font: assets.font.clone(),
+        },
+        ..Default::default()
+    });
+    let tool_text = commands.current_entity().unwrap();
 
     commands.spawn(SpriteBundle {
         material: assets.cursor_mat.clone(),
@@ -73,6 +99,7 @@ fn startup(commands: &mut Commands, assets: Res<CommonAssets>) {
         mouse_pos: Vec2::default(),
         mouse_pos_in_world: IsoPos::default(),
         primary_camera,
+        tool_text,
         world_cursor,
         arrow,
         direction: Default::default(),
@@ -84,20 +111,21 @@ fn update_mouse_pos(
     mut state: ResMut<MouseSystemState>,
     events: Res<Events<CursorMoved>>,
     mut gui_state: ResMut<GuiState>,
+    windows: Res<Windows>,
     cameras: Query<&Camera>,
     mut transforms: Query<&mut Transform>,
-    windows: Res<Windows>,
 ) {
     for event in state.event_reader.iter(&events) {
         gui_state.mouse_pos = event.position;
     }
 
     let camera = cameras.get(gui_state.primary_camera).unwrap();
-    let inv_mat = camera.projection_matrix.inverse();
+    let camera_transform = transforms.get_mut(gui_state.primary_camera).unwrap();
+    let inv_mat = camera_transform.compute_matrix() * camera.projection_matrix.inverse();
     let window = windows.get(camera.window).unwrap();
     let (width, height) = (window.width(), window.height());
     let output_pos = gui_state.mouse_pos / Vec2::new(width, height) * 2.0 - Vec2::one();
-    let world_pos = inv_mat.mul_vec4((output_pos.x, output_pos.y, 0.0, 1.0).into()) * 2.0;
+    let world_pos = inv_mat.mul_vec4((output_pos.x, output_pos.y, 0.0, 1.0).into());
     let world_pos_2 = (world_pos.x, world_pos.y).into();
     let snapping = gui_state.action.get_snapping(gui_state.direction);
     gui_state.mouse_pos_in_world = IsoPos::from_world_pos(world_pos_2, snapping);
@@ -114,13 +142,16 @@ fn update_mouse_pos(
     arrow_transform.rotation = Quat::from_rotation_z(angle);
 }
 
-fn test(
+fn ui_update(
     commands: &mut Commands,
+    time: Res<Time>,
     common_assets: Res<CommonAssets>,
     mut state: ResMut<GuiState>,
     input: Res<Input<MouseButton>>,
     key_input: Res<Input<KeyCode>>,
     containers: Query<(Entity, &IsoPos), With<ItemContainer>>,
+    mut transforms: Query<&mut Transform>,
+    mut texts: Query<&mut Text>,
 ) {
     if input.just_pressed(MouseButton::Left) {
         let mut clicked_container = None;
@@ -153,9 +184,13 @@ fn test(
                 start_pos,
             } => {
                 if let Some((p, c)) = clicked_container {
-                    let distance = p.centroid_pos().distance(start_pos.centroid_pos()) - 0.01;
+                    let distance = p.centroid_pos().distance(start_pos.centroid_pos()) + 0.01;
+                    let distance = distance / GRID_MEDIAN_LENGTH;
                     assert!(distance > 0.0 && distance < 255.0);
-                    let length = (distance / GRID_MEDIAN_LENGTH).ceil() as u8;
+                    let mut length = (distance.floor() as u8) & !0b1;
+                    if distance % 2.0 > 0.2 && distance % 2.0 < 1.8 {
+                        length += 1;
+                    }
                     spawn::claw(commands, &common_assets, start_container, c, length);
                     state.action = MouseAction::PlaceClaw;
                 }
@@ -185,6 +220,31 @@ fn test(
     if key_input.just_pressed(KeyCode::Q) {
         state.direction = state.direction.counter_clockwise();
     }
+    let mut camera_offset = Vec2::zero();
+    if key_input.pressed(KeyCode::W) {
+        camera_offset.y += 1.0;
+    }
+    if key_input.pressed(KeyCode::S) {
+        camera_offset.y -= 1.0;
+    }
+    if key_input.pressed(KeyCode::D) {
+        camera_offset.x += 1.0;
+    }
+    if key_input.pressed(KeyCode::A) {
+        camera_offset.x -= 1.0;
+    }
+    camera_offset *= time.delta_seconds() * 1_000.0;
+    let mut cam_t = transforms.get_mut(state.primary_camera).unwrap();
+    cam_t.translation += (camera_offset, 0.0).into();
+
+    let tooltip = match &state.action {
+        MouseAction::PlaceClaw => format!("Claw Start"),
+        MouseAction::PlaceClawEnd{..} => format!("Claw End"),
+        MouseAction::PlaceConveyor => format!("Conveyor"),
+        MouseAction::PlaceFurnace => format!("Furnace"),
+    };
+    let mut text = texts.get_mut(state.tool_text).unwrap();
+    text.value = tooltip;
 }
 
 pub struct Plug;
@@ -194,6 +254,6 @@ impl Plugin for Plug {
         app.init_resource::<MouseSystemState>()
             .add_startup_system(startup.system())
             .add_system_to_stage(fstage::UI, update_mouse_pos.system())
-            .add_system_to_stage(fstage::UI, test.system());
+            .add_system_to_stage(fstage::UI, ui_update.system());
     }
 }
