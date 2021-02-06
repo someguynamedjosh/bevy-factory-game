@@ -5,6 +5,7 @@ mod conveyor;
 mod furnace;
 pub mod iso_pos;
 mod item;
+mod mill;
 pub mod prelude;
 mod ui;
 mod util;
@@ -31,6 +32,7 @@ fn main() {
         .add_plugin(ui::Plug)
         .add_plugin(util::Plug)
         .add_plugin(furnace::Plug)
+        .add_plugin(mill::Plug)
         .add_plugin(claw::Plug)
         .add_plugin(conveyor::Plug)
         .add_plugin(item::Plug)

@@ -14,6 +14,8 @@ pub struct CommonAssets {
 
     pub metal_rubble_mat: Handle<ColorMaterial>,
     pub metal_mat: Handle<ColorMaterial>,
+    pub structural_mat: Handle<ColorMaterial>,
+    pub circuit_mat: Handle<ColorMaterial>,
 
     pub debug_container_mat: Handle<ColorMaterial>,
     pub debug_blocked_container_mat: Handle<ColorMaterial>,
@@ -57,6 +59,10 @@ fn startup(
     common_assets.metal_rubble_mat = materials.add(texture_handle.into());
     let texture_handle = asset_server.load("metal.png");
     common_assets.metal_mat = materials.add(texture_handle.into());
+    let texture_handle = asset_server.load("structural.png");
+    common_assets.structural_mat = materials.add(texture_handle.into());
+    let texture_handle = asset_server.load("circuit.png");
+    common_assets.circuit_mat = materials.add(texture_handle.into());
 
     let texture_handle = asset_server.load("debug_container.png");
     common_assets.debug_container_mat = materials.add(texture_handle.into());

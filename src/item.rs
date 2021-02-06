@@ -30,6 +30,8 @@ impl ItemContainerAlignment {
 pub enum Item {
     MetalRubble,
     Metal,
+    ElectronicComponent,
+    StructuralComponent,
 }
 
 pub struct ItemAnimator {
@@ -91,6 +93,8 @@ pub fn spawn_item(
     let material = match &item {
         Item::MetalRubble => common_assets.metal_rubble_mat.clone(),
         Item::Metal => common_assets.metal_mat.clone(),
+        Item::ElectronicComponent => common_assets.circuit_mat.clone(),
+        Item::StructuralComponent => common_assets.structural_mat.clone(),
     };
     commands
         .spawn(SpriteBundle {

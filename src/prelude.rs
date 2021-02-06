@@ -13,6 +13,7 @@ pub mod spawn {
     pub use crate::conveyor::spawn_conveyor as conveyor;
     pub use crate::furnace::spawn_furnace as furnace;
     pub use crate::item::spawn_item as item;
+    pub use crate::mill::spawn_mill as mill;
     pub use crate::util::spawn_destroyer as destroyer;
     pub use crate::util::spawn_spawner as spawner;
 }

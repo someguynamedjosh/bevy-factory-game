@@ -31,6 +31,7 @@ enum MouseAction {
         start_container: Entity,
     },
     PlaceFurnace,
+    PlaceMill,
 }
 
 impl MouseAction {
@@ -49,6 +50,7 @@ impl MouseAction {
                 through: *start_pos,
             },
             Self::PlaceFurnace => Snapping::require_edge_pointing_in(selected_direction),
+            Self::PlaceMill => Snapping::require_edge_pointing_in(selected_direction),
         }
     }
 }
@@ -203,6 +205,14 @@ fn ui_update(
                     state.direction,
                 );
             }
+            MouseAction::PlaceMill => {
+                spawn::mill(
+                    commands,
+                    &common_assets,
+                    state.mouse_pos_in_world,
+                    state.direction,
+                );
+            }
         }
     }
     if key_input.just_pressed(KeyCode::Key1) {
@@ -213,6 +223,9 @@ fn ui_update(
     }
     if key_input.just_pressed(KeyCode::Key3) {
         state.action = MouseAction::PlaceFurnace;
+    }
+    if key_input.just_pressed(KeyCode::Key4) {
+        state.action = MouseAction::PlaceMill;
     }
     if key_input.just_pressed(KeyCode::E) {
         state.direction = state.direction.clockwise();
@@ -242,6 +255,7 @@ fn ui_update(
         MouseAction::PlaceClawEnd{..} => format!("Claw End"),
         MouseAction::PlaceConveyor => format!("Conveyor"),
         MouseAction::PlaceFurnace => format!("Furnace"),
+        MouseAction::PlaceMill => format!("Mill"),
     };
     let mut text = texts.get_mut(state.tool_text).unwrap();
     text.value = tooltip;
