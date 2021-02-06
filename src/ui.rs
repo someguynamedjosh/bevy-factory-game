@@ -1,6 +1,6 @@
-use crate::iso_pos::GRID_MEDIAN_LENGTH;
 use crate::item::ItemContainer;
 use crate::prelude::*;
+use crate::{iso_pos::GRID_MEDIAN_LENGTH, machine::MachineType};
 use bevy::prelude::*;
 use bevy::render::camera::Camera;
 
@@ -30,8 +30,7 @@ enum MouseAction {
         start_pos: IsoPos,
         start_container: Entity,
     },
-    PlaceFurnace,
-    PlaceMill,
+    PlaceMachine(MachineType),
 }
 
 impl MouseAction {
@@ -49,8 +48,7 @@ impl MouseAction {
             Self::PlaceClawEnd { start_pos, .. } => Snapping::AlongAnyLine {
                 through: *start_pos,
             },
-            Self::PlaceFurnace => Snapping::require_edge_pointing_in(selected_direction),
-            Self::PlaceMill => Snapping::require_edge_pointing_in(selected_direction),
+            Self::PlaceMachine(..) => Snapping::require_edge_pointing_in(selected_direction),
         }
     }
 }
@@ -197,18 +195,11 @@ fn ui_update(
                     state.action = MouseAction::PlaceClaw;
                 }
             }
-            MouseAction::PlaceFurnace => {
-                spawn::furnace(
+            MouseAction::PlaceMachine(typ) => {
+                spawn::machine(
                     commands,
                     &common_assets,
-                    state.mouse_pos_in_world,
-                    state.direction,
-                );
-            }
-            MouseAction::PlaceMill => {
-                spawn::mill(
-                    commands,
-                    &common_assets,
+                    typ,
                     state.mouse_pos_in_world,
                     state.direction,
                 );
@@ -216,16 +207,16 @@ fn ui_update(
         }
     }
     if key_input.just_pressed(KeyCode::Key1) {
-        state.action = MouseAction::PlaceConveyor;
+        state.action = MouseAction::PlaceConveyor
     }
     if key_input.just_pressed(KeyCode::Key2) {
         state.action = MouseAction::PlaceClaw;
     }
     if key_input.just_pressed(KeyCode::Key3) {
-        state.action = MouseAction::PlaceFurnace;
+        state.action = MouseAction::PlaceMachine(MachineType::Furnace);
     }
     if key_input.just_pressed(KeyCode::Key4) {
-        state.action = MouseAction::PlaceMill;
+        state.action = MouseAction::PlaceMachine(MachineType::Mill);
     }
     if key_input.just_pressed(KeyCode::E) {
         state.direction = state.direction.clockwise();
@@ -252,10 +243,9 @@ fn ui_update(
 
     let tooltip = match &state.action {
         MouseAction::PlaceClaw => format!("Claw Start"),
-        MouseAction::PlaceClawEnd{..} => format!("Claw End"),
+        MouseAction::PlaceClawEnd { .. } => format!("Claw End"),
         MouseAction::PlaceConveyor => format!("Conveyor"),
-        MouseAction::PlaceFurnace => format!("Furnace"),
-        MouseAction::PlaceMill => format!("Mill"),
+        MouseAction::PlaceMachine(typ) => format!("{:?}", typ),
     };
     let mut text = texts.get_mut(state.tool_text).unwrap();
     text.value = tooltip;

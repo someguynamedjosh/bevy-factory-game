@@ -474,6 +474,18 @@ impl IsoPos {
         )
     }
 
+    /// Simultaneously move the coordinate both parallel to and perpendicular to the provided
+    /// direction.
+    pub fn offset_both_direction(
+        self,
+        direction: IsoDirection,
+        parallel_offset: i32,
+        perpendicular_offset: i32,
+    ) -> Self {
+        self.offset_direction(direction, parallel_offset)
+            .offset_perp_direction(direction, perpendicular_offset)
+    }
+
     /// Gets the position of the centroid of the grid cell this coordinate refers to. (The centroid
     /// is the point with equal distance to all vertices of the triangular grid cell.)
     pub fn centroid_pos(self) -> Vec2 {

@@ -49,15 +49,24 @@ fn only_on_tick(tick_clock: Res<TickClock>) -> ShouldRun {
     }
 }
 
+#[derive(Clone, Copy)]
+#[repr(u8)]
+pub enum TileVariant {
+    Blank,
+    Input,
+    Output,
+    Misc,
+}
+
 pub fn start_tile<'c>(
     commands: &'c mut Commands,
     common_assets: &Res<CommonAssets>,
     pos: IsoPos,
-    variant: usize,
+    variant: TileVariant,
 ) -> &'c mut Commands {
     commands
         .spawn(SpriteBundle {
-            material: common_assets.tiles[variant].clone(),
+            material: common_assets.tiles[variant as usize].clone(),
             transform: pos.building_transform(Default::default()),
             ..Default::default()
         })
