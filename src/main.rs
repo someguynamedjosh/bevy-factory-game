@@ -1,4 +1,5 @@
 mod assets;
+mod building;
 mod claw;
 mod common;
 mod conveyor;

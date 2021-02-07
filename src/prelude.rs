@@ -1,4 +1,5 @@
 pub use crate::assets::CommonAssets;
+pub use crate::building::{BuildingResult, Shape};
 pub use crate::common::{fstage, start_tile, SetupNeeded, TickClock, TileVariant};
 pub use crate::iso_pos::{IsoAxis, IsoDirection, IsoPos, Snapping};
 pub use crate::item::Item;
@@ -9,6 +10,7 @@ pub use scones::make_constructor;
 pub use std::f32::consts::{PI, TAU};
 
 pub mod spawn {
+    pub use crate::building::spawn_building as building;
     pub use crate::claw::spawn_claw as claw;
     pub use crate::conveyor::spawn_conveyor as conveyor;
     pub use crate::item::spawn_item as item;

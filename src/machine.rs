@@ -1,16 +1,9 @@
 use crate::{
+    building::Shape,
     item::{ItemContainer, ItemContainerAlignment},
     prelude::*,
 };
 use bevy::prelude::*;
-
-/// Defines the visual/physical structure of a machine.
-#[derive(Debug)]
-struct Shape {
-    blanks: &'static [(i32, i32)],
-    inputs: &'static [(i32, i32)],
-    output: (i32, i32),
-}
 
 #[derive(Debug)]
 pub struct Recipe {
@@ -54,12 +47,12 @@ impl MachineType {
             Self::Furnace => &Shape {
                 blanks: &[(0, 1), (-1, 1), (-1, -1), (0, -1)],
                 inputs: &[(-1, 0)],
-                output: (1, 0),
+                outputs: &[(1, 0)],
             },
             Self::Mill => &Shape {
                 blanks: &[(1, 0)],
                 inputs: &[(0, -1)],
-                output: (1, -1),
+                outputs: &[(1, -1)],
             },
         }
     }
@@ -88,44 +81,16 @@ pub fn spawn_machine(
 ) {
     let recipes = typ.get_recipes();
     let shape = typ.get_shape();
-
     // Machine shapes expect to have an edge in the direction the machine points in.
     assert!(!origin.has_vertex_pointing_in(facing));
     assert!(recipes.len() > 0);
-    assert!(shape.inputs.len() > 0);
-
-    for &(par, perp) in shape.blanks {
-        start_tile(
-            commands,
-            common_assets,
-            origin.offset_both_direction(facing, par, perp),
-            TileVariant::Blank,
-        );
-    }
-    let mut inputs = Vec::new();
-    for &(par, perp) in shape.inputs {
-        let id = start_tile(
-            commands,
-            common_assets,
-            origin.offset_both_direction(facing, par, perp),
-            TileVariant::Input,
-        )
-        .with(ItemContainer::new_empty(ItemContainerAlignment::Centroid))
-        .current_entity()
-        .unwrap();
-        inputs.push(id);
-    }
-    let (par, perp) = shape.output;
-    let output = start_tile(
-        commands,
-        common_assets,
-        origin.offset_both_direction(facing, par, perp),
-        TileVariant::Output,
-    )
-    .with(ItemContainer::new_empty(ItemContainerAlignment::Centroid))
-    .current_entity()
-    .unwrap();
-
+    let BuildingResult {
+        inputs,
+        outputs,
+        origin,
+    } = spawn::building(commands, common_assets, shape, origin, facing);
+    assert_eq!(outputs.len(), 1);
+    let output = outputs[0];
     let recipe = &recipes[0];
     let input_buffer = vec![false; recipe.inputs.len()];
 
@@ -139,10 +104,8 @@ pub fn spawn_machine(
         processing: false,
         processing_time: 0,
     };
-    start_tile(commands, common_assets, origin, TileVariant::Misc)
-        .with(machine)
-        .current_entity()
-        .unwrap();
+    commands.set_current_entity(origin);
+    commands.with(machine);
 }
 
 fn tick(
