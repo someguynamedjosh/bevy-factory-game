@@ -19,7 +19,8 @@ pub struct CommonAssets {
 
     pub debug_container_mat: Handle<ColorMaterial>,
     pub debug_blocked_container_mat: Handle<ColorMaterial>,
-    pub cursor_mat: Handle<ColorMaterial>,
+    pub cursor_accept_mat: Handle<ColorMaterial>,
+    pub cursor_deny_mat: Handle<ColorMaterial>,
     pub arrow_mat: Handle<ColorMaterial>,
 }
 
@@ -68,8 +69,10 @@ fn startup(
     common_assets.debug_container_mat = materials.add(texture_handle.into());
     let texture_handle = asset_server.load("debug_blocked_container.png");
     common_assets.debug_blocked_container_mat = materials.add(texture_handle.into());
-    let texture_handle = asset_server.load("cursor.png");
-    common_assets.cursor_mat = materials.add(texture_handle.into());
+    let texture_handle = asset_server.load("cursor_accept.png");
+    common_assets.cursor_accept_mat = materials.add(texture_handle.into());
+    let texture_handle = asset_server.load("cursor_deny.png");
+    common_assets.cursor_deny_mat = materials.add(texture_handle.into());
     let texture_handle = asset_server.load("arrow.png");
     common_assets.arrow_mat = materials.add(texture_handle.into());
 }

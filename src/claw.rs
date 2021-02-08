@@ -17,7 +17,7 @@ const SEGMENT_DURATION: u8 = 2;
 impl Claw {
     fn anim_length(&self) -> u8 {
         // A 1 length claw has to traverse 4 segments, 2 length 6 segments, 3/8, etc.
-        (self.length + 1) * 2 * SEGMENT_DURATION
+        (self.length + 1) * 3 * SEGMENT_DURATION
     }
 }
 

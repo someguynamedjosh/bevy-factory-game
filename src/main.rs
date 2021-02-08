@@ -7,6 +7,7 @@ pub mod iso_pos;
 mod item;
 mod machine;
 pub mod prelude;
+mod spatial_map;
 mod trading;
 mod ui;
 mod util;
@@ -29,6 +30,7 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
+        .add_plugin(spatial_map::Plug)
         .add_plugin(common::Plug)
         .add_plugin(assets::Plug)
         .add_plugin(ui::Plug)

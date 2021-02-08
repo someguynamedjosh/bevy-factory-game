@@ -38,7 +38,7 @@ impl MachineType {
         }
     }
 
-    fn get_shape(self) -> &'static Shape {
+    pub fn get_shape(self) -> &'static Shape {
         // (||, T) -> the origin will always have a vertex pointing +T (side pointing -T)
         // If the direction is up, || is up, and T is left.
         match self {
@@ -73,6 +73,7 @@ pub struct Machine {
 pub fn spawn_machine(
     commands: &mut Commands,
     common_assets: &Res<CommonAssets>,
+    obstruction_map: &mut ResMut<BuildingObstructionMap>,
     typ: MachineType,
     origin: IsoPos,
     facing: IsoDirection,
@@ -86,7 +87,7 @@ pub fn spawn_machine(
         inputs,
         outputs,
         origin,
-    } = spawn_building(commands, common_assets, shape, origin, facing);
+    } = spawn_building(commands, common_assets, obstruction_map, shape, origin, facing);
     assert_eq!(outputs.len(), 1);
     let output = outputs[0];
     let recipe = &recipes[0];

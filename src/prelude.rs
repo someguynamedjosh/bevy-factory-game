@@ -3,6 +3,7 @@ pub use crate::building::{BuildingResult, Shape};
 pub use crate::common::{fstage, start_tile, SetupNeeded, TickClock, TileVariant};
 pub use crate::iso_pos::{IsoAxis, IsoDirection, IsoPos, Snapping};
 pub use crate::item::Item;
+pub use crate::spatial_map::*;
 use bevy::ecs::{Commands, DynamicBundle};
 pub use bevy::math::Vec2;
 pub use bevy::prelude::{Entity, Quat, Transform};

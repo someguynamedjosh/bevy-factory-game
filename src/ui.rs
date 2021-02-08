@@ -1,12 +1,4 @@
-use crate::{
-    claw::spawn_claw,
-    conveyor::spawn_conveyor,
-    iso_pos::GRID_MEDIAN_LENGTH,
-    item::ItemContainer,
-    machine::{spawn_machine, MachineType},
-    prelude::*,
-    trading::{spawn_seller, CreditBalance},
-};
+use crate::{claw::spawn_claw, conveyor::spawn_conveyor, iso_pos::{GRID_EDGE_LENGTH, GRID_MEDIAN_LENGTH}, item::ItemContainer, machine::{spawn_machine, MachineType}, prelude::*, trading::{self, spawn_seller, CreditBalance}};
 use bevy::{prelude::*, render::camera::Camera};
 
 #[derive(Default)]
@@ -39,12 +31,27 @@ impl Buildable {
         &self,
         commands: &mut Commands,
         common_assets: &Res<CommonAssets>,
+        obstruction_map: &mut ResMut<BuildingObstructionMap>,
         origin: IsoPos,
         facing: IsoDirection,
     ) {
         match self {
-            Self::Machine(typ) => spawn_machine(commands, common_assets, *typ, origin, facing),
-            Self::Seller => spawn_seller(commands, common_assets, origin, facing),
+            Self::Machine(typ) => spawn_machine(
+                commands,
+                common_assets,
+                obstruction_map,
+                *typ,
+                origin,
+                facing,
+            ),
+            Self::Seller => spawn_seller(commands, common_assets, obstruction_map, origin, facing),
+        }
+    }
+
+    fn get_shape(&self) -> &'static Shape {
+        match self {
+            Self::Machine(typ) => typ.get_shape(),
+            Self::Seller => &trading::SELLER_SHAPE,
         }
     }
 }
@@ -103,7 +110,7 @@ fn startup(commands: &mut Commands, assets: Res<CommonAssets>) {
     let tool_text = commands.current_entity().unwrap();
 
     commands.spawn(SpriteBundle {
-        material: assets.cursor_mat.clone(),
+        material: assets.cursor_accept_mat.clone(),
         ..Default::default()
     });
     let world_cursor = commands.current_entity().unwrap();
@@ -129,6 +136,7 @@ fn startup(commands: &mut Commands, assets: Res<CommonAssets>) {
 fn update_mouse_pos(
     mut state: ResMut<MouseSystemState>,
     events: Res<Events<CursorMoved>>,
+    obstruction_map: Res<BuildingObstructionMap>,
     mut gui_state: ResMut<GuiState>,
     windows: Res<Windows>,
     cameras: Query<&Camera>,
@@ -152,6 +160,7 @@ fn update_mouse_pos(
     let mut cursor_transform = transforms.get_mut(gui_state.world_cursor).unwrap();
     *cursor_transform = gui_state.mouse_pos_in_world.building_transform(IsoAxis::A);
     cursor_transform.translation += Vec3::unit_z() * 0.05;
+
     let mut arrow_transform = transforms.get_mut(gui_state.arrow).unwrap();
     arrow_transform.translation = (gui_state.mouse_pos_in_world.centroid_pos(), 0.06).into();
     let angle = -gui_state.direction.unit_vec().angle_between(Vec2::unit_x());
@@ -166,30 +175,55 @@ fn ui_update(
     input: Res<Input<MouseButton>>,
     key_input: Res<Input<KeyCode>>,
     credits: Res<CreditBalance>,
+    mut obstruction_map: ResMut<BuildingObstructionMap>,
     containers: Query<(Entity, &IsoPos), With<ItemContainer>>,
     mut transforms: Query<&mut Transform>,
     mut texts: Query<&mut Text>,
+    mut materials: Query<&mut Handle<ColorMaterial>>,
 ) {
-    if input.just_pressed(MouseButton::Left) {
-        let mut clicked_container = None;
-        for (container, pos) in containers.iter() {
-            if *pos == state.mouse_pos_in_world {
-                clicked_container = Some((*pos, container));
-                break;
-            }
+    let mut hovered_container = None;
+    for (container, pos) in containers.iter() {
+        if *pos == state.mouse_pos_in_world {
+            hovered_container = Some((*pos, container));
+            break;
         }
+    }
+    let ok = match &state.action {
+        MouseAction::PlaceConveyor => !obstruction_map.is_occupied(state.mouse_pos_in_world),
+        MouseAction::PlaceClaw | MouseAction::PlaceClawEnd { .. } => hovered_container.is_some(),
+        MouseAction::Build(typ) => {
+            let shape = typ.get_shape();
+            (|| {
+                let iters = shape.positions(state.mouse_pos_in_world, state.direction);
+                for p in iters.blanks.chain(iters.inputs.chain(iters.outputs)) {
+                    if obstruction_map.is_occupied(p) {
+                        return false;
+                    }
+                }
+                true
+            })()
+        }
+    };
+    let cursor_mat = if ok {
+        common_assets.cursor_accept_mat.clone()
+    } else {
+        common_assets.cursor_deny_mat.clone()
+    };
+    materials.set(state.world_cursor, cursor_mat).unwrap();
+    if input.just_pressed(MouseButton::Left) && ok {
         match &state.action {
             MouseAction::PlaceConveyor => {
                 spawn_conveyor(
                     commands,
                     &common_assets,
+                    &mut obstruction_map,
                     state.mouse_pos_in_world,
                     state.direction,
                     false,
                 );
             }
             MouseAction::PlaceClaw => {
-                if let Some((p, c)) = clicked_container {
+                if let Some((p, c)) = hovered_container {
                     state.action = MouseAction::PlaceClawEnd {
                         start_pos: p,
                         start_container: c,
@@ -200,14 +234,11 @@ fn ui_update(
                 start_container,
                 start_pos,
             } => {
-                if let Some((p, c)) = clicked_container {
+                if let Some((p, c)) = hovered_container {
                     let distance = p.centroid_pos().distance(start_pos.centroid_pos()) + 0.01;
-                    let distance = distance / GRID_MEDIAN_LENGTH;
+                    let distance = distance / GRID_EDGE_LENGTH * 2.0;
                     assert!(distance > 0.0 && distance < 255.0);
-                    let mut length = (distance.floor() as u8) & !0b1;
-                    if distance % 2.0 > 0.2 && distance % 2.0 < 1.8 {
-                        length += 1;
-                    }
+                    let length = (distance + 0.3).floor() as u8;
                     spawn_claw(commands, &common_assets, *start_container, c, length);
                     state.action = MouseAction::PlaceClaw;
                 }
@@ -216,6 +247,7 @@ fn ui_update(
                 typ.build(
                     commands,
                     &common_assets,
+                    &mut obstruction_map,
                     state.mouse_pos_in_world,
                     state.direction,
                 );

@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 /// The distance from any vertex of a grid cell to its centroid.
-pub const GRID_TRIANGLE_RADIUS: f32 = 62.0;
+pub const GRID_TRIANGLE_RADIUS: f32 = 64.0;
 
 // cos 30deg = (edge / 2) / radius
 // cos 30deg = 0.8660254
@@ -191,7 +191,7 @@ impl Snapping {
 /// points down to the left. We only need two coordinates to uniquely describe a position, so we
 /// store x, y coordinates instead of A, B, C.
 #[make_constructor]
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct IsoPos {
     x: i32,
     /// +y points towards the top of the screen.

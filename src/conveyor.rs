@@ -16,6 +16,7 @@ const DURATION: u8 = 4;
 pub fn spawn_conveyor(
     commands: &mut Commands,
     common_assets: &Res<CommonAssets>,
+    obstruction_map: &mut ResMut<BuildingObstructionMap>,
     origin: IsoPos,
     facing: IsoDirection,
     start_with_item: bool,
@@ -38,7 +39,7 @@ pub fn spawn_conveyor(
     } else {
         common_assets.conveyor_mat.1.clone()
     };
-    commands
+    let result = commands
         .spawn(SpriteBundle {
             material,
             transform: origin.building_transform(facing.axis()),
@@ -50,7 +51,9 @@ pub fn spawn_conveyor(
         .with(Conveyor::default())
         .with(SetupNeeded)
         .current_entity()
-        .unwrap()
+        .unwrap();
+    obstruction_map.set_empty(origin, result);
+    result
 }
 
 fn setup(

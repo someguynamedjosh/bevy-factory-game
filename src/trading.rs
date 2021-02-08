@@ -1,8 +1,18 @@
-use crate::{building::{Shape, spawn_building}, item::ItemContainer, prelude::*};
+use crate::{
+    building::{spawn_building, Shape},
+    item::ItemContainer,
+    prelude::*,
+};
 use bevy::prelude::*;
 
 #[derive(Clone, Copy, Debug)]
 pub struct CreditBalance(pub f64);
+
+pub const SELLER_SHAPE: Shape = Shape {
+    blanks: &[(0, 1), (0, -1), (-1, 0), (-1, 1), (-1, -1)],
+    inputs: &[(1, 0), (0, 2), (0, -2), (-1, 2), (-1, -2), (-2, 0)],
+    outputs: &[],
+};
 
 struct Seller {
     inputs: Vec<Entity>,
@@ -11,15 +21,18 @@ struct Seller {
 pub fn spawn_seller(
     commands: &mut Commands,
     common_assets: &Res<CommonAssets>,
+    obstruction_map: &mut ResMut<BuildingObstructionMap>,
     origin: IsoPos,
     facing: IsoDirection,
 ) {
-    const SHAPE: Shape = Shape {
-        blanks: &[(0, 1), (0, -1), (-1, 0), (-1, 1), (-1, -1)],
-        inputs: &[(1, 0), (0, 2), (0, -2), (-1, 2), (-1, -2), (-2, 0)],
-        outputs: &[],
-    };
-    let res = spawn_building(commands, common_assets, &SHAPE, origin, facing);
+    let res = spawn_building(
+        commands,
+        common_assets,
+        obstruction_map,
+        &SELLER_SHAPE,
+        origin,
+        facing,
+    );
     let seller = Seller { inputs: res.inputs };
     commands.set_current_entity(res.origin);
     commands.with(seller);
