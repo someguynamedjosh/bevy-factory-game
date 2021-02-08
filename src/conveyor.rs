@@ -63,13 +63,13 @@ fn setup(
 ) {
     let mut check_has_setup_needed = Vec::new();
     for (id, mut conveyor, pos, facing) in unlinked_conveyors.iter_mut() {
-        let upstream_pos = pos.offset_perp_direction(*facing, -1);
-        let downstream_pos = pos.offset_perp_direction(*facing, 1);
+        let upstream_pos = pos.offset_direction(*facing, -1);
+        let downstream_pos = pos.offset_direction(*facing, 1);
         let mut has_downstream = false;
         for (cid, cpos, cfacing) in all_conveyors.iter() {
             // If they are in our upstream position and we are in their downstream position...
             if *cpos == upstream_pos {
-                let candidate_downstream_pos = cpos.offset_perp_direction(*cfacing, 1);
+                let candidate_downstream_pos = cpos.offset_direction(*cfacing, 1);
                 if candidate_downstream_pos == *pos {
                     conveyor.upstream = Some(cid);
                     // They have a downstream now, they cannot be
@@ -79,7 +79,7 @@ fn setup(
             // If they are in our downstream position and we are in their upstream position...
             if *cpos == downstream_pos {
                 check_has_setup_needed.push(cid);
-                let candidate_upstream_pos = cpos.offset_perp_direction(*cfacing, -1);
+                let candidate_upstream_pos = cpos.offset_direction(*cfacing, -1);
                 if candidate_upstream_pos == *pos {
                     has_downstream = true;
                 }

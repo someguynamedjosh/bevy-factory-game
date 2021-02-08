@@ -60,13 +60,6 @@ enum MouseAction {
 }
 
 impl MouseAction {
-    fn use_perpendicular_arrow(&self) -> bool {
-        match self {
-            Self::PlaceConveyor => true,
-            _ => false,
-        }
-    }
-
     fn get_snapping(&self, selected_direction: IsoDirection) -> Snapping {
         match self {
             Self::PlaceConveyor => Snapping::None,
@@ -161,10 +154,7 @@ fn update_mouse_pos(
     cursor_transform.translation += Vec3::unit_z() * 0.05;
     let mut arrow_transform = transforms.get_mut(gui_state.arrow).unwrap();
     arrow_transform.translation = (gui_state.mouse_pos_in_world.centroid_pos(), 0.06).into();
-    let mut angle = -gui_state.direction.unit_vec().angle_between(Vec2::unit_x());
-    if gui_state.action.use_perpendicular_arrow() {
-        angle += TAU * 0.25;
-    }
+    let angle = -gui_state.direction.unit_vec().angle_between(Vec2::unit_x());
     arrow_transform.rotation = Quat::from_rotation_z(angle);
 }
 

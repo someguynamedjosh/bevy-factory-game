@@ -39,16 +39,18 @@ impl MachineType {
     }
 
     fn get_shape(self) -> &'static Shape {
+        // (||, T) -> the origin will always have a vertex pointing +T (side pointing -T)
+        // If the direction is up, || is up, and T is left.
         match self {
             Self::Furnace => &Shape {
-                blanks: &[(0, 1), (-1, 1), (-1, -1), (0, -1)],
-                inputs: &[(-1, 0)],
-                outputs: &[(1, 0)],
+                blanks: &[(1, 0), (-1, 0), (1, 1), (-1, 1)],
+                inputs: &[(0, 1)],
+                outputs: &[(0, -1)],
             },
             Self::Mill => &Shape {
-                blanks: &[(1, 0)],
-                inputs: &[(0, -1)],
-                outputs: &[(1, -1)],
+                blanks: &[(0, -1)],
+                inputs: &[(1, -1)],
+                outputs: &[(1, 0)],
             },
         }
     }

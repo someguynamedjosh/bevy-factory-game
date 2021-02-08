@@ -53,9 +53,9 @@ impl IsoAxis {
 
     pub fn facing_angle(self) -> f32 {
         match self {
-            Self::A => 0.0,
-            Self::B => (PI * 2.0 / 3.0),
-            Self::C => (-PI * 2.0 / 3.0),
+            Self::A => TAU * 0.25,
+            Self::B => TAU * (0.25 + 1.0 / 3.0),
+            Self::C => TAU * (0.25 - 1.0 / 3.0),
         }
     }
 
@@ -274,26 +274,23 @@ impl IsoPos {
                 if without_snapping.points_in(dir) {
                     without_snapping
                 } else {
-                    let from_centroid: Vec2 = pos - without_snapping.centroid_pos();
-                    if without_snapping.points_right() {
-                        let angle = from_centroid.angle_between(Vec2::unit_x());
-                        if angle.abs() >= TAU * 1.0 / 3.0 {
-                            without_snapping.offset_a(-1)
-                        } else if angle > 0.0 {
-                            without_snapping.offset_b(-1)
-                        } else {
-                            without_snapping.offset_c(-1)
-                        }
+                    let delta = if without_snapping.points_right() {
+                        -1
                     } else {
-                        assert!(without_snapping.points_left());
-                        let angle = from_centroid.angle_between(-Vec2::unit_x());
-                        if angle.abs() >= TAU * 1.0 / 3.0 {
-                            without_snapping.offset_a(1)
-                        } else if angle > 0.0 {
-                            without_snapping.offset_b(1)
-                        } else {
-                            without_snapping.offset_c(1)
-                        }
+                        1
+                    };
+                    let a = without_snapping.offset_a(delta);
+                    let da = a.centroid_pos().distance(pos);
+                    let b = without_snapping.offset_b(delta);
+                    let db = b.centroid_pos().distance(pos);
+                    let c = without_snapping.offset_c(delta);
+                    let dc = c.centroid_pos().distance(pos);
+                    if da < db && da < dc {
+                        a
+                    } else if db < dc && db < da {
+                        b
+                    } else {
+                        c
                     }
                 }
             }
@@ -332,15 +329,15 @@ impl IsoPos {
     /// Move the coordinate left or right (+A points to the right.)
     pub const fn offset_a(self, offset: i32) -> Self {
         Self {
-            x: self.x + offset,
-            y: self.y,
+            y: self.y + offset,
+            x: self.x,
         }
     }
 
     /// Move the coordinate along the B axis (+ points top-left.)
     pub fn offset_b(self, offset: i32) -> Self {
-        // Offsetting along the B axis involves alternating between moving 1 step along Y and moving
-        // -1 step along X, 2 steps along Y. Use the first pattern when moving up from the origin.
+        // Offsetting along the B axis involves alternating between moving -1 step along Y and
+        // moving -1 step along X. Use the first pattern when moving up from the origin.
 
         // How much we should move along the first axis (first, third, fifth... step)
         // This is basically division rounding away from zero.
@@ -351,36 +348,36 @@ impl IsoPos {
 
         // if we are pointing left XOR the offset is negative.
         if self.points_left() != (offset < 0) {
-            // Move along the y axis first, then the x axis.
+            // Move along the y pattern first, then the x pattern.
             Self {
                 x: self.x - second_pattern_amount,
-                y: self.y + first_pattern_amount + 2 * second_pattern_amount,
+                y: self.y - first_pattern_amount,
             }
         } else {
-            // Move along the x pattern first, then the y pattern.
+            // Move along the x axis first, then the y axis.
             Self {
                 x: self.x - first_pattern_amount,
-                y: self.y + second_pattern_amount + 2 * first_pattern_amount,
+                y: self.y - second_pattern_amount,
             }
         }
     }
 
     /// Move the coordinate along the C axis (+ points bottom-left.)
     pub fn offset_c(self, offset: i32) -> Self {
-        // Same thing as the B algorithm except mirrored effect on Y axis.
+        // Same thing as the B algorithm except mirrored effect on X axis and flipped order.
 
         let first_pattern_amount = offset / 2 + offset % 2;
         let second_pattern_amount = offset / 2;
 
         if self.points_left() != (offset < 0) {
             Self {
-                x: self.x - second_pattern_amount,
-                y: self.y - first_pattern_amount - 2 * second_pattern_amount,
+                x: self.x + first_pattern_amount,
+                y: self.y - second_pattern_amount,
             }
         } else {
             Self {
-                x: self.x - first_pattern_amount,
-                y: self.y - second_pattern_amount - 2 * first_pattern_amount,
+                x: self.x + second_pattern_amount,
+                y: self.y - first_pattern_amount,
             }
         }
     }
@@ -408,10 +405,10 @@ impl IsoPos {
 
     /// Move the coordinate along the axis perpendicular to +A.
     pub const fn offset_perp_a(self, offset: i32) -> Self {
-        // Just like the offset_a algorithm, but with x and y swapped.
+        // Just like the offset_a algorithm, but rotated 90 degrees.
         Self {
-            x: self.x,
-            y: self.y + offset,
+            x: self.x - offset,
+            y: self.y,
         }
     }
 
@@ -423,13 +420,13 @@ impl IsoPos {
 
         if self.points_left() != (offset < 0) {
             Self {
-                x: self.x - second_axis_amount,
-                y: self.y - first_axis_amount,
+                x: self.x + first_axis_amount,
+                y: self.y - second_axis_amount - 2 * first_axis_amount,
             }
         } else {
             Self {
-                x: self.x - first_axis_amount,
-                y: self.y - second_axis_amount,
+                x: self.x + second_axis_amount,
+                y: self.y - first_axis_amount - 2 * second_axis_amount,
             }
         }
     }
@@ -443,12 +440,12 @@ impl IsoPos {
         if self.points_left() != (offset < 0) {
             Self {
                 x: self.x + first_axis_amount,
-                y: self.y - second_axis_amount,
+                y: self.y + second_axis_amount + 2 * first_axis_amount,
             }
         } else {
             Self {
                 x: self.x + second_axis_amount,
-                y: self.y - first_axis_amount,
+                y: self.y + first_axis_amount + 2 * second_axis_amount,
             }
         }
     }
@@ -500,21 +497,21 @@ impl IsoPos {
         )
     }
 
-    /// Returns a coordinate which bisects the median perpendicular to the given axis, with the
+    /// Returns a coordinate which bisects the median parallel to the given axis, with the
     /// result being that points returned by this function line up when the underlying IsoPos
     /// instances are also on an axis. This behavior does not occur with centroid_pos(), it appears
     /// jagged. This function is useful for animating things traveling on rails.
     pub fn axis_aligned_pos(self, axis: IsoAxis) -> Vec2 {
-        let offset = CENTROID_TO_MEDMID_DISTANCE * if self.points_left() { 1.0 } else { -1.0 };
-        self.centroid_pos() + axis.unit_vec() * offset
+        let offset = CENTROID_TO_MEDMID_DISTANCE * if self.points_left() { -1.0 } else { 1.0 };
+        self.centroid_pos() + axis.unit_vec().perp() * offset
     }
 
     /// Returns a transform which places a building at centroid_pos with the correct rotation.
     pub fn building_transform(self, facing: IsoAxis) -> Transform {
         let mut t = Transform::identity();
         t.translation = (self.centroid_pos(), 0.0).into();
-        let pointing_angle = if self.points_left() { 0.0 } else { PI };
-        t.rotation = Quat::from_rotation_z(facing.facing_angle() + pointing_angle);
+        let pointing_angle = if self.points_left() { 0.0 } else { TAU * 0.5 };
+        t.rotation = Quat::from_rotation_z(facing.facing_angle() - TAU * 0.25 + pointing_angle);
         t
     }
 
@@ -542,18 +539,18 @@ mod tests {
 
     #[test]
     fn axis_offsets() {
-        assert_eq!(IsoPos::new(0, 0).offset_a(1), IsoPos::new(1, 0));
-        assert_eq!(IsoPos::new(0, 0).offset_a(-2), IsoPos::new(-2, 0));
+        assert_eq!(IsoPos::new(0, 0).offset_a(1), IsoPos::new(0, 1));
+        assert_eq!(IsoPos::new(0, 0).offset_a(-2), IsoPos::new(0, -2));
 
-        assert_eq!(IsoPos::new(0, 0).offset_b(4), IsoPos::new(-2, 6));
-        assert_eq!(IsoPos::new(0, 0).offset_b(5), IsoPos::new(-2, 7));
-        assert_eq!(IsoPos::new(-1, 0).offset_b(5), IsoPos::new(-4, 8));
-        assert_eq!(IsoPos::new(1, 0).offset_b(-2), IsoPos::new(2, -3));
+        assert_eq!(IsoPos::new(0, 0).offset_b(4), IsoPos::new(-2, -2));
+        assert_eq!(IsoPos::new(0, 0).offset_b(5), IsoPos::new(-2, -3));
+        assert_eq!(IsoPos::new(-1, 0).offset_b(5), IsoPos::new(-4, -2));
+        assert_eq!(IsoPos::new(1, 0).offset_b(-2), IsoPos::new(2, 1));
 
-        assert_eq!(IsoPos::new(0, 0).offset_c(4), IsoPos::new(-2, -6));
-        assert_eq!(IsoPos::new(0, 0).offset_c(5), IsoPos::new(-2, -7));
-        assert_eq!(IsoPos::new(-1, 0).offset_c(5), IsoPos::new(-4, -8));
-        assert_eq!(IsoPos::new(1, 0).offset_c(-2), IsoPos::new(2, 3));
+        assert_eq!(IsoPos::new(0, 0).offset_c(4), IsoPos::new(2, -2));
+        assert_eq!(IsoPos::new(0, 0).offset_c(5), IsoPos::new(3, -2));
+        assert_eq!(IsoPos::new(-1, 0).offset_c(5), IsoPos::new(1, -3));
+        assert_eq!(IsoPos::new(1, 0).offset_c(-2), IsoPos::new(0, 1));
 
         let mut direction = IsoDirection::PosA;
         let mut pos = IsoPos::origin();
@@ -565,5 +562,20 @@ mod tests {
         }
         assert_eq!(direction, IsoDirection::PosA);
         assert_eq!(pos, IsoPos::origin());
+    }
+
+    #[test]
+    fn perp_axis_offsets() {
+        assert_eq!(IsoPos::new(0, 0).offset_perp_a(1), IsoPos::new(-1, 0));
+
+        assert_eq!(IsoPos::new(0, 0).offset_perp_b(-1), IsoPos::new(0, 1));
+        assert_eq!(IsoPos::new(0, 0).offset_perp_b(-3), IsoPos::new(-1, 4));
+        assert_eq!(IsoPos::new(1, 0).offset_perp_b(-2), IsoPos::new(0, 3));
+        assert_eq!(IsoPos::new(1, 0).offset_perp_b(2), IsoPos::new(2, -3));
+
+        assert_eq!(IsoPos::new(0, 0).offset_perp_c(1), IsoPos::new(1, 2));
+        assert_eq!(IsoPos::new(0, 0).offset_perp_c(3), IsoPos::new(2, 5));
+        assert_eq!(IsoPos::new(1, 0).offset_perp_c(2), IsoPos::new(2, 3));
+        assert_eq!(IsoPos::new(1, 0).offset_perp_c(-2), IsoPos::new(0, -3));
     }
 }
