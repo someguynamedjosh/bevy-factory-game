@@ -135,6 +135,7 @@ pub fn spawn_item(
     commands
         .spawn(SpriteBundle {
             material,
+            transform: SPRITE_TRANSFORM,
             ..Default::default()
         })
         .with(item)
@@ -246,9 +247,10 @@ mod container_debug {
             commands
                 .spawn(SpriteBundle {
                     material: common_assets.debug_container_mat.clone(),
-                    transform: Transform::from_translation(
-                        (container.alignment.get_item_pos(*pos), 10.0).into(),
-                    ),
+                    transform: SPRITE_TRANSFORM
+                        * Transform::from_translation(
+                            (container.alignment.get_item_pos(*pos), 10.0).into(),
+                        ),
                     ..Default::default()
                 })
                 .with(ContainerDebug(id));

@@ -1,5 +1,13 @@
-use crate::{claw::spawn_claw, conveyor::spawn_conveyor, iso_pos::{GRID_EDGE_LENGTH, GRID_MEDIAN_LENGTH}, item::ItemContainer, machine::{spawn_machine, MachineType}, prelude::*, trading::{self, spawn_seller, CreditBalance}};
-use bevy::{prelude::*, render::camera::Camera};
+use crate::{
+    claw::spawn_claw,
+    conveyor::spawn_conveyor,
+    iso_pos::GRID_EDGE_LENGTH,
+    item::ItemContainer,
+    machine::{spawn_machine, MachineType},
+    prelude::*,
+    trading::{self, spawn_seller, CreditBalance},
+};
+use bevy::{math::Vec4Swizzles, prelude::*, render::camera::Camera};
 
 #[derive(Default)]
 struct MouseSystemState {
@@ -80,8 +88,12 @@ impl MouseAction {
 }
 
 fn startup(commands: &mut Commands, assets: Res<CommonAssets>) {
-    let mut bundle = Camera2dBundle::default();
-    bundle.transform.scale *= 2.0;
+    let mut bundle = Camera3dBundle::default();
+    bundle.transform = Transform {
+        translation: Vec3::new(0.0, 0.0, 20.0),
+        rotation: Quat::from_rotation_x(0.05 * TAU),
+        scale: Vec3::one(),
+    };
     commands.spawn(bundle);
     let primary_camera = commands.current_entity().unwrap();
     commands.spawn(CameraUiBundle::default());
@@ -111,12 +123,14 @@ fn startup(commands: &mut Commands, assets: Res<CommonAssets>) {
 
     commands.spawn(SpriteBundle {
         material: assets.cursor_accept_mat.clone(),
+        transform: SPRITE_TRANSFORM,
         ..Default::default()
     });
     let world_cursor = commands.current_entity().unwrap();
 
     commands.spawn(SpriteBundle {
         material: assets.arrow_mat.clone(),
+        transform: SPRITE_TRANSFORM,
         ..Default::default()
     });
     let arrow = commands.current_entity().unwrap();
@@ -136,7 +150,6 @@ fn startup(commands: &mut Commands, assets: Res<CommonAssets>) {
 fn update_mouse_pos(
     mut state: ResMut<MouseSystemState>,
     events: Res<Events<CursorMoved>>,
-    obstruction_map: Res<BuildingObstructionMap>,
     mut gui_state: ResMut<GuiState>,
     windows: Res<Windows>,
     cameras: Query<&Camera>,
@@ -146,25 +159,44 @@ fn update_mouse_pos(
         gui_state.mouse_pos = event.position;
     }
 
+    // https://antongerdelan.net/opengl/raycasting.html
     let camera = cameras.get(gui_state.primary_camera).unwrap();
     let camera_transform = transforms.get_mut(gui_state.primary_camera).unwrap();
-    let inv_mat = camera_transform.compute_matrix() * camera.projection_matrix.inverse();
     let window = windows.get(camera.window).unwrap();
     let (width, height) = (window.width(), window.height());
     let output_pos = gui_state.mouse_pos / Vec2::new(width, height) * 2.0 - Vec2::one();
-    let world_pos = inv_mat.mul_vec4((output_pos.x, output_pos.y, 0.0, 1.0).into());
-    let world_pos_2 = (world_pos.x, world_pos.y).into();
+    let clip_pos = camera
+        .projection_matrix
+        .inverse()
+        .mul_vec4((output_pos.x, output_pos.y, -1.0, 1.0).into());
+    let world_pos = 
+    camera_transform
+        .compute_matrix()
+    //     .inverse()
+    // Mat4::identity()
+        .mul_vec4((clip_pos.x, clip_pos.y, -1.0, 0.0).into())
+        .xyz()
+        .normalize();
+    let desired_delta_z = -camera_transform.translation.z;
+    let world_pos = world_pos * (desired_delta_z / world_pos.z);
+    let world_pos_2 = Vec2::new(
+        world_pos.x + camera_transform.translation.x,
+        world_pos.y + camera_transform.translation.y,
+    );
     let snapping = gui_state.action.get_snapping(gui_state.direction);
     gui_state.mouse_pos_in_world = IsoPos::from_world_pos(world_pos_2, snapping);
 
     let mut cursor_transform = transforms.get_mut(gui_state.world_cursor).unwrap();
-    *cursor_transform = gui_state.mouse_pos_in_world.building_transform(IsoAxis::A);
+    *cursor_transform =
+        gui_state.mouse_pos_in_world.building_transform(IsoAxis::A) * SPRITE_TRANSFORM;
+    cursor_transform.translation.z += 0.1;
     cursor_transform.translation += Vec3::unit_z() * 0.05;
 
     let mut arrow_transform = transforms.get_mut(gui_state.arrow).unwrap();
     arrow_transform.translation = (gui_state.mouse_pos_in_world.centroid_pos(), 0.06).into();
     let angle = -gui_state.direction.unit_vec().angle_between(Vec2::unit_x());
     arrow_transform.rotation = Quat::from_rotation_z(angle);
+    arrow_transform.translation.z += 0.1;
 }
 
 fn ui_update(
@@ -288,7 +320,7 @@ fn ui_update(
     if key_input.pressed(KeyCode::A) {
         camera_offset.x -= 1.0;
     }
-    camera_offset *= time.delta_seconds() * 1_000.0;
+    camera_offset *= time.delta_seconds() * 10.0;
     let mut cam_t = transforms.get_mut(state.primary_camera).unwrap();
     cam_t.translation += (camera_offset, 0.0).into();
 

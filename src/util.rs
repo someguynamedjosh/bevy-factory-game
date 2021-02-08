@@ -1,4 +1,4 @@
-use crate::item::{ItemContainer, ItemContainerAlignment, spawn_item};
+use crate::item::{spawn_item, ItemContainer, ItemContainerAlignment};
 use crate::prelude::*;
 use bevy::prelude::*;
 
@@ -17,7 +17,7 @@ pub fn spawn_spawner(
     commands
         .spawn(SpriteBundle {
             material: common_assets.spawner_mat.clone(),
-            transform: origin.building_transform(Default::default()),
+            transform: origin.building_transform(Default::default()) * SPRITE_TRANSFORM,
             ..Default::default()
         })
         .with(origin)
@@ -38,7 +38,7 @@ pub fn spawn_destroyer(
     commands
         .spawn(SpriteBundle {
             material: common_assets.destroyer_mat.clone(),
-            transform: origin.building_transform(Default::default()),
+            transform: origin.building_transform(Default::default()) * SPRITE_TRANSFORM,
             ..Default::default()
         })
         .with(origin)

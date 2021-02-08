@@ -1,5 +1,18 @@
-use crate::prelude::*;
+use crate::{iso_pos::GRID_TRIANGLE_RADIUS, prelude::*};
 use bevy::{ecs::ShouldRun, prelude::*};
+
+/// How big a pixel of a sprite should be.
+const _SPRITE_SCALE: f32 = GRID_TRIANGLE_RADIUS / 64.0;
+pub const SPRITE_SCALE: Vec3 = Vec3 {
+    x: _SPRITE_SCALE,
+    y: _SPRITE_SCALE,
+    z: _SPRITE_SCALE,
+};
+pub const SPRITE_TRANSFORM: Transform = Transform {
+    translation: Vec3::zero(),
+    rotation: Quat::identity(),
+    scale: SPRITE_SCALE,
+};
 
 pub mod fstage {
     pub const UI: &'static str = "factory_ui";
@@ -67,7 +80,7 @@ pub fn start_tile<'c>(
     commands
         .spawn(SpriteBundle {
             material: common_assets.tiles[variant as usize].clone(),
-            transform: pos.building_transform(Default::default()),
+            transform: pos.building_transform(Default::default()) * SPRITE_TRANSFORM,
             ..Default::default()
         })
         .with(pos)

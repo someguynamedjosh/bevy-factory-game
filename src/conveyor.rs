@@ -42,7 +42,7 @@ pub fn spawn_conveyor(
     let result = commands
         .spawn(SpriteBundle {
             material,
-            transform: origin.building_transform(facing.axis()),
+            transform: origin.building_transform(facing.axis()) * SPRITE_TRANSFORM,
             ..Default::default()
         })
         .with(origin)

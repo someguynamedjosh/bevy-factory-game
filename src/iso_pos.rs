@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 /// The distance from any vertex of a grid cell to its centroid.
-pub const GRID_TRIANGLE_RADIUS: f32 = 64.0;
+pub const GRID_TRIANGLE_RADIUS: f32 = 1.0;
 
 // cos 30deg = (edge / 2) / radius
 // cos 30deg = 0.8660254

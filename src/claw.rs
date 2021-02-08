@@ -31,6 +31,7 @@ pub fn spawn_claw(
     commands
         .spawn(SpriteBundle {
             material: common_assets.claw_mat.clone(),
+            transform: SPRITE_TRANSFORM,
             ..Default::default()
         })
         .with(Claw {
