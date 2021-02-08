@@ -15,8 +15,8 @@ pub fn spawn_seller(
     facing: IsoDirection,
 ) {
     const SHAPE: Shape = Shape {
-        blanks: &[(0, 1), (0, -1)],
-        inputs: &[(1, 0)],
+        blanks: &[(0, 1), (0, -1), (-1, 0), (-1, 1), (-1, -1)],
+        inputs: &[(1, 0), (0, 2), (0, -2), (-1, 2), (-1, -2), (-2, 0)],
         outputs: &[],
     };
     let res = spawn_building(commands, common_assets, &SHAPE, origin, facing);
