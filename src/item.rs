@@ -34,6 +34,42 @@ pub enum Item {
     StructuralComponent,
 }
 
+pub struct ItemProperties {
+    /// Value of this item in credits.
+    pub base_market_value: f32,
+    /// Mass of this item in kilograms.
+    pub mass: f32,
+    /// Volume of this item in liters.
+    pub volume: f32,
+}
+
+impl Item {
+    pub const fn get_properties(&self) -> &'static ItemProperties {
+        match self {
+            Item::MetalRubble => &ItemProperties {
+                base_market_value: 10.0,
+                mass: 60.0,
+                volume: 30.0,
+            },
+            Item::Metal => &ItemProperties {
+                base_market_value: 20.0,
+                mass: 30.0,
+                volume: 5.0,
+            },
+            Item::ElectronicComponent => &ItemProperties {
+                base_market_value: 40.0,
+                mass: 15.0,
+                volume: 5.0,
+            },
+            Item::StructuralComponent => &ItemProperties {
+                base_market_value: 30.0,
+                mass: 20.0,
+                volume: 5.0,
+            },
+        }
+    }
+}
+
 pub struct ItemAnimator {
     anim: ItemAnim,
 }
@@ -146,10 +182,6 @@ impl ItemContainer {
         Self::new_maybe_preloaded(alignment, None)
     }
 
-    pub fn new_preloaded(alignment: ItemContainerAlignment, item: Entity) -> Self {
-        Self::new_maybe_preloaded(alignment, Some(item))
-    }
-
     pub fn new_maybe_preloaded(alignment: ItemContainerAlignment, item: Option<Entity>) -> Self {
         Self {
             alignment,
@@ -194,7 +226,7 @@ impl ItemContainer {
     ) {
         assert!(self.item.is_none());
         assert!(!self.blocked);
-        let item = spawn::item(commands, common_assets, item, this_pos, self.alignment);
+        let item = spawn_item(commands, common_assets, item, this_pos, self.alignment);
         self.item = Some(item);
     }
 }

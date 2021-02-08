@@ -9,16 +9,6 @@ pub use bevy::prelude::{Entity, Quat, Transform};
 pub use scones::make_constructor;
 pub use std::f32::consts::{PI, TAU};
 
-pub mod spawn {
-    pub use crate::building::spawn_building as building;
-    pub use crate::claw::spawn_claw as claw;
-    pub use crate::conveyor::spawn_conveyor as conveyor;
-    pub use crate::item::spawn_item as item;
-    pub use crate::machine::spawn_machine as machine;
-    pub use crate::util::spawn_destroyer as destroyer;
-    pub use crate::util::spawn_spawner as spawner;
-}
-
 pub trait SpawnWithBundles<Input> {
     fn spawn_with_bundles(&mut self, bundles: Input) -> &mut Self;
 }

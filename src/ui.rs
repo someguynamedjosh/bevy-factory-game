@@ -1,8 +1,13 @@
-use crate::item::ItemContainer;
-use crate::prelude::*;
-use crate::{iso_pos::GRID_MEDIAN_LENGTH, machine::MachineType};
-use bevy::prelude::*;
-use bevy::render::camera::Camera;
+use crate::{
+    claw::spawn_claw,
+    conveyor::spawn_conveyor,
+    iso_pos::GRID_MEDIAN_LENGTH,
+    item::ItemContainer,
+    machine::{spawn_machine, MachineType},
+    prelude::*,
+    trading::{spawn_seller, CreditBalance},
+};
+use bevy::{prelude::*, render::camera::Camera};
 
 #[derive(Default)]
 struct MouseSystemState {
@@ -23,6 +28,27 @@ struct GuiState {
     action: MouseAction,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum Buildable {
+    Machine(MachineType),
+    Seller,
+}
+
+impl Buildable {
+    fn build(
+        &self,
+        commands: &mut Commands,
+        common_assets: &Res<CommonAssets>,
+        origin: IsoPos,
+        facing: IsoDirection,
+    ) {
+        match self {
+            Self::Machine(typ) => spawn_machine(commands, common_assets, *typ, origin, facing),
+            Self::Seller => spawn_seller(commands, common_assets, origin, facing),
+        }
+    }
+}
+
 enum MouseAction {
     PlaceConveyor,
     PlaceClaw,
@@ -30,7 +56,7 @@ enum MouseAction {
         start_pos: IsoPos,
         start_container: Entity,
     },
-    PlaceMachine(MachineType),
+    Build(Buildable),
 }
 
 impl MouseAction {
@@ -48,7 +74,7 @@ impl MouseAction {
             Self::PlaceClawEnd { start_pos, .. } => Snapping::AlongAnyLine {
                 through: *start_pos,
             },
-            Self::PlaceMachine(..) => Snapping::require_edge_pointing_in(selected_direction),
+            Self::Build(..) => Snapping::require_edge_pointing_in(selected_direction),
         }
     }
 }
@@ -149,6 +175,7 @@ fn ui_update(
     mut state: ResMut<GuiState>,
     input: Res<Input<MouseButton>>,
     key_input: Res<Input<KeyCode>>,
+    credits: Res<CreditBalance>,
     containers: Query<(Entity, &IsoPos), With<ItemContainer>>,
     mut transforms: Query<&mut Transform>,
     mut texts: Query<&mut Text>,
@@ -161,9 +188,9 @@ fn ui_update(
                 break;
             }
         }
-        match state.action {
+        match &state.action {
             MouseAction::PlaceConveyor => {
-                spawn::conveyor(
+                spawn_conveyor(
                     commands,
                     &common_assets,
                     state.mouse_pos_in_world,
@@ -191,15 +218,14 @@ fn ui_update(
                     if distance % 2.0 > 0.2 && distance % 2.0 < 1.8 {
                         length += 1;
                     }
-                    spawn::claw(commands, &common_assets, start_container, c, length);
+                    spawn_claw(commands, &common_assets, *start_container, c, length);
                     state.action = MouseAction::PlaceClaw;
                 }
             }
-            MouseAction::PlaceMachine(typ) => {
-                spawn::machine(
+            MouseAction::Build(typ) => {
+                typ.build(
                     commands,
                     &common_assets,
-                    typ,
                     state.mouse_pos_in_world,
                     state.direction,
                 );
@@ -213,10 +239,13 @@ fn ui_update(
         state.action = MouseAction::PlaceClaw;
     }
     if key_input.just_pressed(KeyCode::Key3) {
-        state.action = MouseAction::PlaceMachine(MachineType::Furnace);
+        state.action = MouseAction::Build(Buildable::Machine(MachineType::Furnace));
     }
     if key_input.just_pressed(KeyCode::Key4) {
-        state.action = MouseAction::PlaceMachine(MachineType::Mill);
+        state.action = MouseAction::Build(Buildable::Machine(MachineType::Mill));
+    }
+    if key_input.just_pressed(KeyCode::Key5) {
+        state.action = MouseAction::Build(Buildable::Seller);
     }
     if key_input.just_pressed(KeyCode::E) {
         state.direction = state.direction.clockwise();
@@ -245,10 +274,10 @@ fn ui_update(
         MouseAction::PlaceClaw => format!("Claw Start"),
         MouseAction::PlaceClawEnd { .. } => format!("Claw End"),
         MouseAction::PlaceConveyor => format!("Conveyor"),
-        MouseAction::PlaceMachine(typ) => format!("{:?}", typ),
+        MouseAction::Build(typ) => format!("{:?}", typ),
     };
     let mut text = texts.get_mut(state.tool_text).unwrap();
-    text.value = tooltip;
+    text.value = format!("{}\n{}", tooltip, credits.0.floor());
 }
 
 pub struct Plug;

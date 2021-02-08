@@ -1,4 +1,4 @@
-use crate::item::{ItemContainer, ItemContainerAlignment};
+use crate::item::{ItemContainer, ItemContainerAlignment, spawn_item};
 use crate::prelude::*;
 use bevy::prelude::*;
 
@@ -58,7 +58,7 @@ fn tick_spawners(
             spawner.spawn_cycle += 1;
             if spawner.spawn_cycle >= spawner.rate {
                 spawner.spawn_cycle = 0;
-                let item = spawn::item(
+                let item = spawn_item(
                     commands,
                     &common_assets,
                     Item::MetalRubble,

@@ -3,22 +3,22 @@ mod building;
 mod claw;
 mod common;
 mod conveyor;
-// mod furnace;
 pub mod iso_pos;
 mod item;
 mod machine;
-// mod mill;
 pub mod prelude;
+mod trading;
 mod ui;
 mod util;
 
 use bevy::prelude::*;
 use prelude::*;
+use util::{spawn_destroyer, spawn_spawner};
 
 fn test_scene(commands: &mut Commands, common_assets: Res<CommonAssets>) {
-    spawn::spawner(commands, &common_assets, IsoPos::new(-5, -3), 8);
-    spawn::spawner(commands, &common_assets, IsoPos::new(-5, -4), 8);
-    spawn::destroyer(commands, &common_assets, IsoPos::new(-5, -6));
+    spawn_spawner(commands, &common_assets, IsoPos::new(-5, -3), 8);
+    spawn_spawner(commands, &common_assets, IsoPos::new(-5, -4), 8);
+    spawn_destroyer(commands, &common_assets, IsoPos::new(-5, -6));
 }
 
 fn main() {
@@ -34,6 +34,7 @@ fn main() {
         .add_plugin(ui::Plug)
         .add_plugin(util::Plug)
         .add_plugin(machine::Plug)
+        .add_plugin(trading::Plug)
         .add_plugin(claw::Plug)
         .add_plugin(conveyor::Plug)
         .add_plugin(item::Plug)
