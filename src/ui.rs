@@ -169,11 +169,10 @@ fn update_mouse_pos(
         .projection_matrix
         .inverse()
         .mul_vec4((output_pos.x, output_pos.y, -1.0, 1.0).into());
-    let world_pos = 
-    camera_transform
+    let world_pos = camera_transform
         .compute_matrix()
-    //     .inverse()
-    // Mat4::identity()
+        //     .inverse()
+        // Mat4::identity()
         .mul_vec4((clip_pos.x, clip_pos.y, -1.0, 0.0).into())
         .xyz()
         .normalize();
@@ -189,14 +188,13 @@ fn update_mouse_pos(
     let mut cursor_transform = transforms.get_mut(gui_state.world_cursor).unwrap();
     *cursor_transform =
         gui_state.mouse_pos_in_world.building_transform(IsoAxis::A) * SPRITE_TRANSFORM;
-    cursor_transform.translation.z += 0.1;
-    cursor_transform.translation += Vec3::unit_z() * 0.05;
+    cursor_transform.translation.z += 0.02;
 
     let mut arrow_transform = transforms.get_mut(gui_state.arrow).unwrap();
     arrow_transform.translation = (gui_state.mouse_pos_in_world.centroid_pos(), 0.06).into();
     let angle = -gui_state.direction.unit_vec().angle_between(Vec2::unit_x());
     arrow_transform.rotation = Quat::from_rotation_z(angle);
-    arrow_transform.translation.z += 0.1;
+    arrow_transform.translation.z += 0.02;
 }
 
 fn ui_update(

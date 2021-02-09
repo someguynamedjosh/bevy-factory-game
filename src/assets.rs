@@ -29,6 +29,13 @@ fn startup(
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut common_assets: ResMut<CommonAssets>,
 ) {
+    let mut make_mat = |filename: &str| {
+        let texture_handle = asset_server.load(filename);
+        materials.add(ColorMaterial {
+            texture: Some(texture_handle),
+            ..Default::default()
+        })
+    };
     common_assets.font = asset_server.load("LiberationMono-Regular.ttf");
     for (i, path) in [
         "tile.png",
@@ -39,42 +46,27 @@ fn startup(
     .iter()
     .enumerate()
     {
-        let texture_handle = asset_server.load(*path);
-        common_assets.tiles[i] = materials.add(texture_handle.into());
+        common_assets.tiles[i] = make_mat(path);
     }
 
-    let texture_handle = asset_server.load("conveyor_up.png");
-    common_assets.conveyor_mat.0 = materials.add(texture_handle.into());
-    let texture_handle = asset_server.load("conveyor_down.png");
-    common_assets.conveyor_mat.1 = materials.add(texture_handle.into());
-    let texture_handle = asset_server.load("item.png");
-    common_assets.item_mat = materials.add(texture_handle.into());
-    let texture_handle = asset_server.load("claw.png");
-    common_assets.claw_mat = materials.add(texture_handle.into());
-    let texture_handle = asset_server.load("spawner.png");
-    common_assets.spawner_mat = materials.add(texture_handle.into());
-    let texture_handle = asset_server.load("destroyer.png");
-    common_assets.destroyer_mat = materials.add(texture_handle.into());
+    common_assets.conveyor_mat.0 = make_mat("conveyor_up.png");
 
-    let texture_handle = asset_server.load("metal_rubble.png");
-    common_assets.metal_rubble_mat = materials.add(texture_handle.into());
-    let texture_handle = asset_server.load("metal.png");
-    common_assets.metal_mat = materials.add(texture_handle.into());
-    let texture_handle = asset_server.load("structural.png");
-    common_assets.structural_mat = materials.add(texture_handle.into());
-    let texture_handle = asset_server.load("circuit.png");
-    common_assets.circuit_mat = materials.add(texture_handle.into());
+    common_assets.conveyor_mat.1 = make_mat("conveyor_down.png");
+    common_assets.item_mat = make_mat("item.png");
+    common_assets.claw_mat = make_mat("claw.png");
+    common_assets.spawner_mat = make_mat("spawner.png");
+    common_assets.destroyer_mat = make_mat("destroyer.png");
 
-    let texture_handle = asset_server.load("debug_container.png");
-    common_assets.debug_container_mat = materials.add(texture_handle.into());
-    let texture_handle = asset_server.load("debug_blocked_container.png");
-    common_assets.debug_blocked_container_mat = materials.add(texture_handle.into());
-    let texture_handle = asset_server.load("cursor_accept.png");
-    common_assets.cursor_accept_mat = materials.add(texture_handle.into());
-    let texture_handle = asset_server.load("cursor_deny.png");
-    common_assets.cursor_deny_mat = materials.add(texture_handle.into());
-    let texture_handle = asset_server.load("arrow.png");
-    common_assets.arrow_mat = materials.add(texture_handle.into());
+    common_assets.metal_rubble_mat = make_mat("metal_rubble.png");
+    common_assets.metal_mat = make_mat("metal.png");
+    common_assets.structural_mat = make_mat("structural.png");
+    common_assets.circuit_mat = make_mat("circuit.png");
+
+    common_assets.debug_container_mat = make_mat("debug_container.png");
+    common_assets.debug_blocked_container_mat = make_mat("debug_blocked_container.png");
+    common_assets.cursor_accept_mat = make_mat("cursor_accept.png");
+    common_assets.cursor_deny_mat = make_mat("cursor_deny.png");
+    common_assets.arrow_mat = make_mat("arrow.png");
 }
 
 pub struct Plug;

@@ -1,5 +1,18 @@
 use crate::{iso_pos::GRID_TRIANGLE_RADIUS, prelude::*};
-use bevy::{ecs::ShouldRun, prelude::*};
+use bevy::{
+    ecs::ShouldRun,
+    pbr::render_graph::FORWARD_PIPELINE_HANDLE,
+    prelude::*,
+    render::{
+        pipeline::{
+            BlendDescriptor, BlendFactor, BlendOperation, ColorStateDescriptor, ColorWrite,
+            CompareFunction, CullMode, DepthStencilStateDescriptor, FrontFace, PipelineDescriptor,
+            RasterizationStateDescriptor, StencilStateDescriptor, StencilStateFaceDescriptor,
+        },
+        shader::{ShaderStage, ShaderStages},
+        texture::TextureFormat,
+    },
+};
 
 /// How big a pixel of a sprite should be.
 const _SPRITE_SCALE: f32 = GRID_TRIANGLE_RADIUS / 64.0;
@@ -81,6 +94,10 @@ pub fn start_tile<'c>(
         .spawn(SpriteBundle {
             material: common_assets.tiles[variant as usize].clone(),
             transform: pos.building_transform(Default::default()) * SPRITE_TRANSFORM,
+            visible: Visible {
+                is_transparent: true,
+                is_visible: true,
+            },
             ..Default::default()
         })
         .with(pos)

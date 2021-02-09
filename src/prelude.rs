@@ -1,7 +1,7 @@
 pub use crate::assets::CommonAssets;
 pub use crate::building::{BuildingResult, Shape};
 pub use crate::common::{
-    fstage, start_tile, SetupNeeded, TickClock, TileVariant, SPRITE_SCALE, SPRITE_TRANSFORM,
+    fstage, start_tile, SetupNeeded, TickClock, TileVariant, SPRITE_TRANSFORM,
 };
 pub use crate::iso_pos::{IsoAxis, IsoDirection, IsoPos, Snapping};
 pub use crate::item::Item;

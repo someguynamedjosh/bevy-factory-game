@@ -8,11 +8,12 @@ mod item;
 mod machine;
 pub mod prelude;
 mod spatial_map;
+mod sprite_render;
 mod trading;
 mod ui;
 mod util;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::QUAD_HANDLE};
 use prelude::*;
 use util::{spawn_destroyer, spawn_spawner};
 
@@ -42,6 +43,23 @@ fn test_scene(
         transform: Transform::from_translation(Vec3::new(0.0, 0.0, 10.0)),
         ..Default::default()
     });
+
+    let mesh_handle = QUAD_HANDLE.clone();
+    let material_handle = materials.add(StandardMaterial {
+        albedo: Color::rgba(1.0, 0.0, 0.0, 0.5),
+        shaded: false,
+        ..Default::default()
+    });
+    commands.spawn(PbrBundle {
+        mesh: mesh_handle.clone().typed(),
+        material: material_handle.clone(),
+        transform: Transform::from_scale(Vec3::one() * 5.0),
+        visible: Visible {
+            is_transparent: true,
+            ..Default::default()
+        },
+        ..Default::default()
+    });
 }
 
 fn main() {
@@ -52,6 +70,7 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
+        .add_plugin(sprite_render::Plug)
         .add_plugin(spatial_map::Plug)
         .add_plugin(common::Plug)
         .add_plugin(assets::Plug)
