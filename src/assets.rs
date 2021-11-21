@@ -22,16 +22,21 @@ pub struct CommonAssets {
     pub cursor_accept_mat: Handle<ColorMaterial>,
     pub cursor_deny_mat: Handle<ColorMaterial>,
     pub arrow_mat: Handle<ColorMaterial>,
+
+    pub clay_mat: Handle<StandardMaterial>,
+
+    pub furnace_mesh: Handle<Mesh>,
 }
 
 fn startup(
     asset_server: Res<AssetServer>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut sprite_mats: ResMut<Assets<ColorMaterial>>,
+    mut mesh_mats: ResMut<Assets<StandardMaterial>>,
     mut common_assets: ResMut<CommonAssets>,
 ) {
     let mut make_mat = |filename: &str| {
         let texture_handle = asset_server.load(filename);
-        materials.add(ColorMaterial {
+        sprite_mats.add(ColorMaterial {
             texture: Some(texture_handle),
             ..Default::default()
         })
@@ -67,6 +72,13 @@ fn startup(
     common_assets.cursor_accept_mat = make_mat("cursor_accept.png");
     common_assets.cursor_deny_mat = make_mat("cursor_deny.png");
     common_assets.arrow_mat = make_mat("arrow.png");
+    
+    common_assets.clay_mat = mesh_mats.add(StandardMaterial {
+        albedo: Color::rgb(1.0, 1.0, 1.0),
+        ..Default::default()
+    });
+
+    common_assets.furnace_mesh = asset_server.load("furnace.obj");
 }
 
 pub struct Plug;

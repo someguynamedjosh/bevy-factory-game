@@ -13,7 +13,8 @@ quarter-speed = []
 draw-containers = []
 
 [dependencies]
-scones = "^0.1.2"
+bevy_obj = "0.4.0"
+scones = "0.1.2"
 
 [dependencies.bevy]
 version = "0.4.0"

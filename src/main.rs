@@ -13,53 +13,14 @@ mod trading;
 mod ui;
 mod util;
 
-use bevy::{prelude::*, sprite::QUAD_HANDLE};
+use bevy::prelude::*;
 use prelude::*;
 use util::{spawn_destroyer, spawn_spawner};
 
-fn test_scene(
-    commands: &mut Commands,
-    common_assets: Res<CommonAssets>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
+fn test_scene(commands: &mut Commands, common_assets: Res<CommonAssets>) {
     spawn_spawner(commands, &common_assets, IsoPos::new(-5, -3), 8);
     spawn_spawner(commands, &common_assets, IsoPos::new(-5, -4), 8);
     spawn_destroyer(commands, &common_assets, IsoPos::new(-5, -6));
-
-    let mesh_handle = meshes.add(Mesh::from(shape::Box::new(2.0, 2.0, 2.0)));
-    let material_handle = materials.add(StandardMaterial {
-        ..Default::default()
-    });
-    commands.spawn(PbrBundle {
-        mesh: mesh_handle,
-        material: material_handle,
-        ..Default::default()
-    });
-    commands.spawn(LightBundle {
-        light: Light {
-            ..Default::default()
-        },
-        transform: Transform::from_translation(Vec3::new(0.0, 0.0, 10.0)),
-        ..Default::default()
-    });
-
-    let mesh_handle = QUAD_HANDLE.clone();
-    let material_handle = materials.add(StandardMaterial {
-        albedo: Color::rgba(1.0, 0.0, 0.0, 0.5),
-        shaded: false,
-        ..Default::default()
-    });
-    commands.spawn(PbrBundle {
-        mesh: mesh_handle.clone().typed(),
-        material: material_handle.clone(),
-        transform: Transform::from_scale(Vec3::one() * 5.0),
-        visible: Visible {
-            is_transparent: true,
-            ..Default::default()
-        },
-        ..Default::default()
-    });
 }
 
 fn main() {
@@ -70,6 +31,7 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
+        .add_plugin(bevy_obj::ObjPlugin)
         .add_plugin(sprite_render::Plug)
         .add_plugin(spatial_map::Plug)
         .add_plugin(common::Plug)

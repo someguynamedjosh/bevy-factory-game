@@ -1,18 +1,5 @@
 use crate::{iso_pos::GRID_TRIANGLE_RADIUS, prelude::*};
-use bevy::{
-    ecs::ShouldRun,
-    pbr::render_graph::FORWARD_PIPELINE_HANDLE,
-    prelude::*,
-    render::{
-        pipeline::{
-            BlendDescriptor, BlendFactor, BlendOperation, ColorStateDescriptor, ColorWrite,
-            CompareFunction, CullMode, DepthStencilStateDescriptor, FrontFace, PipelineDescriptor,
-            RasterizationStateDescriptor, StencilStateDescriptor, StencilStateFaceDescriptor,
-        },
-        shader::{ShaderStage, ShaderStages},
-        texture::TextureFormat,
-    },
-};
+use bevy::{ecs::ShouldRun, prelude::*};
 
 /// How big a pixel of a sprite should be.
 const _SPRITE_SCALE: f32 = GRID_TRIANGLE_RADIUS / 64.0;

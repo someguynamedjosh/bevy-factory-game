@@ -28,7 +28,11 @@ impl Shape {
             .map(move |&(par, perp)| origin.offset_both_direction(facing, par, perp))
     }
 
-    pub fn positions(&self, origin: IsoPos, facing: IsoDirection) -> ShapeIters<impl Iterator<Item = IsoPos>> {
+    pub fn positions(
+        &self,
+        origin: IsoPos,
+        facing: IsoDirection,
+    ) -> ShapeIters<impl Iterator<Item = IsoPos>> {
         ShapeIters {
             blanks: Self::positions_impl(self.blanks, origin, facing),
             inputs: Self::positions_impl(self.inputs, origin, facing),
@@ -43,7 +47,7 @@ pub struct BuildingResult {
     pub origin: Entity,
 }
 
-pub fn spawn_building(
+pub fn spawn_building_with_placeholder_art(
     commands: &mut Commands,
     common_assets: &Res<CommonAssets>,
     obstruction_map: &mut ResMut<BuildingObstructionMap>,
@@ -76,6 +80,63 @@ pub fn spawn_building(
         obstruction_map.set_empty(pos, main_entity);
         let id = start_tile(commands, common_assets, pos, TileVariant::Output)
             .with(ItemContainer::new_empty(ItemContainerAlignment::Centroid))
+            .current_entity()
+            .unwrap();
+        outputs.push(id);
+    }
+
+    BuildingResult {
+        inputs,
+        outputs,
+        origin: main_entity,
+    }
+}
+
+pub fn spawn_building(
+    commands: &mut Commands,
+    obstruction_map: &mut ResMut<BuildingObstructionMap>,
+    mesh: Handle<Mesh>,
+    material: Handle<StandardMaterial>,
+    shape: &Shape,
+    origin: IsoPos,
+    facing: IsoDirection,
+) -> BuildingResult {
+    let main_entity = commands
+        .spawn(PbrBundle {
+            mesh,
+            material,
+            transform: origin.building_transform(facing.axis()),
+            ..Default::default()
+        })
+        .current_entity()
+        .unwrap();
+    obstruction_map.set_empty(origin, main_entity);
+    let tile_pos_iters = shape.positions(origin, facing);
+
+    for pos in tile_pos_iters.blanks {
+        obstruction_map.set_empty(pos, main_entity);
+    }
+
+    let mut inputs = Vec::new();
+    for pos in tile_pos_iters.inputs {
+        obstruction_map.set_empty(pos, main_entity);
+        let id = commands
+            .spawn((
+                pos,
+                ItemContainer::new_empty(ItemContainerAlignment::Centroid),
+            ))
+            .current_entity()
+            .unwrap();
+        inputs.push(id);
+    }
+    let mut outputs = Vec::new();
+    for pos in tile_pos_iters.outputs {
+        obstruction_map.set_empty(pos, main_entity);
+        let id = commands
+            .spawn((
+                pos,
+                ItemContainer::new_empty(ItemContainerAlignment::Centroid),
+            ))
             .current_entity()
             .unwrap();
         outputs.push(id);

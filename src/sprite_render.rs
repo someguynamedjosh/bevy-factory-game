@@ -1,9 +1,7 @@
-use crate::prelude::*;
 use bevy::{
     asset::{Assets, HandleUntyped},
     ecs::Resources,
     prelude::*,
-    reflect::TypeUuid,
     render::{
         pipeline::{
             BlendDescriptor, BlendFactor, BlendOperation, ColorStateDescriptor, ColorWrite,

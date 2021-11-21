@@ -90,7 +90,7 @@ impl MouseAction {
 fn startup(commands: &mut Commands, assets: Res<CommonAssets>) {
     let mut bundle = Camera3dBundle::default();
     bundle.transform = Transform {
-        translation: Vec3::new(0.0, 0.0, 20.0),
+        translation: Vec3::new(0.0, -7.0, 20.0),
         rotation: Quat::from_rotation_x(0.05 * TAU),
         scale: Vec3::one(),
     };

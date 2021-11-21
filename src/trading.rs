@@ -1,5 +1,5 @@
 use crate::{
-    building::{spawn_building, Shape},
+    building::{spawn_building_with_placeholder_art, Shape},
     item::ItemContainer,
     prelude::*,
 };
@@ -25,7 +25,7 @@ pub fn spawn_seller(
     origin: IsoPos,
     facing: IsoDirection,
 ) {
-    let res = spawn_building(
+    let res = spawn_building_with_placeholder_art(
         commands,
         common_assets,
         obstruction_map,

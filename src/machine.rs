@@ -1,4 +1,4 @@
-use crate::{building::{Shape, spawn_building}, item::ItemContainer, prelude::*};
+use crate::{building::{Shape, spawn_building, spawn_building_with_placeholder_art}, item::ItemContainer, prelude::*};
 use bevy::prelude::*;
 
 #[derive(Debug)]
@@ -54,6 +54,16 @@ impl MachineType {
             },
         }
     }
+
+    pub fn get_appearence(
+        self,
+        assets: &CommonAssets,
+    ) -> Option<(Handle<Mesh>, Handle<StandardMaterial>)> {
+        match self {
+            Self::Furnace => Some((assets.furnace_mesh.clone(), assets.clay_mat.clone())),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -87,7 +97,26 @@ pub fn spawn_machine(
         inputs,
         outputs,
         origin,
-    } = spawn_building(commands, common_assets, obstruction_map, shape, origin, facing);
+    } = if let Some((mesh, mat)) = typ.get_appearence(&*common_assets) {
+        spawn_building(
+            commands,
+            obstruction_map,
+            mesh,
+            mat,
+            shape,
+            origin,
+            facing,
+        )
+    } else {
+        spawn_building_with_placeholder_art(
+            commands,
+            common_assets,
+            obstruction_map,
+            shape,
+            origin,
+            facing,
+        )
+    };
     assert_eq!(outputs.len(), 1);
     let output = outputs[0];
     let recipe = &recipes[0];

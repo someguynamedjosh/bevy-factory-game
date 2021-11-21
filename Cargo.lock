@@ -504,6 +504,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_obj"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee465d4fb268dc0a15304df3066161d8e502b78c593627cfc8395f1fa29dec2e"
+dependencies = [
+ "anyhow",
+ "bevy_app",
+ "bevy_asset",
+ "bevy_render",
+ "bevy_utils",
+ "obj-rs",
+ "thiserror",
+]
+
+[[package]]
 name = "bevy_pbr"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1355,6 +1370,7 @@ name = "fav-genre"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_obj",
  "scones",
 ]
 
@@ -2491,6 +2507,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "obj-rs"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cf37dd242b0636bf442a539738f54330b0db9ad9758a89de154e9d3866a7847e"
+dependencies = [
+ "num-traits",
+ "vec_map",
 ]
 
 [[package]]
