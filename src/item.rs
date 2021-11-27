@@ -1,3 +1,5 @@
+mod container_debug;
+
 use crate::prelude::*;
 use bevy::prelude::*;
 
@@ -229,47 +231,6 @@ impl ItemContainer {
         assert!(!self.blocked);
         let item = spawn_item(commands, common_assets, item, this_pos, self.alignment);
         self.item = Some(item);
-    }
-}
-
-// #[cfg(feature = "draw-containers")]
-mod container_debug {
-    use super::*;
-
-    pub(super) struct ContainerDebug(Entity);
-
-    pub(super) fn attach_debug(
-        commands: &mut Commands,
-        common_assets: Res<CommonAssets>,
-        add_to: Query<(Entity, &IsoPos, &ItemContainer), Without<ContainerDebug>>,
-    ) {
-        for (id, pos, container) in add_to.iter() {
-            commands
-                .spawn(SpriteBundle {
-                    material: common_assets.debug_container_mat.clone(),
-                    transform: SPRITE_TRANSFORM
-                        * Transform::from_translation(
-                            (container.alignment.get_item_pos(*pos), 10.0).into(),
-                        ),
-                    ..Default::default()
-                })
-                .with(ContainerDebug(id));
-        }
-    }
-
-    pub(super) fn animate(
-        common_assets: Res<CommonAssets>,
-        mut debugs: Query<(&ContainerDebug, &mut Handle<ColorMaterial>)>,
-        containers: Query<(&ItemContainer,)>,
-    ) {
-        for (debug, mut material) in debugs.iter_mut() {
-            let blocked = containers.get(debug.0).unwrap().0.blocked;
-            *material = if blocked {
-                common_assets.debug_blocked_container_mat.clone()
-            } else {
-                common_assets.debug_container_mat.clone()
-            };
-        }
     }
 }
 
