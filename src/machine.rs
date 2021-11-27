@@ -60,7 +60,7 @@ impl MachineType {
         assets: &CommonAssets,
     ) -> Option<(Handle<Mesh>, Handle<StandardMaterial>)> {
         match self {
-            Self::Furnace => Some((assets.furnace_mesh.clone(), assets.clay_mat.clone())),
+            // Self::Furnace => Some((assets.furnace_mesh.clone(), assets.clay_mat.clone())),
             _ => None,
         }
     }
