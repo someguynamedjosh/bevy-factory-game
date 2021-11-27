@@ -16,6 +16,7 @@ const DURATION: u8 = 4;
 pub fn spawn_conveyor(
     commands: &mut Commands,
     common_assets: &Res<CommonAssets>,
+    conveyor_map: &mut ResMut<ConveyorMap>,
     obstruction_map: &mut ResMut<BuildingObstructionMap>,
     origin: IsoPos,
     facing: IsoDirection,
@@ -53,6 +54,7 @@ pub fn spawn_conveyor(
         .current_entity()
         .unwrap();
     obstruction_map.set_empty(origin, result);
+    conveyor_map.set_empty(origin, result);
     result
 }
 

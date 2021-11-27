@@ -9,7 +9,6 @@ mod machine;
 pub mod prelude;
 mod spatial_map;
 mod sprite_render;
-mod trading;
 mod ui;
 mod util;
 
@@ -39,7 +38,6 @@ fn main() {
         .add_plugin(ui::Plug)
         .add_plugin(util::Plug)
         .add_plugin(machine::Plug)
-        .add_plugin(trading::Plug)
         .add_plugin(claw::Plug)
         .add_plugin(conveyor::Plug)
         .add_plugin(item::Plug)

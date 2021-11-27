@@ -1,4 +1,8 @@
-use crate::{building::{Shape, spawn_building, spawn_building_with_placeholder_art}, item::ItemContainer, prelude::*};
+use crate::{
+    building::{spawn_building, spawn_building_with_placeholder_art, Shape},
+    item::ItemContainer,
+    prelude::*,
+};
 use bevy::prelude::*;
 
 #[derive(Debug)]
@@ -12,6 +16,7 @@ pub struct Recipe {
 pub enum MachineType {
     Furnace,
     Mill,
+    CrucibleFiller,
 }
 
 impl MachineType {
@@ -35,6 +40,11 @@ impl MachineType {
                     outputs: &[StructuralComponent],
                 },
             ],
+            Self::CrucibleFiller => &[Recipe {
+                inputs: &[MetalRubble, MetalRubble],
+                time: 40,
+                outputs: &[Metal],
+            }],
         }
     }
 
@@ -46,11 +56,20 @@ impl MachineType {
                 blanks: &[(1, 0), (-1, 0), (1, 1), (-1, 1)],
                 inputs: &[(0, 1)],
                 outputs: &[(0, -1)],
+                conveyor_links: &[],
             },
             Self::Mill => &Shape {
                 blanks: &[(0, -1)],
                 inputs: &[(1, -1)],
                 outputs: &[(1, 0)],
+                conveyor_links: &[],
+            },
+            Self::CrucibleFiller => &Shape {
+                blanks: &[],
+                inputs: &[(0, -1)],
+                outputs: &[(0, 1)],
+                conveyor_links: &[(-1, 0)],
+                // conveyor_links: &[],
             },
         }
     }
@@ -84,6 +103,7 @@ pub fn spawn_machine(
     commands: &mut Commands,
     common_assets: &Res<CommonAssets>,
     obstruction_map: &mut ResMut<BuildingObstructionMap>,
+    conveyor_map: &ConveyorMap,
     typ: MachineType,
     origin: IsoPos,
     facing: IsoDirection,
@@ -98,20 +118,13 @@ pub fn spawn_machine(
         outputs,
         origin,
     } = if let Some((mesh, mat)) = typ.get_appearence(&*common_assets) {
-        spawn_building(
-            commands,
-            obstruction_map,
-            mesh,
-            mat,
-            shape,
-            origin,
-            facing,
-        )
+        spawn_building(commands, obstruction_map, mesh, mat, shape, origin, facing)
     } else {
         spawn_building_with_placeholder_art(
             commands,
             common_assets,
             obstruction_map,
+            conveyor_map,
             shape,
             origin,
             facing,

@@ -5,7 +5,6 @@ use crate::{
     item::ItemContainer,
     machine::{spawn_machine, MachineType},
     prelude::*,
-    trading::{self, spawn_seller, CreditBalance},
 };
 use bevy::{math::Vec4Swizzles, prelude::*, render::camera::Camera};
 
@@ -31,7 +30,6 @@ struct GuiState {
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Buildable {
     Machine(MachineType),
-    Seller,
 }
 
 impl Buildable {
@@ -40,6 +38,7 @@ impl Buildable {
         commands: &mut Commands,
         common_assets: &Res<CommonAssets>,
         obstruction_map: &mut ResMut<BuildingObstructionMap>,
+        conveyor_map: &ConveyorMap,
         origin: IsoPos,
         facing: IsoDirection,
     ) {
@@ -48,18 +47,17 @@ impl Buildable {
                 commands,
                 common_assets,
                 obstruction_map,
+                conveyor_map,
                 *typ,
                 origin,
                 facing,
             ),
-            Self::Seller => spawn_seller(commands, common_assets, obstruction_map, origin, facing),
         }
     }
 
     fn get_shape(&self) -> &'static Shape {
         match self {
             Self::Machine(typ) => typ.get_shape(),
-            Self::Seller => &trading::SELLER_SHAPE,
         }
     }
 }
@@ -204,8 +202,8 @@ fn ui_update(
     mut state: ResMut<GuiState>,
     input: Res<Input<MouseButton>>,
     key_input: Res<Input<KeyCode>>,
-    credits: Res<CreditBalance>,
     mut obstruction_map: ResMut<BuildingObstructionMap>,
+    mut conveyor_map: ResMut<ConveyorMap>,
     containers: Query<(Entity, &IsoPos), With<ItemContainer>>,
     mut transforms: Query<&mut Transform>,
     mut texts: Query<&mut Text>,
@@ -230,6 +228,11 @@ fn ui_update(
                         return false;
                     }
                 }
+                for p in shape.conveyor_link_positions(state.mouse_pos_in_world, state.direction) {
+                    if !conveyor_map.is_occupied(p) {
+                        return false;
+                    }
+                }
                 true
             })()
         }
@@ -246,6 +249,7 @@ fn ui_update(
                 spawn_conveyor(
                     commands,
                     &common_assets,
+                    &mut conveyor_map,
                     &mut obstruction_map,
                     state.mouse_pos_in_world,
                     state.direction,
@@ -278,6 +282,7 @@ fn ui_update(
                     commands,
                     &common_assets,
                     &mut obstruction_map,
+                    &conveyor_map,
                     state.mouse_pos_in_world,
                     state.direction,
                 );
@@ -291,13 +296,10 @@ fn ui_update(
         state.action = MouseAction::PlaceClaw;
     }
     if key_input.just_pressed(KeyCode::Key3) {
-        state.action = MouseAction::Build(Buildable::Machine(MachineType::Furnace));
+        state.action = MouseAction::Build(Buildable::Machine(MachineType::CrucibleFiller));
     }
     if key_input.just_pressed(KeyCode::Key4) {
-        state.action = MouseAction::Build(Buildable::Machine(MachineType::Mill));
-    }
-    if key_input.just_pressed(KeyCode::Key5) {
-        state.action = MouseAction::Build(Buildable::Seller);
+        // state.action = MouseAction::Build(Buildable::Machine(MachineType::Mill));
     }
     if key_input.just_pressed(KeyCode::E) {
         state.direction = state.direction.clockwise();
@@ -329,7 +331,7 @@ fn ui_update(
         MouseAction::Build(typ) => format!("{:?}", typ),
     };
     let mut text = texts.get_mut(state.tool_text).unwrap();
-    text.value = format!("{}\n{}", tooltip, credits.0.floor());
+    text.value = format!("{}\n{}", tooltip, /* credits.0.floor() */ 0);
 }
 
 pub struct Plug;

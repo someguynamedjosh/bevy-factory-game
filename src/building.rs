@@ -10,6 +10,7 @@ pub struct Shape {
     pub blanks: &'static [(i32, i32)],
     pub inputs: &'static [(i32, i32)],
     pub outputs: &'static [(i32, i32)],
+    pub conveyor_links: &'static [(i32, i32)],
 }
 
 pub struct ShapeIters<T> {
@@ -25,7 +26,7 @@ impl Shape {
         facing: IsoDirection,
     ) -> impl Iterator<Item = IsoPos> {
         def.iter()
-            .map(move |&(par, perp)| origin.offset_both_direction(facing, par, perp))
+            .map(move |&(perp, par)| origin.offset_both_direction(facing, par, perp))
     }
 
     pub fn positions(
@@ -39,6 +40,14 @@ impl Shape {
             outputs: Self::positions_impl(self.outputs, origin, facing),
         }
     }
+
+    pub fn conveyor_link_positions(
+        &self,
+        origin: IsoPos,
+        facing: IsoDirection,
+    ) -> impl Iterator<Item = IsoPos> {
+        Self::positions_impl(self.conveyor_links, origin, facing)
+    }
 }
 
 pub struct BuildingResult {
@@ -51,10 +60,15 @@ pub fn spawn_building_with_placeholder_art(
     commands: &mut Commands,
     common_assets: &Res<CommonAssets>,
     obstruction_map: &mut ResMut<BuildingObstructionMap>,
+    conveyor_map: &ConveyorMap,
     shape: &Shape,
     origin: IsoPos,
     facing: IsoDirection,
 ) -> BuildingResult {
+    if shape.conveyor_links.len() > 0 {
+        // todo!();
+    }
+
     let main_entity = start_tile(commands, common_assets, origin, TileVariant::Misc)
         .current_entity()
         .unwrap();
@@ -101,6 +115,9 @@ pub fn spawn_building(
     origin: IsoPos,
     facing: IsoDirection,
 ) -> BuildingResult {
+    if shape.conveyor_links.len() > 0 {
+        todo!();
+    }
     let main_entity = commands
         .spawn(PbrBundle {
             mesh,
