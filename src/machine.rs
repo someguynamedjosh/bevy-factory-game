@@ -16,7 +16,6 @@ pub struct Recipe {
 pub enum MachineType {
     Furnace,
     Mill,
-    CrucibleFiller,
 }
 
 impl MachineType {
@@ -40,22 +39,17 @@ impl MachineType {
                     outputs: &[StructuralComponent],
                 },
             ],
-            Self::CrucibleFiller => &[Recipe {
-                inputs: &[MetalRubble, MetalRubble],
-                time: 40,
-                outputs: &[Metal],
-            }],
         }
     }
 
     pub fn get_shape(self) -> &'static Shape {
-        // (||, T) -> the origin will always have a vertex pointing +T (side pointing -T)
+        // (T, ||) -> the origin will always have a vertex pointing +T (side pointing -T)
         // If the direction is up, || is up, and T is left.
         match self {
             Self::Furnace => &Shape {
-                blanks: &[(1, 0), (-1, 0), (1, 1), (-1, 1)],
-                inputs: &[(0, 1)],
-                outputs: &[(0, -1)],
+                blanks: &[(0, 1), (0, -1), (1, 1), (1, -1)],
+                inputs: &[(-1, 0)],
+                outputs: &[(1, 0)],
                 conveyor_links: &[],
             },
             Self::Mill => &Shape {
@@ -63,13 +57,6 @@ impl MachineType {
                 inputs: &[(1, -1)],
                 outputs: &[(1, 0)],
                 conveyor_links: &[],
-            },
-            Self::CrucibleFiller => &Shape {
-                blanks: &[],
-                inputs: &[(0, -1)],
-                outputs: &[(0, 1)],
-                conveyor_links: &[(-1, 0)],
-                // conveyor_links: &[],
             },
         }
     }

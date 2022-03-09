@@ -296,10 +296,10 @@ fn ui_update(
         state.action = MouseAction::PlaceClaw;
     }
     if key_input.just_pressed(KeyCode::Key3) {
-        state.action = MouseAction::Build(Buildable::Machine(MachineType::CrucibleFiller));
+        state.action = MouseAction::Build(Buildable::Machine(MachineType::Furnace));
     }
     if key_input.just_pressed(KeyCode::Key4) {
-        // state.action = MouseAction::Build(Buildable::Machine(MachineType::Mill));
+        state.action = MouseAction::Build(Buildable::Machine(MachineType::Mill));
     }
     if key_input.just_pressed(KeyCode::E) {
         state.direction = state.direction.clockwise();
