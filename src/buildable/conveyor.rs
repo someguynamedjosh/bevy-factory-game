@@ -14,7 +14,7 @@ pub struct Conveyor {
 /// Conveyors that do not have any downstream.
 struct TailConveyor;
 /// It takes this many ticks for an item to ride one unit of a conveyor.
-const DURATION: u8 = 4;
+const DURATION: u8 = 6;
 
 pub fn spawn_conveyor(
     commands: &mut Commands,
@@ -113,44 +113,54 @@ fn tick(
     mut all_items: Query<&mut ItemAnimator>,
 ) {
     for (mut current,) in tail_conveyors.iter() {
-        loop {
-            let (pos, mut conveyor, mut item_container) = all_conveyors.get_mut(current).unwrap();
-            let empty = item_container.item().is_none();
-            // True if the downstream belt could have taken an item we have but didn't.
-            let not_taken = conveyor.incoming_timer == 0;
-            conveyor.incoming_timer = conveyor.incoming_timer.saturating_sub(1);
-            conveyor.outgoing_timer = conveyor.outgoing_timer.saturating_sub(1);
-            // Don't allow placing items into the conveyor or moving items out of the
-            // conveyor if there are items partially inside the conveyor.
-            item_container.set_blocked(conveyor.incoming_timer > 0 || conveyor.outgoing_timer > 0);
-            let alignment = item_container.alignment();
-            let upstream = if let Some(upstream) = conveyor.upstream {
-                upstream
-            } else {
-                break;
-            };
-            if empty && !item_container.blocked() {
-                let pos = pos.clone();
-                let (_, mut upstream, mut up_container) = all_conveyors.get_mut(upstream).unwrap();
-                if let Some(ientity) = up_container.try_take() {
-                    let mut item = all_items.get_mut(ientity).unwrap();
-                    item.anim_to_container(pos, alignment, DURATION);
-                    upstream.outgoing_timer = DURATION;
-
-                    let (_, mut this, mut this_container) = all_conveyors.get_mut(current).unwrap();
-                    this.incoming_timer = DURATION - 1;
-                    this_container.put_item(ientity);
-                    this_container.set_blocked(true);
-                }
-            } else if not_taken {
-                item_container.item().map(|e| {
-                    let mut item = all_items.get_mut(e).unwrap();
-                    item.anim_stationary_in_container(*pos, alignment);
-                });
-            }
-            current = upstream;
-        }
+        tick_conveyor(&mut all_conveyors, current, &mut all_items);
     }
+}
+
+fn tick_conveyor(
+    all_conveyors: &mut Query<(&IsoPos, &mut Conveyor, &mut ItemContainer)>,
+    mut current: Entity,
+    all_items: &mut Query<&mut ItemAnimator>,
+) {
+    let (pos, mut conveyor, mut item_container) = all_conveyors.get_mut(current).unwrap();
+    let empty = item_container.item().is_none();
+    // True if the downstream belt could have taken an item we have but didn't.
+    let not_taken = conveyor.incoming_timer == 0;
+    conveyor.incoming_timer = conveyor.incoming_timer.saturating_sub(1);
+    conveyor.outgoing_timer = conveyor.outgoing_timer.saturating_sub(1);
+    let alignment = item_container.alignment();
+    let upstream = if let Some(upstream) = conveyor.upstream {
+        upstream
+    } else {
+        return;
+    };
+    item_container.set_blocked(false);
+    if empty {
+        let pos = pos.clone();
+        let (_, mut upstream, mut up_container) = all_conveyors.get_mut(upstream).unwrap();
+        if let Some(ientity) = up_container.try_take() {
+            let mut item = all_items.get_mut(ientity).unwrap();
+            item.anim_to_container(pos, alignment, DURATION);
+            upstream.outgoing_timer = DURATION;
+
+            let (_, mut this, mut this_container) = all_conveyors.get_mut(current).unwrap();
+            this.incoming_timer = DURATION - 1;
+            this_container.put_item(ientity);
+            this_container.set_blocked(true);
+        }
+    } else if not_taken {
+        item_container.item().map(|e| {
+            let mut item = all_items.get_mut(e).unwrap();
+            item.anim_stationary_in_container(*pos, alignment);
+        });
+    }
+
+    let (pos, mut conveyor, mut item_container) = all_conveyors.get_mut(current).unwrap();
+    // Don't allow placing items into the conveyor or moving items out of the
+    // conveyor if there are items partially inside the conveyor.
+    item_container.set_blocked(conveyor.incoming_timer > 0 || conveyor.outgoing_timer > 0);
+
+    tick_conveyor(all_conveyors, upstream, all_items);
 }
 
 pub struct Plug;
