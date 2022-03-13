@@ -182,8 +182,6 @@ fn tick(
         if machine.processing() && !done {
             machine.processing_time += 1;
         }
-
-        println!("{:?}", machine.processing_time);
     }
 }
 

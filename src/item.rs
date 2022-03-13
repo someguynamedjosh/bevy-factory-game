@@ -34,6 +34,10 @@ pub struct Item {
 }
 
 impl Item {
+    pub fn as_elements(&self) -> &[Element] {
+        &self.elements[..]
+    }
+
     pub fn into_elements(self) -> Vec<Element> {
         self.elements
     }

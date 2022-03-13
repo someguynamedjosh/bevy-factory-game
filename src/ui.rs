@@ -204,15 +204,16 @@ fn ui_update(
     key_input: Res<Input<KeyCode>>,
     mut obstruction_map: ResMut<BuildingObstructionMap>,
     mut conveyor_map: ResMut<ConveyorMap>,
-    containers: Query<(Entity, &IsoPos), With<ItemContainer>>,
+    containers: Query<(Entity, &ItemContainer, &IsoPos)>,
     mut transforms: Query<&mut Transform>,
     mut texts: Query<&mut Text>,
     mut materials: Query<&mut Handle<ColorMaterial>>,
+    items: Query<&Item>,
 ) {
     let mut hovered_container = None;
-    for (container, pos) in containers.iter() {
+    for (entity, container, pos) in containers.iter() {
         if *pos == state.mouse_pos_in_world {
-            hovered_container = Some((*pos, container));
+            hovered_container = Some((entity, container, *pos));
             break;
         }
     }
@@ -252,10 +253,10 @@ fn ui_update(
                 );
             }
             MouseAction::PlaceClaw => {
-                if let Some((p, c)) = hovered_container {
+                if let Some((e, _, p)) = hovered_container {
                     state.action = MouseAction::PlaceClawEnd {
                         start_pos: p,
-                        start_container: c,
+                        start_container: e,
                     };
                 }
             }
@@ -263,12 +264,12 @@ fn ui_update(
                 start_container,
                 start_pos,
             } => {
-                if let Some((p, c)) = hovered_container {
+                if let Some((e, _, p)) = hovered_container {
                     let distance = p.centroid_pos().distance(start_pos.centroid_pos()) + 0.01;
                     let distance = distance / GRID_EDGE_LENGTH * 2.0;
                     assert!(distance > 0.0 && distance < 255.0);
                     let length = (distance + 0.3).floor() as u8;
-                    spawn_claw(commands, &common_assets, *start_container, c, length);
+                    spawn_claw(commands, &common_assets, *start_container, e, length);
                     state.action = MouseAction::PlaceClaw;
                 }
             }
@@ -326,7 +327,20 @@ fn ui_update(
         MouseAction::Build(typ) => format!("{:?}", typ),
     };
     let mut text = texts.get_mut(state.tool_text).unwrap();
-    text.value = format!("{}\n{}", tooltip, /* credits.0.floor() */ 0);
+    let hovered_item = if let Some((_, container, _)) = hovered_container {
+        if let Some(item) = container.item {
+            let item = items.get(item).unwrap();
+            format!("{:?}", item.as_elements())
+        } else {
+            format!("")
+        }
+    } else {
+        format!("")
+    };
+    text.value = format!(
+        "{}\n{}\n{}",
+        tooltip, /* credits.0.floor() */ 0, hovered_item
+    );
 }
 
 pub struct Plug;
