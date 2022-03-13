@@ -1,12 +1,12 @@
 use super::{Element, Item};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum KnownItem {
+pub enum ReferenceItem {
     IronOre,
     IronNugget,
 }
 
-impl KnownItem {
+impl ReferenceItem {
     pub fn all() -> &'static [Self] {
         &[Self::IronOre, Self::IronNugget]
     }

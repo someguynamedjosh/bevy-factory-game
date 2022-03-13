@@ -1,4 +1,4 @@
-use super::{Element, KnownItem};
+use super::{Element, ReferenceItem};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Item {
@@ -24,8 +24,8 @@ impl Item {
             .into()
     }
 
-    pub fn as_known_item(&self) -> Option<KnownItem> {
-        for known in KnownItem::all() {
+    pub fn as_known_item(&self) -> Option<ReferenceItem> {
+        for known in ReferenceItem::all() {
             if &known.as_item() == self {
                 return Some(*known);
             }

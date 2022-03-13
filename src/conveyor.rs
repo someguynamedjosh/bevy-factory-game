@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    item::{ItemAnimator, ItemContainer, ItemContainerAlignment, KnownItem},
+    item::{ItemAnimator, ItemContainer, ItemContainerAlignment, ReferenceItem},
     prelude::*,
 };
 
@@ -30,7 +30,7 @@ pub fn spawn_conveyor(
         Some(crate::item::spawn_item(
             commands,
             common_assets,
-            KnownItem::IronOre.as_item(),
+            ReferenceItem::IronOre.as_item(),
             origin,
             alignment,
         ))

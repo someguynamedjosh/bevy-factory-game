@@ -4,12 +4,12 @@ mod base;
 mod container;
 mod container_debug;
 mod element;
-mod known_item;
+mod reference_item;
 
 use bevy::prelude::*;
 
 use self::animation::*;
-pub use self::{animator::*, base::*, container::*, element::*, known_item::*};
+pub use self::{animator::*, base::*, container::*, element::*, reference_item::*};
 use crate::prelude::*;
 
 pub fn spawn_item(
@@ -20,8 +20,8 @@ pub fn spawn_item(
     alignment: ItemContainerAlignment,
 ) -> Entity {
     let material = match item.as_known_item() {
-        Some(KnownItem::IronOre) => common_assets.metal_rubble_mat.clone(),
-        Some(KnownItem::IronNugget) => common_assets.metal_mat.clone(),
+        Some(ReferenceItem::IronOre) => common_assets.metal_rubble_mat.clone(),
+        Some(ReferenceItem::IronNugget) => common_assets.metal_mat.clone(),
         None => common_assets.claw_mat.clone(),
     };
     commands

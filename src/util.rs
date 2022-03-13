@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    item::{spawn_item, ItemContainer, ItemContainerAlignment, KnownItem},
+    item::{spawn_item, ItemContainer, ItemContainerAlignment, ReferenceItem},
     prelude::*,
 };
 
@@ -64,7 +64,7 @@ fn tick_spawners(
                 let item = spawn_item(
                     commands,
                     &common_assets,
-                    KnownItem::IronOre.as_item(),
+                    ReferenceItem::IronOre.as_item(),
                     *pos,
                     ItemContainerAlignment::Centroid,
                 );
