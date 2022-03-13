@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use itertools::Itertools;
 
 use crate::{
-    building::{spawn_building, spawn_building_with_placeholder_art, Shape},
+    building::{BuildingSpawner, Shape},
     item::{spawn_item, Element, ItemContainer},
     prelude::*,
 };
@@ -84,7 +84,6 @@ pub fn spawn_machine(
     commands: &mut Commands,
     common_assets: &Res<CommonAssets>,
     obstruction_map: &mut ResMut<BuildingObstructionMap>,
-    conveyor_map: &ConveyorMap,
     typ: MachineType,
     origin: IsoPos,
     facing: IsoDirection,
@@ -96,18 +95,28 @@ pub fn spawn_machine(
         inputs,
         outputs,
         origin,
+        art,
     } = if let Some((mesh, mat)) = typ.get_appearence(&*common_assets) {
-        spawn_building(commands, obstruction_map, mesh, mat, shape, origin, facing)
-    } else {
-        spawn_building_with_placeholder_art(
+        BuildingSpawner::start(
             commands,
-            common_assets,
+            Some(mesh),
+            Some(mat),
             obstruction_map,
-            conveyor_map,
             shape,
             origin,
             facing,
         )
+        .finish()
+    } else {
+        BuildingSpawner::start_with_placeholder_art(
+            commands,
+            Some(common_assets),
+            obstruction_map,
+            shape,
+            origin,
+            facing,
+        )
+        .finish()
     };
 
     let machine = Machine {
@@ -164,11 +173,12 @@ fn tick(
 
         for (&container, buffer) in inputs.iter().zip(input_buffer.iter_mut()) {
             let (mut container, _) = containers.get_mut(container).unwrap();
-            if buffer.is_none() && container.item().is_some() {
-                let item = container.item().take().unwrap();
-                commands.despawn(item);
-                let item = items.get(item).unwrap().clone();
-                *buffer = Some(item);
+            if buffer.is_none() {
+                if let Some(item) = container.try_take() {
+                    commands.despawn(item);
+                    let item = items.get(item).unwrap().clone();
+                    *buffer = Some(item);
+                }
             }
         }
 

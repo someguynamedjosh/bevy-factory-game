@@ -56,8 +56,8 @@ pub fn spawn_conveyor(
         .with(SetupNeeded)
         .current_entity()
         .unwrap();
-    obstruction_map.set_empty(origin, result);
-    conveyor_map.set_empty(origin, result);
+    obstruction_map.set_assuming_empty(origin, result);
+    conveyor_map.set_assuming_empty(origin, result);
     result
 }
 

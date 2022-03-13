@@ -83,7 +83,7 @@ fn tick_destroyers(
         if container.blocked() {
             continue;
         }
-        if let Some(item) = container.item().take() {
+        if let Some(item) = container.try_take() {
             commands.despawn(item);
         }
     }

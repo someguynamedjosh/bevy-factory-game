@@ -1,3 +1,5 @@
+use bevy::{math::Vec4Swizzles, prelude::*, render::camera::Camera};
+
 use crate::{
     claw::spawn_claw,
     conveyor::spawn_conveyor,
@@ -6,7 +8,6 @@ use crate::{
     machine::{spawn_machine, MachineType},
     prelude::*,
 };
-use bevy::{math::Vec4Swizzles, prelude::*, render::camera::Camera};
 
 #[derive(Default)]
 struct MouseSystemState {
@@ -38,7 +39,6 @@ impl Buildable {
         commands: &mut Commands,
         common_assets: &Res<CommonAssets>,
         obstruction_map: &mut ResMut<BuildingObstructionMap>,
-        conveyor_map: &ConveyorMap,
         origin: IsoPos,
         facing: IsoDirection,
     ) {
@@ -47,7 +47,6 @@ impl Buildable {
                 commands,
                 common_assets,
                 obstruction_map,
-                conveyor_map,
                 *typ,
                 origin,
                 facing,
@@ -278,7 +277,6 @@ fn ui_update(
                     commands,
                     &common_assets,
                     &mut obstruction_map,
-                    &conveyor_map,
                     state.mouse_pos_in_world,
                     state.direction,
                 );

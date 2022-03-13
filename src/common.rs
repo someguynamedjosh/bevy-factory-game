@@ -73,7 +73,7 @@ pub enum TileVariant {
 
 pub fn start_tile<'c>(
     commands: &'c mut Commands,
-    common_assets: &Res<CommonAssets>,
+    common_assets: &CommonAssets,
     pos: IsoPos,
     variant: TileVariant,
 ) -> &'c mut Commands {

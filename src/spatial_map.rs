@@ -18,7 +18,7 @@ impl<Data> SpatialMap<Data> {
     }
 
     /// Like set(), but asserts that the cell is not occupied.
-    pub fn set_empty(&mut self, pos: IsoPos, data: Data) {
+    pub fn set_assuming_empty(&mut self, pos: IsoPos, data: Data) {
         assert!(!self.is_occupied(pos));
         self.set(pos, data);
     }

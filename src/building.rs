@@ -1,8 +1,9 @@
+use bevy::prelude::*;
+
 use crate::{
     item::{ItemContainer, ItemContainerAlignment},
     prelude::*,
 };
-use bevy::prelude::*;
 
 /// Defines the visual/physical structure of a machine.
 #[derive(Debug)]
@@ -45,107 +46,130 @@ pub struct BuildingResult {
     pub inputs: Vec<Entity>,
     pub outputs: Vec<Entity>,
     pub origin: Entity,
+    pub art: Vec<Entity>,
 }
 
-pub fn spawn_building_with_placeholder_art(
-    commands: &mut Commands,
-    common_assets: &Res<CommonAssets>,
-    obstruction_map: &mut ResMut<BuildingObstructionMap>,
-    conveyor_map: &ConveyorMap,
-    shape: &Shape,
+#[scones::make_constructor(pub start)]
+#[scones::make_constructor(pub start_with_placeholder_art)]
+pub struct BuildingSpawner<'a> {
+    commands: &'a mut Commands,
+
+    #[value(None for start)]
+    common_assets: Option<&'a CommonAssets>,
+    #[value(None for start_with_placeholder_art)]
+    mesh: Option<Handle<Mesh>>,
+    #[value(None for start_with_placeholder_art)]
+    material: Option<Handle<StandardMaterial>>,
+
+    obstruction_map: &'a mut BuildingObstructionMap,
+    shape: &'a Shape,
     origin: IsoPos,
     facing: IsoDirection,
-) -> BuildingResult {
-    let main_entity = start_tile(commands, common_assets, origin, TileVariant::Misc)
-        .current_entity()
-        .unwrap();
-    obstruction_map.set_empty(origin, main_entity);
-    let tile_pos_iters = shape.positions(origin, facing);
-
-    for pos in tile_pos_iters.blanks {
-        obstruction_map.set_empty(pos, main_entity);
-        start_tile(commands, common_assets, pos, TileVariant::Blank);
-    }
-
-    let mut inputs = Vec::new();
-    for pos in tile_pos_iters.inputs {
-        obstruction_map.set_empty(pos, main_entity);
-        let id = start_tile(commands, common_assets, pos, TileVariant::Input)
-            .with(ItemContainer::new_empty(ItemContainerAlignment::Centroid))
-            .current_entity()
-            .unwrap();
-        inputs.push(id);
-    }
-    let mut outputs = Vec::new();
-    for pos in tile_pos_iters.outputs {
-        obstruction_map.set_empty(pos, main_entity);
-        let id = start_tile(commands, common_assets, pos, TileVariant::Output)
-            .with(ItemContainer::new_empty(ItemContainerAlignment::Centroid))
-            .current_entity()
-            .unwrap();
-        outputs.push(id);
-    }
-
-    BuildingResult {
-        inputs,
-        outputs,
-        origin: main_entity,
-    }
 }
 
-pub fn spawn_building(
-    commands: &mut Commands,
-    obstruction_map: &mut ResMut<BuildingObstructionMap>,
-    mesh: Handle<Mesh>,
-    material: Handle<StandardMaterial>,
-    shape: &Shape,
-    origin: IsoPos,
-    facing: IsoDirection,
-) -> BuildingResult {
-    let main_entity = commands
-        .spawn(PbrBundle {
-            mesh,
-            material,
-            transform: origin.building_transform(facing.axis()),
-            ..Default::default()
-        })
-        .current_entity()
-        .unwrap();
-    obstruction_map.set_empty(origin, main_entity);
-    let tile_pos_iters = shape.positions(origin, facing);
+impl<'a> BuildingSpawner<'a> {
+    pub fn finish(mut self) -> BuildingResult {
+        let mut art = Vec::new();
+        let main_entity = self.create_main(&mut art);
+        self.create_blanks(main_entity, &mut art);
+        let inputs = self.create_inputs(main_entity, &mut art);
+        let outputs = self.create_outputs(main_entity, &mut art);
 
-    for pos in tile_pos_iters.blanks {
-        obstruction_map.set_empty(pos, main_entity);
+        BuildingResult {
+            inputs,
+            outputs,
+            origin: main_entity,
+            art,
+        }
     }
 
-    let mut inputs = Vec::new();
-    for pos in tile_pos_iters.inputs {
-        obstruction_map.set_empty(pos, main_entity);
-        let id = commands
+    fn positions(&self) -> ShapeIters<impl Iterator<Item = IsoPos>> {
+        self.shape.positions(self.origin, self.facing)
+    }
+
+    fn create_main(&mut self, art: &mut Vec<Entity>) -> Entity {
+        let main_entity = self.commands.spawn(()).current_entity().unwrap();
+        self.obstruction_map
+            .set_assuming_empty(self.origin, main_entity);
+        if let (Some(mesh), Some(material)) = (self.mesh.take(), self.material.take()) {
+            self.spawn_bespoke_art(mesh, material, art);
+        } else {
+            self.maybe_spawn_placeholder_art(self.origin, TileVariant::Misc, art);
+        }
+        main_entity
+    }
+
+    fn spawn_bespoke_art(
+        &mut self,
+        mesh: Handle<Mesh>,
+        material: Handle<StandardMaterial>,
+        art: &mut Vec<Entity>,
+    ) {
+        let main_art = self
+            .commands
+            .spawn(PbrBundle {
+                mesh,
+                material,
+                transform: self.origin.building_transform(self.facing.axis()),
+                ..Default::default()
+            })
+            .current_entity()
+            .unwrap();
+        art.push(main_art);
+    }
+
+    fn create_blanks(&mut self, main_entity: Entity, art: &mut Vec<Entity>) {
+        for pos in self.positions().blanks {
+            self.obstruction_map.set_assuming_empty(pos, main_entity);
+            self.maybe_spawn_placeholder_art(pos, TileVariant::Blank, art);
+        }
+    }
+
+    fn create_inputs(&mut self, main_entity: Entity, art: &mut Vec<Entity>) -> Vec<Entity> {
+        let mut inputs = Vec::new();
+        for pos in self.positions().inputs {
+            self.obstruction_map.set_assuming_empty(pos, main_entity);
+            let id = self.spawn_empty_item_container(pos);
+            inputs.push(id);
+            self.maybe_spawn_placeholder_art(pos, TileVariant::Input, art);
+        }
+        inputs
+    }
+
+    fn create_outputs(&mut self, main_entity: Entity, art: &mut Vec<Entity>) -> Vec<Entity> {
+        let mut outputs = Vec::new();
+        for pos in self.positions().outputs {
+            self.obstruction_map.set_assuming_empty(pos, main_entity);
+            let id = self.spawn_empty_item_container(pos);
+            outputs.push(id);
+            self.maybe_spawn_placeholder_art(pos, TileVariant::Output, art);
+        }
+        outputs
+    }
+
+    fn maybe_spawn_placeholder_art(
+        &mut self,
+        pos: IsoPos,
+        variant: TileVariant,
+        art: &mut Vec<Entity>,
+    ) {
+        if let Some(ca) = self.common_assets {
+            let ent = start_tile(self.commands, ca, pos, variant)
+                .current_entity()
+                .unwrap();
+            art.push(ent);
+        }
+    }
+
+    fn spawn_empty_item_container(&mut self, pos: IsoPos) -> Entity {
+        let id = self
+            .commands
             .spawn((
                 pos,
                 ItemContainer::new_empty(ItemContainerAlignment::Centroid),
             ))
             .current_entity()
             .unwrap();
-        inputs.push(id);
-    }
-    let mut outputs = Vec::new();
-    for pos in tile_pos_iters.outputs {
-        obstruction_map.set_empty(pos, main_entity);
-        let id = commands
-            .spawn((
-                pos,
-                ItemContainer::new_empty(ItemContainerAlignment::Centroid),
-            ))
-            .current_entity()
-            .unwrap();
-        outputs.push(id);
-    }
-
-    BuildingResult {
-        inputs,
-        outputs,
-        origin: main_entity,
+        id
     }
 }
