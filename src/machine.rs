@@ -1,44 +1,35 @@
 use crate::{
     building::{spawn_building, spawn_building_with_placeholder_art, Shape},
-    item::ItemContainer,
+    item::{Element, ItemContainer},
     prelude::*,
 };
 use bevy::prelude::*;
-
-#[derive(Debug)]
-pub struct Recipe {
-    inputs: &'static [Item],
-    time: u8,
-    outputs: &'static [Item],
-}
+use itertools::Itertools;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MachineType {
-    Furnace,
-    Mill,
+    Purifier,
+    Joiner,
 }
 
 impl MachineType {
-    fn get_recipes(self) -> &'static [Recipe] {
-        use Item::*;
+    pub fn processing_time(self) -> u8 {
         match self {
-            Self::Furnace => &[Recipe {
-                inputs: &[MetalRubble, MetalRubble],
-                time: 40,
-                outputs: &[Metal],
-            }],
-            Self::Mill => &[
-                Recipe {
-                    inputs: &[Metal, Metal, Metal],
-                    time: 96,
-                    outputs: &[ElectronicComponent, ElectronicComponent],
-                },
-                Recipe {
-                    inputs: &[Metal],
-                    time: 32,
-                    outputs: &[StructuralComponent],
-                },
-            ],
+            _ => 6,
+        }
+    }
+
+    pub fn process(self, items: Vec<Item>) -> Vec<Item> {
+        match self {
+            Self::Purifier => {
+                let (item,) = items.into_iter().collect_tuple().unwrap();
+                vec![item.with_modified_elements(|xs| xs.filter(|x| x != &Element::Impurity))]
+            }
+            Self::Joiner => {
+                let (a, b) = items.into_iter().collect_tuple().unwrap();
+                let item = [a.into_elements(), b.into_elements()].concat().into();
+                vec![item]
+            }
         }
     }
 
@@ -46,17 +37,15 @@ impl MachineType {
         // (T, ||) -> the origin will always have a vertex pointing +T (side pointing -T)
         // If the direction is up, || is up, and T is left.
         match self {
-            Self::Furnace => &Shape {
+            Self::Purifier => &Shape {
                 blanks: &[(0, 1), (0, -1), (1, 1), (1, -1)],
-                inputs: &[(-1, 0)],
-                outputs: &[(1, 0)],
-                conveyor_links: &[],
+                inputs: &[(1, 0)],
+                outputs: &[(-1, 0)],
             },
-            Self::Mill => &Shape {
-                blanks: &[(0, -1)],
-                inputs: &[(1, -1)],
-                outputs: &[(1, 0)],
-                conveyor_links: &[],
+            Self::Joiner => &Shape {
+                blanks: &[],
+                inputs: &[(0, 1), (0, -1)],
+                outputs: &[(-1, 0)],
             },
         }
     }
@@ -75,11 +64,10 @@ impl MachineType {
 #[derive(Clone, Debug)]
 pub struct Machine {
     inputs: Vec<Entity>,
-    output: Entity,
+    outputs: Vec<Entity>,
 
-    recipes: &'static [Recipe],
-    recipe: &'static Recipe,
-    input_buffer: Vec<bool>,
+    typ: MachineType,
+    input_buffer: Vec<Option<Item>>,
     output_buffer: Vec<Item>,
 
     processing: bool,
@@ -95,11 +83,9 @@ pub fn spawn_machine(
     origin: IsoPos,
     facing: IsoDirection,
 ) {
-    let recipes = typ.get_recipes();
     let shape = typ.get_shape();
     // Machine shapes expect to have an edge in the direction the machine points in.
     assert!(!origin.has_vertex_pointing_in(facing));
-    assert!(recipes.len() > 0);
     let BuildingResult {
         inputs,
         outputs,
@@ -117,17 +103,12 @@ pub fn spawn_machine(
             facing,
         )
     };
-    assert_eq!(outputs.len(), 1);
-    let output = outputs[0];
-    let recipe = &recipes[0];
-    let input_buffer = vec![false; recipe.inputs.len()];
 
     let machine = Machine {
+        input_buffer: vec![None; inputs.len()],
         inputs,
-        output,
-        recipes,
-        recipe,
-        input_buffer,
+        outputs,
+        typ,
         output_buffer: Vec::new(),
         processing: false,
         processing_time: 0,
@@ -144,47 +125,16 @@ fn tick(
     items: Query<&Item>,
 ) {
     for (mut machine,) in machines.iter_mut() {
-        let recipe = machine.recipe;
-        let (mut output, pos) = containers.get_mut(machine.output).unwrap();
-        if output.item.is_none() {
-            if machine.processing_time == recipe.time && machine.output_buffer.is_empty() {
-                for item in recipe.outputs {
-                    machine.output_buffer.push(item.clone());
-                }
-                machine.processing = false;
-                machine.processing_time = 0;
-            }
-            if let Some(item) = machine.output_buffer.pop() {
-                output.put_new_item(commands, &common_assets, *pos, item);
+        let done = machine.processing_time == machine.typ.processing_time();
+        let mut can_output = done;
+        for &output in &machine.outputs {
+            let (mut output, pos) = containers.get_mut(output).unwrap();
+            if output.item.is_some() {
+                can_output = false;
+                break;
             }
         }
-
-        for input in 0..machine.inputs.len() {
-            let input = machine.inputs[input];
-            let mut input = containers.get_mut(input).unwrap().0;
-            if let Some(item_ent) = input.item {
-                let item = items.get(item_ent).unwrap();
-                for idx in 0..recipe.inputs.len() {
-                    if machine.input_buffer[idx] {
-                        continue;
-                    }
-                    if *item == recipe.inputs[idx] {
-                        machine.input_buffer[idx] = true;
-                        input.item = None;
-                        commands.despawn(item_ent);
-                        break;
-                    }
-                }
-            }
-        }
-        if !machine.processing && machine.input_buffer.iter().all(|&stored| stored) {
-            machine.processing = true;
-            machine.processing_time = 0;
-            for stored in &mut machine.input_buffer {
-                *stored = false;
-            }
-        }
-        if machine.processing && machine.processing_time < recipe.time {
+        if machine.processing && !done {
             machine.processing_time += 1;
         }
     }

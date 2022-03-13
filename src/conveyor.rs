@@ -1,4 +1,4 @@
-use crate::item::{ItemAnimator, ItemContainer, ItemContainerAlignment};
+use crate::item::{ItemAnimator, ItemContainer, ItemContainerAlignment, KnownItem};
 use crate::prelude::*;
 use bevy::prelude::*;
 
@@ -27,7 +27,7 @@ pub fn spawn_conveyor(
         Some(crate::item::spawn_item(
             commands,
             common_assets,
-            Item::MetalRubble,
+            KnownItem::IronOre.as_item(),
             origin,
             alignment,
         ))

@@ -228,11 +228,6 @@ fn ui_update(
                         return false;
                     }
                 }
-                for p in shape.conveyor_link_positions(state.mouse_pos_in_world, state.direction) {
-                    if !conveyor_map.is_occupied(p) {
-                        return false;
-                    }
-                }
                 true
             })()
         }
@@ -296,10 +291,10 @@ fn ui_update(
         state.action = MouseAction::PlaceClaw;
     }
     if key_input.just_pressed(KeyCode::Key3) {
-        state.action = MouseAction::Build(Buildable::Machine(MachineType::Furnace));
+        state.action = MouseAction::Build(Buildable::Machine(MachineType::Purifier));
     }
     if key_input.just_pressed(KeyCode::Key4) {
-        state.action = MouseAction::Build(Buildable::Machine(MachineType::Mill));
+        state.action = MouseAction::Build(Buildable::Machine(MachineType::Joiner));
     }
     if key_input.just_pressed(KeyCode::E) {
         state.direction = state.direction.clockwise();

@@ -1,4 +1,4 @@
-use crate::item::{spawn_item, ItemContainer, ItemContainerAlignment};
+use crate::item::{spawn_item, ItemContainer, ItemContainerAlignment, KnownItem};
 use crate::prelude::*;
 use bevy::prelude::*;
 
@@ -61,7 +61,7 @@ fn tick_spawners(
                 let item = spawn_item(
                     commands,
                     &common_assets,
-                    Item::MetalRubble,
+                    KnownItem::IronOre.as_item(),
                     *pos,
                     ItemContainerAlignment::Centroid,
                 );

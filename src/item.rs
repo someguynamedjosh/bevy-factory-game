@@ -29,46 +29,65 @@ impl ItemContainerAlignment {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Item {
-    MetalRubble,
-    Metal,
-    ElectronicComponent,
-    StructuralComponent,
-}
-
-pub struct ItemProperties {
-    /// Value of this item in credits.
-    pub base_market_value: f32,
-    /// Mass of this item in kilograms.
-    pub mass: f32,
-    /// Volume of this item in liters.
-    pub volume: f32,
+pub struct Item {
+    elements: Vec<Element>,
 }
 
 impl Item {
-    pub const fn get_properties(&self) -> &'static ItemProperties {
+    pub fn into_elements(self) -> Vec<Element> {
+        self.elements
+    }
+
+    pub fn with_modified_elements<O, M>(self, modifier: M) -> Self
+    where
+        O: Iterator<Item = Element>,
+        M: Fn(std::vec::IntoIter<Element>) -> O,
+    {
+        modifier(self.elements.into_iter())
+            .collect::<Vec<_>>()
+            .into()
+    }
+}
+
+impl From<Vec<Element>> for Item {
+    fn from(elements: Vec<Element>) -> Self {
+        Self { elements }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Element {
+    Ferrite,
+    Impurity,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum KnownItem {
+    IronOre,
+    IronNugget,
+}
+
+impl KnownItem {
+    pub fn all() -> &'static [Self] {
+        &[Self::IronOre, Self::IronNugget]
+    }
+
+    pub fn as_item(&self) -> Item {
         match self {
-            Item::MetalRubble => &ItemProperties {
-                base_market_value: 10.0,
-                mass: 60.0,
-                volume: 30.0,
-            },
-            Item::Metal => &ItemProperties {
-                base_market_value: 20.0,
-                mass: 30.0,
-                volume: 5.0,
-            },
-            Item::ElectronicComponent => &ItemProperties {
-                base_market_value: 40.0,
-                mass: 15.0,
-                volume: 5.0,
-            },
-            Item::StructuralComponent => &ItemProperties {
-                base_market_value: 30.0,
-                mass: 20.0,
-                volume: 5.0,
-            },
+            Self::IronOre => vec![Element::Impurity, Element::Ferrite, Element::Impurity].into(),
+            Self::IronNugget => vec![Element::Ferrite, Element::Ferrite].into(),
         }
+    }
+}
+
+impl Item {
+    pub fn as_known_item(&self) -> Option<KnownItem> {
+        for known in KnownItem::all() {
+            if &known.as_item() == self {
+                return Some(*known);
+            }
+        }
+        None
     }
 }
 
@@ -128,11 +147,10 @@ pub fn spawn_item(
     origin: IsoPos,
     alignment: ItemContainerAlignment,
 ) -> Entity {
-    let material = match &item {
-        Item::MetalRubble => common_assets.metal_rubble_mat.clone(),
-        Item::Metal => common_assets.metal_mat.clone(),
-        Item::ElectronicComponent => common_assets.circuit_mat.clone(),
-        Item::StructuralComponent => common_assets.structural_mat.clone(),
+    let material = match item.as_known_item() {
+        Some(KnownItem::IronOre) => common_assets.metal_rubble_mat.clone(),
+        Some(KnownItem::IronNugget) => common_assets.metal_mat.clone(),
+        None => common_assets.claw_mat.clone(),
     };
     commands
         .spawn(SpriteBundle {
