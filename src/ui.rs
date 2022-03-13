@@ -328,7 +328,7 @@ fn ui_update(
     };
     let mut text = texts.get_mut(state.tool_text).unwrap();
     let hovered_item = if let Some((_, container, _)) = hovered_container {
-        if let Some(item) = container.item {
+        if let Some(item) = container.item() {
             let item = items.get(item).unwrap();
             format!("{:?}", item.as_elements())
         } else {

@@ -34,10 +34,7 @@ impl ItemContainer {
         Self::new_maybe_preloaded(alignment, None)
     }
 
-    pub fn new_maybe_preloaded(
-        alignment: ItemContainerAlignment,
-        item: Option<Entity>,
-    ) -> Self {
+    pub fn new_maybe_preloaded(alignment: ItemContainerAlignment, item: Option<Entity>) -> Self {
         Self {
             alignment,
             item,
@@ -57,7 +54,7 @@ impl ItemContainer {
         self.blocked
     }
 
-    pub fn set_blocked(&self, blocked: bool) {
+    pub fn set_blocked(&mut self, blocked: bool) {
         self.blocked = blocked;
     }
 
@@ -89,16 +86,21 @@ impl ItemContainer {
     }
 
     // Will panic if blocked or already has an item.
-    pub fn put_new_item(
+    pub fn put_item(&mut self, item: Entity) {
+        assert!(self.item.is_none());
+        assert!(!self.blocked);
+        self.item = Some(item);
+    }
+
+    // Will panic if blocked or already has an item.
+    pub fn create_and_put_item(
         &mut self,
         commands: &mut Commands,
         common_assets: &Res<CommonAssets>,
         this_pos: IsoPos,
         item: Item,
     ) {
-        assert!(self.item.is_none());
-        assert!(!self.blocked);
         let item = spawn_item(commands, common_assets, item, this_pos, self.alignment);
-        self.item = Some(item);
+        self.put_item(item);
     }
 }

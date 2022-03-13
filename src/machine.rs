@@ -1,10 +1,11 @@
+use bevy::prelude::*;
+use itertools::Itertools;
+
 use crate::{
     building::{spawn_building, spawn_building_with_placeholder_art, Shape},
     item::{spawn_item, Element, ItemContainer},
     prelude::*,
 };
-use bevy::prelude::*;
-use itertools::Itertools;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MachineType {
@@ -34,8 +35,8 @@ impl MachineType {
     }
 
     pub fn get_shape(self) -> &'static Shape {
-        // (T, ||) -> the origin will always have a vertex pointing +T (side pointing -T)
-        // If the direction is up, || is up, and T is left.
+        // (T, ||) -> the origin will always have a vertex pointing +T (side pointing
+        // -T) If the direction is up, || is up, and T is left.
         match self {
             Self::Purifier => &Shape {
                 blanks: &[(0, 1), (0, -1), (1, 1), (1, -1)],
@@ -133,7 +134,7 @@ fn tick(
         let mut can_output = done;
         for &output in &machine.outputs {
             let (output, _) = containers.get_mut(output).unwrap();
-            if output.item.is_some() {
+            if output.item().is_some() {
                 can_output = false;
                 break;
             }
@@ -149,13 +150,7 @@ fn tick(
                 assert_eq!(results.len(), machine.outputs.len());
                 for (result, &output) in results.into_iter().zip(machine.outputs.iter()) {
                     let (mut output, pos) = containers.get_mut(output).unwrap();
-                    output.item = Some(spawn_item(
-                        commands,
-                        &common_assets,
-                        result,
-                        *pos,
-                        output.alignment,
-                    ));
+                    output.create_and_put_item(commands, &common_assets, *pos, result);
                 }
                 machine.processing_time = 0;
             }
@@ -169,8 +164,8 @@ fn tick(
 
         for (&container, buffer) in inputs.iter().zip(input_buffer.iter_mut()) {
             let (mut container, _) = containers.get_mut(container).unwrap();
-            if buffer.is_none() && container.item.is_some() {
-                let item = container.item.take().unwrap();
+            if buffer.is_none() && container.item().is_some() {
+                let item = container.item().take().unwrap();
                 commands.despawn(item);
                 let item = items.get(item).unwrap().clone();
                 *buffer = Some(item);

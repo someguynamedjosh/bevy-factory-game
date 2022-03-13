@@ -85,8 +85,8 @@ fn animate(
     for (claw, mut transform) in claws.iter_mut() {
         let (from_container, from_pos) = item_containers.get(claw.take_from).unwrap();
         let (to_container, to_pos) = item_containers.get(claw.move_to).unwrap();
-        let from_pos = from_container.alignment.get_item_pos(*from_pos);
-        let to_pos = to_container.alignment.get_item_pos(*to_pos);
+        let from_pos = from_container.alignment().get_item_pos(*from_pos);
+        let to_pos = to_container.alignment().get_item_pos(*to_pos);
         let anim_length = claw.anim_length();
         let current_tick = claw.current_anim_tick;
         let mut progress = current_tick as f32;

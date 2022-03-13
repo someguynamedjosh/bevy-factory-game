@@ -12,7 +12,7 @@ pub(super) fn attach_debug(
             .spawn(SpriteBundle {
                 material: common_assets.debug_container_mat.clone(),
                 transform: Transform::from_translation(
-                    (container.alignment.get_item_pos(*pos), 0.2).into(),
+                    (container.alignment().get_item_pos(*pos), 0.2).into(),
                 ) * SPRITE_TRANSFORM,
                 ..Default::default()
             })
@@ -26,7 +26,7 @@ pub(super) fn animate(
     containers: Query<&ItemContainer>,
 ) {
     for (debug, mut material) in debugs.iter_mut() {
-        let blocked = containers.get(debug.0).unwrap().blocked;
+        let blocked = containers.get(debug.0).unwrap().blocked();
         *material = if blocked {
             common_assets.debug_blocked_container_mat.clone()
         } else {

@@ -1,6 +1,9 @@
-use crate::item::{ItemAnimator, ItemContainer, ItemContainerAlignment, KnownItem};
-use crate::prelude::*;
 use bevy::prelude::*;
+
+use crate::{
+    item::{ItemAnimator, ItemContainer, ItemContainerAlignment, KnownItem},
+    prelude::*,
+};
 
 #[derive(Default)]
 pub struct Conveyor {
@@ -72,7 +75,8 @@ fn setup(
         let downstream_pos = pos.offset_direction(*facing, 1);
         let mut has_downstream = false;
         for (cid, cpos, cfacing) in all_conveyors.iter() {
-            // If they are in our upstream position and we are in their downstream position...
+            // If they are in our upstream position and we are in their downstream
+            // position...
             if *cpos == upstream_pos {
                 let candidate_downstream_pos = cpos.offset_direction(*cfacing, 1);
                 if candidate_downstream_pos == *pos {
@@ -81,7 +85,8 @@ fn setup(
                     commands.remove_one::<TailConveyor>(cid);
                 }
             }
-            // If they are in our downstream position and we are in their upstream position...
+            // If they are in our downstream position and we are in their upstream
+            // position...
             if *cpos == downstream_pos {
                 check_has_setup_needed.push(cid);
                 let candidate_upstream_pos = cpos.offset_direction(*cfacing, -1);
@@ -110,15 +115,15 @@ fn tick(
     for (mut current,) in tail_conveyors.iter() {
         loop {
             let (pos, mut conveyor, mut item_container) = all_conveyors.get_mut(current).unwrap();
-            let empty = item_container.item.is_none();
+            let empty = item_container.item().is_none();
             // True if the downstream belt could have taken an item we have but didn't.
             let not_taken = conveyor.incoming_timer == 0;
             conveyor.incoming_timer = conveyor.incoming_timer.saturating_sub(1);
             conveyor.outgoing_timer = conveyor.outgoing_timer.saturating_sub(1);
-            // Don't allow placing items into the conveyor or moving items out of the conveyor if
-            // there are items partially inside the conveyor.
-            item_container.blocked = conveyor.incoming_timer > 0 || conveyor.outgoing_timer > 0;
-            let alignment = item_container.alignment;
+            // Don't allow placing items into the conveyor or moving items out of the
+            // conveyor if there are items partially inside the conveyor.
+            item_container.set_blocked(conveyor.incoming_timer > 0 || conveyor.outgoing_timer > 0);
+            let alignment = item_container.alignment();
             let upstream = if let Some(upstream) = conveyor.upstream {
                 upstream
             } else {
@@ -135,11 +140,11 @@ fn tick(
 
                     let (_, mut this, mut this_container) = all_conveyors.get_mut(current).unwrap();
                     this.incoming_timer = DURATION - 1;
-                    this_container.item = Some(ientity);
-                    this_container.blocked = true;
+                    this_container.put_item(ientity);
+                    this_container.set_blocked(true);
                 }
             } else if not_taken {
-                item_container.item.map(|e| {
+                item_container.item().map(|e| {
                     let mut item = all_items.get_mut(e).unwrap();
                     item.anim_stationary_in_container(*pos, alignment);
                 });
