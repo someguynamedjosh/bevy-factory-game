@@ -1,5 +1,5 @@
 pub use crate::assets::CommonAssets;
-pub use crate::building::{BuildingResult, Shape};
+pub use crate::buildable::{BuildingResult, Shape};
 pub use crate::common::{
     fstage, start_tile, SetupNeeded, TickClock, TileVariant, SPRITE_TRANSFORM,
 };

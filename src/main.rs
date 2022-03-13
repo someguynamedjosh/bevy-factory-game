@@ -1,20 +1,16 @@
 mod assets;
-mod building;
-mod claw;
+mod buildable;
 mod common;
-mod conveyor;
 pub mod iso_pos;
 mod item;
-mod machine;
 pub mod prelude;
 mod spatial_map;
 mod sprite_render;
 mod ui;
-mod util;
 
 use bevy::prelude::*;
 use prelude::*;
-use util::{spawn_destroyer, spawn_spawner};
+use buildable::util::{spawn_destroyer, spawn_spawner};
 
 fn test_scene(commands: &mut Commands, common_assets: Res<CommonAssets>) {
     spawn_spawner(commands, &common_assets, IsoPos::new(-5, -3), 8);
@@ -36,10 +32,7 @@ fn main() {
         .add_plugin(common::Plug)
         .add_plugin(assets::Plug)
         .add_plugin(ui::Plug)
-        .add_plugin(util::Plug)
-        .add_plugin(machine::Plug)
-        .add_plugin(claw::Plug)
-        .add_plugin(conveyor::Plug)
+        .add_plugin(buildable::Plug)
         .add_plugin(item::Plug)
         .add_startup_system(test_scene.system())
         .run();

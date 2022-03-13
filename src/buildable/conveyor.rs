@@ -129,8 +129,7 @@ fn tick(
             } else {
                 break;
             };
-            // if we are empty that also means our incoming_timer has to be at zero.
-            if empty {
+            if empty && !item_container.blocked() {
                 let pos = pos.clone();
                 let (_, mut upstream, mut up_container) = all_conveyors.get_mut(upstream).unwrap();
                 if let Some(ientity) = up_container.try_take() {

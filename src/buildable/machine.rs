@@ -2,8 +2,8 @@ use bevy::prelude::*;
 use itertools::Itertools;
 
 use crate::{
-    building::{BuildingSpawner, Shape},
-    item::{spawn_item, Element, ItemContainer},
+    buildable::{BuildingSpawner, Shape},
+    item::{Element, ItemContainer},
     prelude::*,
 };
 
@@ -91,32 +91,16 @@ pub fn spawn_machine(
     let shape = typ.get_shape();
     // Machine shapes expect to have an edge in the direction the machine points in.
     assert!(!origin.has_vertex_pointing_in(facing));
+    let builder = BuildingSpawner::start(commands, obstruction_map, shape, origin, facing);
     let BuildingResult {
         inputs,
         outputs,
         origin,
         art,
     } = if let Some((mesh, mat)) = typ.get_appearence(&*common_assets) {
-        BuildingSpawner::start(
-            commands,
-            Some(mesh),
-            Some(mat),
-            obstruction_map,
-            shape,
-            origin,
-            facing,
-        )
-        .finish()
+        builder.with_bespoke_art(mesh, mat).finish()
     } else {
-        BuildingSpawner::start_with_placeholder_art(
-            commands,
-            Some(common_assets),
-            obstruction_map,
-            shape,
-            origin,
-            facing,
-        )
-        .finish()
+        builder.with_placeholder_art(common_assets).finish()
     };
 
     let machine = Machine {

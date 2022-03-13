@@ -1,11 +1,13 @@
 use bevy::{math::Vec4Swizzles, prelude::*, render::camera::Camera};
 
 use crate::{
-    claw::spawn_claw,
-    conveyor::spawn_conveyor,
+    buildable::{
+        claw::spawn_claw,
+        conveyor::spawn_conveyor,
+        machine::{spawn_machine, MachineType},
+    },
     iso_pos::GRID_EDGE_LENGTH,
     item::ItemContainer,
-    machine::{spawn_machine, MachineType},
     prelude::*,
 };
 

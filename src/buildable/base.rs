@@ -50,15 +50,14 @@ pub struct BuildingResult {
 }
 
 #[scones::make_constructor(pub start)]
-#[scones::make_constructor(pub start_with_placeholder_art)]
 pub struct BuildingSpawner<'a> {
     commands: &'a mut Commands,
 
     #[value(None for start)]
     common_assets: Option<&'a CommonAssets>,
-    #[value(None for start_with_placeholder_art)]
+    #[value(None for start)]
     mesh: Option<Handle<Mesh>>,
-    #[value(None for start_with_placeholder_art)]
+    #[value(None for start)]
     material: Option<Handle<StandardMaterial>>,
 
     obstruction_map: &'a mut BuildingObstructionMap,
@@ -68,6 +67,25 @@ pub struct BuildingSpawner<'a> {
 }
 
 impl<'a> BuildingSpawner<'a> {
+    pub fn with_bespoke_art(
+        mut self,
+        mesh: Handle<Mesh>,
+        material: Handle<StandardMaterial>,
+    ) -> Self {
+        Self {
+            mesh: Some(mesh),
+            material: Some(material),
+            ..self
+        }
+    }
+
+    pub fn with_placeholder_art(mut self, common_assets: &'a CommonAssets) -> Self {
+        Self {
+            common_assets: Some(common_assets),
+            ..self
+        }
+    }
+
     pub fn finish(mut self) -> BuildingResult {
         let mut art = Vec::new();
         let main_entity = self.create_main(&mut art);
