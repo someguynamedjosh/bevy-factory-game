@@ -1,6 +1,6 @@
 use crate::{
     building::{spawn_building, spawn_building_with_placeholder_art, Shape},
-    item::{Element, ItemContainer},
+    item::{spawn_item, Element, ItemContainer},
     prelude::*,
 };
 use bevy::prelude::*;
@@ -15,7 +15,7 @@ pub enum MachineType {
 impl MachineType {
     pub fn processing_time(self) -> u8 {
         match self {
-            _ => 6,
+            _ => 12,
         }
     }
 
@@ -70,8 +70,13 @@ pub struct Machine {
     input_buffer: Vec<Option<Item>>,
     output_buffer: Vec<Item>,
 
-    processing: bool,
     processing_time: u8,
+}
+
+impl Machine {
+    pub fn processing(&self) -> bool {
+        self.input_buffer.iter().all(Option::is_some)
+    }
 }
 
 pub fn spawn_machine(
@@ -110,7 +115,6 @@ pub fn spawn_machine(
         outputs,
         typ,
         output_buffer: Vec::new(),
-        processing: false,
         processing_time: 0,
     };
     commands.set_current_entity(origin);
@@ -128,15 +132,58 @@ fn tick(
         let done = machine.processing_time == machine.typ.processing_time();
         let mut can_output = done;
         for &output in &machine.outputs {
-            let (mut output, pos) = containers.get_mut(output).unwrap();
+            let (output, _) = containers.get_mut(output).unwrap();
             if output.item.is_some() {
                 can_output = false;
                 break;
             }
         }
-        if machine.processing && !done {
+
+        if machine.processing() {
+            if done && can_output {
+                let mut inputs = Vec::new();
+                for input in &mut machine.input_buffer {
+                    inputs.push(input.take().unwrap());
+                }
+                let results = machine.typ.process(inputs);
+                assert_eq!(results.len(), machine.outputs.len());
+                for (result, &output) in results.into_iter().zip(machine.outputs.iter()) {
+                    let (mut output, pos) = containers.get_mut(output).unwrap();
+                    output.item = Some(spawn_item(
+                        commands,
+                        &common_assets,
+                        result,
+                        *pos,
+                        output.alignment,
+                    ));
+                }
+                machine.processing_time = 0;
+            }
+        }
+
+        let Machine {
+            inputs,
+            input_buffer,
+            ..
+        } = &mut *machine;
+
+        for (&container, buffer) in inputs.iter().zip(input_buffer.iter_mut()) {
+            let (mut container, _) = containers.get_mut(container).unwrap();
+            if buffer.is_none() && container.item.is_some() {
+                let item = container.item.take().unwrap();
+                commands.despawn(item);
+                let item = items.get(item).unwrap().clone();
+                *buffer = Some(item);
+            }
+        }
+
+        let done = machine.processing_time == machine.typ.processing_time();
+
+        if machine.processing() && !done {
             machine.processing_time += 1;
         }
+
+        println!("{:?}", machine.processing_time);
     }
 }
 
