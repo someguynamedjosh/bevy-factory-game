@@ -4,7 +4,8 @@ use crate::{
     buildable::{
         claw::spawn_claw,
         conveyor::spawn_conveyor,
-        machine::{spawn_machine, MachineType},
+        machine::{spawn_machine},
+        machine_type::MachineType,
     },
     iso::GRID_EDGE_LENGTH,
     item::ItemContainer,

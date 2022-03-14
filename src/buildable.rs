@@ -3,6 +3,7 @@ mod base;
 pub mod claw;
 pub mod conveyor;
 pub mod machine;
+pub mod machine_type;
 pub mod util;
 
 use bevy::prelude::*;
