@@ -8,7 +8,6 @@ mod reference_item;
 
 use bevy::prelude::*;
 
-use self::animation::*;
 pub use self::{animator::*, base::*, container::*, element::*, reference_item::*};
 use crate::prelude::*;
 

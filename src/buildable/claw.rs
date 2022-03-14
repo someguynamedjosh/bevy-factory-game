@@ -1,6 +1,9 @@
-use crate::item::{ItemAnimator, ItemContainer};
-use crate::prelude::*;
 use bevy::prelude::*;
+
+use crate::{
+    item::{ItemAnimator, ItemContainer},
+    prelude::*,
+};
 
 pub struct Claw {
     take_from: Entity,

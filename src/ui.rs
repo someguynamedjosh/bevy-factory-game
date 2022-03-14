@@ -2,9 +2,7 @@ use bevy::{math::Vec4Swizzles, prelude::*, render::camera::Camera};
 
 use crate::{
     buildable::{
-        claw::spawn_claw,
-        conveyor::spawn_conveyor,
-        machine::{spawn_machine},
+        claw::spawn_claw, conveyor::spawn_conveyor, machine::spawn_machine,
         machine_type::MachineType,
     },
     iso::GRID_EDGE_LENGTH,

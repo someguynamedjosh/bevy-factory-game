@@ -1,6 +1,11 @@
-use crate::prelude::*;
+use std::{
+    collections::HashMap,
+    ops::{Deref, DerefMut},
+};
+
 use bevy::prelude::*;
-use std::{collections::HashMap, ops::{Deref, DerefMut}};
+
+use crate::prelude::*;
 
 pub struct SpatialMap<Data> {
     contents: HashMap<IsoPos, Data>,
@@ -53,6 +58,7 @@ macro_rules! map_newtype {
         }
         impl Deref for $name {
             type Target = SpatialMap<Entity>;
+
             fn deref(&self) -> &Self::Target {
                 &self.0
             }

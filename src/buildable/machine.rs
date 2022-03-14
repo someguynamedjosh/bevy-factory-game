@@ -1,12 +1,7 @@
 use bevy::prelude::*;
-use itertools::Itertools;
 
 use super::machine_type::MachineType;
-use crate::{
-    buildable::{BuildingSpawner, Shape},
-    item::{Element, ItemContainer},
-    prelude::*,
-};
+use crate::{buildable::BuildingSpawner, item::ItemContainer, prelude::*};
 
 #[derive(Clone, Debug)]
 pub struct Machine {
@@ -41,7 +36,7 @@ pub fn spawn_machine(
         inputs,
         outputs,
         origin,
-        art,
+        art: _,
     } = if let Some((mesh, mat)) = typ.get_appearence(&*common_assets) {
         builder.with_bespoke_art(mesh, mat).finish()
     } else {

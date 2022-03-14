@@ -112,14 +112,14 @@ fn tick(
     mut all_conveyors: Query<(&IsoPos, &mut Conveyor, &mut ItemContainer)>,
     mut all_items: Query<&mut ItemAnimator>,
 ) {
-    for (mut current,) in tail_conveyors.iter() {
+    for (current,) in tail_conveyors.iter() {
         tick_conveyor(&mut all_conveyors, current, &mut all_items);
     }
 }
 
 fn tick_conveyor(
     all_conveyors: &mut Query<(&IsoPos, &mut Conveyor, &mut ItemContainer)>,
-    mut current: Entity,
+    current: Entity,
     all_items: &mut Query<&mut ItemAnimator>,
 ) {
     let (pos, mut conveyor, mut item_container) = all_conveyors.get_mut(current).unwrap();
@@ -155,7 +155,7 @@ fn tick_conveyor(
         });
     }
 
-    let (pos, mut conveyor, mut item_container) = all_conveyors.get_mut(current).unwrap();
+    let (_pos, conveyor, mut item_container) = all_conveyors.get_mut(current).unwrap();
     // Don't allow placing items into the conveyor or moving items out of the
     // conveyor if there are items partially inside the conveyor.
     item_container.set_blocked(conveyor.incoming_timer > 0 || conveyor.outgoing_timer > 0);

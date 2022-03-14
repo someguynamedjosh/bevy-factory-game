@@ -72,7 +72,7 @@ fn startup(
     common_assets.cursor_accept_mat = make_mat("cursor_accept.png");
     common_assets.cursor_deny_mat = make_mat("cursor_deny.png");
     common_assets.arrow_mat = make_mat("arrow.png");
-    
+
     common_assets.clay_mat = mesh_mats.add(StandardMaterial {
         albedo: Color::rgb(1.0, 1.0, 1.0),
         ..Default::default()

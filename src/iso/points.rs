@@ -1,5 +1,3 @@
-use super::*;
-
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub enum PointsDirection {
     Left,

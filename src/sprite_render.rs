@@ -16,7 +16,8 @@ use bevy::{
 };
 
 pub const TRANSPARENT_SPRITE_PIPELINE_HANDLE: HandleUntyped = SPRITE_PIPELINE_HANDLE;
-// HandleUntyped::weak_from_u64(PipelineDescriptor::TYPE_UUID, 0x37215d3f806dfa3a);
+// HandleUntyped::weak_from_u64(PipelineDescriptor::TYPE_UUID,
+// 0x37215d3f806dfa3a);
 
 pub fn build_transparent_sprite_pipeline(shaders: &mut Assets<Shader>) -> PipelineDescriptor {
     PipelineDescriptor {

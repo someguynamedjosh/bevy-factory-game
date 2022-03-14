@@ -67,11 +67,7 @@ pub struct BuildingSpawner<'a> {
 }
 
 impl<'a> BuildingSpawner<'a> {
-    pub fn with_bespoke_art(
-        mut self,
-        mesh: Handle<Mesh>,
-        material: Handle<StandardMaterial>,
-    ) -> Self {
+    pub fn with_bespoke_art(self, mesh: Handle<Mesh>, material: Handle<StandardMaterial>) -> Self {
         Self {
             mesh: Some(mesh),
             material: Some(material),
@@ -79,7 +75,7 @@ impl<'a> BuildingSpawner<'a> {
         }
     }
 
-    pub fn with_placeholder_art(mut self, common_assets: &'a CommonAssets) -> Self {
+    pub fn with_placeholder_art(self, common_assets: &'a CommonAssets) -> Self {
         Self {
             common_assets: Some(common_assets),
             ..self
