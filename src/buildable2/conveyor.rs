@@ -1,12 +1,51 @@
 use bevy::prelude::*;
 
+use super::{Buildable, BuildingContext, WhichMap};
 use crate::{
-    item::{ItemAnimator, ItemContainer, ItemContainerAlignment, ReferenceItem},
+    item::{ItemAnimator, ItemContainer, ItemContainerAlignment},
     prelude::*,
 };
 
+#[derive(Clone)]
+pub struct BConveyor;
+
+impl Buildable for BConveyor {
+    fn shape(&self, ctx: &mut BuildingContext) -> Vec<IsoPos> {
+        vec![ctx.position]
+    }
+
+    fn maps(&self) -> Vec<WhichMap> {
+        vec![WhichMap::Buildings, WhichMap::Conveyors]
+    }
+
+    fn extra_root_components(&self, ctx: &mut BuildingContext) {
+        ctx.commands
+            .with(ConveyorLogic::default())
+            .with(ItemContainer::new_empty(
+                ItemContainerAlignment::AxisAligned(ctx.direction.axis()),
+            ))
+            .with(SetupNeeded);
+    }
+
+    fn spawn_art(&self, ctx: &mut BuildingContext) -> Vec<Entity> {
+        // xor
+        let material = if ctx.position.points_left() != ctx.direction.is_negative() {
+            ctx.common_assets.conveyor_mat.0.clone()
+        } else {
+            ctx.common_assets.conveyor_mat.1.clone()
+        };
+        let transform = ctx.position.building_transform(ctx.direction.axis()) * SPRITE_TRANSFORM;
+        ctx.commands.spawn(SpriteBundle {
+            material,
+            transform,
+            ..Default::default()
+        });
+        vec![ctx.commands.current_entity().unwrap()]
+    }
+}
+
 #[derive(Default)]
-pub struct Conveyor {
+struct ConveyorLogic {
     upstream: Option<Entity>,
     incoming_timer: u8,
     outgoing_timer: u8,
@@ -16,56 +55,11 @@ struct TailConveyor;
 /// It takes this many ticks for an item to ride one unit of a conveyor.
 const DURATION: u8 = 6;
 
-pub fn spawn_conveyor(
-    commands: &mut Commands,
-    common_assets: &Res<CommonAssets>,
-    conveyor_map: &mut ResMut<ConveyorMap>,
-    obstruction_map: &mut ResMut<BuildingObstructionMap>,
-    origin: IsoPos,
-    facing: IsoDirection,
-    start_with_item: bool,
-) -> Entity {
-    let alignment = ItemContainerAlignment::AxisAligned(facing.axis());
-    let item = if start_with_item {
-        Some(crate::item::spawn_item(
-            commands,
-            common_assets,
-            ReferenceItem::IronOre.as_item(),
-            origin,
-            alignment,
-        ))
-    } else {
-        None
-    };
-    // xor
-    let material = if origin.points_left() != facing.is_negative() {
-        common_assets.conveyor_mat.0.clone()
-    } else {
-        common_assets.conveyor_mat.1.clone()
-    };
-    let result = commands
-        .spawn(SpriteBundle {
-            material,
-            transform: origin.building_transform(facing.axis()) * SPRITE_TRANSFORM,
-            ..Default::default()
-        })
-        .with(origin)
-        .with(facing)
-        .with(ItemContainer::new_maybe_preloaded(alignment, item))
-        .with(Conveyor::default())
-        .with(SetupNeeded)
-        .current_entity()
-        .unwrap();
-    obstruction_map.set_assuming_empty(origin, result);
-    conveyor_map.set_assuming_empty(origin, result);
-    result
-}
-
 fn setup(
     commands: &mut Commands,
-    all_conveyors: Query<(Entity, &IsoPos, &IsoDirection), With<Conveyor>>,
+    all_conveyors: Query<(Entity, &IsoPos, &IsoDirection), With<ConveyorLogic>>,
     mut unlinked_conveyors: Query<
-        (Entity, &mut Conveyor, &IsoPos, &IsoDirection),
+        (Entity, &mut ConveyorLogic, &IsoPos, &IsoDirection),
         With<SetupNeeded>,
     >,
 ) {
@@ -109,7 +103,7 @@ fn setup(
 
 fn tick(
     tail_conveyors: Query<(Entity,), With<TailConveyor>>,
-    mut all_conveyors: Query<(&IsoPos, &mut Conveyor, &mut ItemContainer)>,
+    mut all_conveyors: Query<(&IsoPos, &mut ConveyorLogic, &mut ItemContainer)>,
     mut all_items: Query<&mut ItemAnimator>,
 ) {
     for (current,) in tail_conveyors.iter() {
@@ -118,7 +112,7 @@ fn tick(
 }
 
 fn tick_conveyor(
-    all_conveyors: &mut Query<(&IsoPos, &mut Conveyor, &mut ItemContainer)>,
+    all_conveyors: &mut Query<(&IsoPos, &mut ConveyorLogic, &mut ItemContainer)>,
     current: Entity,
     all_items: &mut Query<&mut ItemAnimator>,
 ) {

@@ -1,11 +1,9 @@
 use bevy::{math::Vec4Swizzles, prelude::*, render::camera::Camera};
 
 use crate::{
-    buildable::{
-        claw::spawn_claw, conveyor::spawn_conveyor, machine::spawn_machine,
-        machine_type::MachineType,
-    },
-    iso::GRID_EDGE_LENGTH,
+    buildable::{claw::spawn_claw, machine::spawn_machine, machine_type::MachineType},
+    buildable2::{self, conveyor::BConveyor, BuildingContext, MutBuildingMaps},
+    iso::{ItemContainerMap, GRID_EDGE_LENGTH},
     item::ItemContainer,
     prelude::*,
 };
@@ -204,6 +202,7 @@ fn ui_update(
     key_input: Res<Input<KeyCode>>,
     mut obstruction_map: ResMut<BuildingObstructionMap>,
     mut conveyor_map: ResMut<ConveyorMap>,
+    mut item_container_map: ResMut<ItemContainerMap>,
     containers: Query<(Entity, &ItemContainer, &IsoPos)>,
     mut transforms: Query<&mut Transform>,
     mut texts: Query<&mut Text>,
@@ -242,14 +241,19 @@ fn ui_update(
     if input.just_pressed(MouseButton::Left) && ok {
         match &state.action {
             MouseAction::PlaceConveyor => {
-                spawn_conveyor(
-                    commands,
-                    &common_assets,
-                    &mut conveyor_map,
-                    &mut obstruction_map,
-                    state.mouse_pos_in_world,
-                    state.direction,
-                    false,
+                buildable2::spawn_buildable(
+                    Box::new(BConveyor),
+                    &mut BuildingContext {
+                        commands,
+                        position: state.mouse_pos_in_world,
+                        direction: state.direction,
+                        common_assets: &*common_assets,
+                    },
+                    &mut MutBuildingMaps {
+                        buildings: &mut *obstruction_map,
+                        conveyors: &mut *conveyor_map,
+                        item_containers: &mut *item_container_map,
+                    },
                 );
             }
             MouseAction::PlaceClaw => {
