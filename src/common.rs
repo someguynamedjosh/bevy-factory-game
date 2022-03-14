@@ -1,5 +1,6 @@
-use crate::{iso_pos::GRID_TRIANGLE_RADIUS, prelude::*};
 use bevy::{ecs::ShouldRun, prelude::*};
+
+use crate::{iso::GRID_TRIANGLE_RADIUS, prelude::*};
 
 /// How big a pixel of a sprite should be.
 const _SPRITE_SCALE: f32 = GRID_TRIANGLE_RADIUS / 64.0;

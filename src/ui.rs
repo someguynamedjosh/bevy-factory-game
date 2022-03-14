@@ -6,7 +6,7 @@ use crate::{
         conveyor::spawn_conveyor,
         machine::{spawn_machine, MachineType},
     },
-    iso_pos::GRID_EDGE_LENGTH,
+    iso::GRID_EDGE_LENGTH,
     item::ItemContainer,
     prelude::*,
 };

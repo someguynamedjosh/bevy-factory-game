@@ -1,16 +1,15 @@
 mod assets;
 mod buildable;
 mod common;
-pub mod iso_pos;
+pub mod iso;
 mod item;
 pub mod prelude;
-mod spatial_map;
 mod sprite_render;
 mod ui;
 
 use bevy::prelude::*;
-use prelude::*;
 use buildable::util::{spawn_destroyer, spawn_spawner};
+use prelude::*;
 
 fn test_scene(commands: &mut Commands, common_assets: Res<CommonAssets>) {
     spawn_spawner(commands, &common_assets, IsoPos::new(-5, -3), 8);
@@ -28,7 +27,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(bevy_obj::ObjPlugin)
         .add_plugin(sprite_render::Plug)
-        .add_plugin(spatial_map::Plug)
+        .add_plugin(iso::Plug)
         .add_plugin(common::Plug)
         .add_plugin(assets::Plug)
         .add_plugin(ui::Plug)

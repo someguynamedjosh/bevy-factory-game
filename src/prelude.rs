@@ -1,16 +1,19 @@
-pub use crate::assets::CommonAssets;
-pub use crate::buildable::{BuildingResult, Shape};
-pub use crate::common::{
-    fstage, start_tile, SetupNeeded, TickClock, TileVariant, SPRITE_TRANSFORM,
-};
-pub use crate::iso_pos::{IsoAxis, IsoDirection, IsoPos, Snapping};
-pub use crate::item::Item;
-pub use crate::spatial_map::*;
-use bevy::ecs::{Commands, DynamicBundle};
-pub use bevy::math::Vec2;
-pub use bevy::prelude::{Entity, Quat, Transform};
-pub use scones::make_constructor;
 pub use std::f32::consts::{PI, TAU};
+
+use bevy::ecs::{Commands, DynamicBundle};
+pub use bevy::{
+    math::Vec2,
+    prelude::{Entity, Quat, Transform},
+};
+pub use scones::make_constructor;
+
+pub use crate::{
+    assets::CommonAssets,
+    buildable::{BuildingResult, Shape},
+    common::{fstage, start_tile, SetupNeeded, TickClock, TileVariant, SPRITE_TRANSFORM},
+    iso::{BuildingObstructionMap, ConveyorMap, IsoAxis, IsoDirection, IsoPos, Snapping},
+    item::Item,
+};
 
 pub trait SpawnWithBundles<Input> {
     fn spawn_with_bundles(&mut self, bundles: Input) -> &mut Self;
