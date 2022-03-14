@@ -106,9 +106,9 @@ impl<'a> BuildingSpawner<'a> {
         self.obstruction_map
             .set_assuming_empty(self.origin, main_entity);
         if let (Some(mesh), Some(material)) = (self.mesh.take(), self.material.take()) {
-            self.spawn_bespoke_art(mesh, material, art);
+            self.spawn_bespoke_art(mesh, material, art, main_entity);
         } else {
-            self.maybe_spawn_placeholder_art(self.origin, TileVariant::Misc, art);
+            self.maybe_spawn_placeholder_art(self.origin, TileVariant::Misc, art, main_entity);
         }
         main_entity
     }
@@ -118,6 +118,7 @@ impl<'a> BuildingSpawner<'a> {
         mesh: Handle<Mesh>,
         material: Handle<StandardMaterial>,
         art: &mut Vec<Entity>,
+        main_entity: Entity,
     ) {
         let main_art = self
             .commands
@@ -127,6 +128,7 @@ impl<'a> BuildingSpawner<'a> {
                 transform: self.origin.building_transform(self.facing.axis()),
                 ..Default::default()
             })
+            .with(Parent(main_entity))
             .current_entity()
             .unwrap();
         art.push(main_art);
@@ -135,7 +137,7 @@ impl<'a> BuildingSpawner<'a> {
     fn create_blanks(&mut self, main_entity: Entity, art: &mut Vec<Entity>) {
         for pos in self.positions().blanks {
             self.obstruction_map.set_assuming_empty(pos, main_entity);
-            self.maybe_spawn_placeholder_art(pos, TileVariant::Blank, art);
+            self.maybe_spawn_placeholder_art(pos, TileVariant::Blank, art, main_entity);
         }
     }
 
@@ -143,9 +145,9 @@ impl<'a> BuildingSpawner<'a> {
         let mut inputs = Vec::new();
         for pos in self.positions().inputs {
             self.obstruction_map.set_assuming_empty(pos, main_entity);
-            let id = self.spawn_empty_item_container(pos);
+            let id = self.spawn_empty_item_container(pos, main_entity);
             inputs.push(id);
-            self.maybe_spawn_placeholder_art(pos, TileVariant::Input, art);
+            self.maybe_spawn_placeholder_art(pos, TileVariant::Input, art, main_entity);
         }
         inputs
     }
@@ -154,9 +156,9 @@ impl<'a> BuildingSpawner<'a> {
         let mut outputs = Vec::new();
         for pos in self.positions().outputs {
             self.obstruction_map.set_assuming_empty(pos, main_entity);
-            let id = self.spawn_empty_item_container(pos);
+            let id = self.spawn_empty_item_container(pos, main_entity);
             outputs.push(id);
-            self.maybe_spawn_placeholder_art(pos, TileVariant::Output, art);
+            self.maybe_spawn_placeholder_art(pos, TileVariant::Output, art, main_entity);
         }
         outputs
     }
@@ -166,22 +168,25 @@ impl<'a> BuildingSpawner<'a> {
         pos: IsoPos,
         variant: TileVariant,
         art: &mut Vec<Entity>,
+        main_entity: Entity,
     ) {
         if let Some(ca) = self.common_assets {
             let ent = start_tile(self.commands, ca, pos, variant)
+                .with(Parent(main_entity))
                 .current_entity()
                 .unwrap();
             art.push(ent);
         }
     }
 
-    fn spawn_empty_item_container(&mut self, pos: IsoPos) -> Entity {
+    fn spawn_empty_item_container(&mut self, pos: IsoPos, main_entity: Entity) -> Entity {
         let id = self
             .commands
             .spawn((
                 pos,
                 ItemContainer::new_empty(ItemContainerAlignment::Centroid),
             ))
+            .with(Parent(main_entity))
             .current_entity()
             .unwrap();
         id

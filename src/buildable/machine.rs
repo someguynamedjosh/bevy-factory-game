@@ -32,16 +32,17 @@ pub fn spawn_machine(
     // Machine shapes expect to have an edge in the direction the machine points in.
     assert!(!origin.has_vertex_pointing_in(facing));
     let builder = BuildingSpawner::start(commands, obstruction_map, shape, origin, facing);
+    let builder = if let Some((mesh, mat)) = typ.get_appearence(&*common_assets) {
+        builder.with_bespoke_art(mesh, mat)
+    } else {
+        builder.with_placeholder_art(common_assets)
+    };
     let BuildingResult {
         inputs,
         outputs,
         origin,
         art: _,
-    } = if let Some((mesh, mat)) = typ.get_appearence(&*common_assets) {
-        builder.with_bespoke_art(mesh, mat).finish()
-    } else {
-        builder.with_placeholder_art(common_assets).finish()
-    };
+    } = builder.finish();
 
     let machine = Machine {
         input_buffer: vec![None; inputs.len()],
