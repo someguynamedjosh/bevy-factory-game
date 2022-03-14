@@ -15,7 +15,6 @@ pub struct Machine {
 
     typ: MachineType,
     input_buffer: Vec<Option<Item>>,
-    output_buffer: Vec<Item>,
 
     processing_time: u8,
 }
@@ -54,7 +53,6 @@ pub fn spawn_machine(
         inputs,
         outputs,
         typ,
-        output_buffer: Vec::new(),
         processing_time: 0,
     };
     commands.set_current_entity(origin);
