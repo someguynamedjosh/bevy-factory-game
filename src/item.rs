@@ -24,7 +24,8 @@ pub fn spawn_item(
         None => common_assets.claw_mat.clone(),
     };
     commands
-        .spawn(SpriteBundle {
+        .spawn()
+        .with_bundle(SpriteBundle {
             material,
             transform: SPRITE_TRANSFORM,
             ..Default::default()

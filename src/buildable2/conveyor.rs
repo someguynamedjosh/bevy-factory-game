@@ -35,7 +35,7 @@ impl Buildable for BConveyor {
             ctx.common_assets.conveyor_mat.1.clone()
         };
         let transform = ctx.position.building_transform(ctx.direction.axis()) * SPRITE_TRANSFORM;
-        ctx.commands.spawn(SpriteBundle {
+        ctx.commands.spawn().with_bundle(SpriteBundle {
             material,
             transform,
             ..Default::default()
@@ -160,7 +160,7 @@ fn tick_conveyor(
 pub struct Plug;
 
 impl Plugin for Plug {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.add_system_to_stage(fstage::SETUP, setup.system())
             .add_system_to_stage(fstage::TICK, tick.system());
     }

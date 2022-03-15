@@ -117,7 +117,7 @@ fn tick(
 pub struct Plug;
 
 impl Plugin for Plug {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.add_system_to_stage(fstage::TICK, tick.system());
     }
 }

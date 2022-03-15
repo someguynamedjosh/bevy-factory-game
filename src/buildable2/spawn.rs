@@ -23,7 +23,8 @@ fn spawn_root(buildable: &Box<dyn Buildable>, ctx: &mut BuildingContext) -> Enti
     };
     let root = ctx
         .commands
-        .spawn((built, Transform::identity()))
+        .spawn()
+        .with_bundle((built, Transform::identity()))
         .current_entity()
         .unwrap();
     root

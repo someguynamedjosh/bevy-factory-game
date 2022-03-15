@@ -18,7 +18,8 @@ pub fn spawn_spawner(
     rate: u8,
 ) -> Entity {
     commands
-        .spawn(SpriteBundle {
+        .spawn()
+        .with_bundle(SpriteBundle {
             material: common_assets.spawner_mat.clone(),
             transform: origin.building_transform(Default::default()) * SPRITE_TRANSFORM,
             ..Default::default()
@@ -39,7 +40,8 @@ pub fn spawn_destroyer(
     origin: IsoPos,
 ) -> Entity {
     commands
-        .spawn(SpriteBundle {
+        .spawn()
+        .with_bundle(SpriteBundle {
             material: common_assets.destroyer_mat.clone(),
             transform: origin.building_transform(Default::default()) * SPRITE_TRANSFORM,
             ..Default::default()

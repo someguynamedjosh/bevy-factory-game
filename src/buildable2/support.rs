@@ -5,8 +5,8 @@ use crate::{
     prelude::*,
 };
 
-pub struct BuildingContext<'a> {
-    pub commands: &'a mut Commands,
+pub struct BuildingContext<'a, 'c1, 'c2> {
+    pub commands: &'a mut Commands<'c1, 'c2>,
     pub position: IsoPos,
     pub direction: IsoDirection,
     pub common_assets: &'a CommonAssets,

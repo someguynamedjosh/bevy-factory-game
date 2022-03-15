@@ -50,8 +50,8 @@ pub struct BuildingResult {
 }
 
 #[scones::make_constructor(pub start)]
-pub struct BuildingSpawner<'a> {
-    commands: &'a mut Commands,
+pub struct BuildingSpawner<'a, 'c1, 'c2> {
+    commands: &'a mut Commands<'c1, 'c2>,
 
     #[value(None for start)]
     common_assets: Option<&'a CommonAssets>,
@@ -66,7 +66,7 @@ pub struct BuildingSpawner<'a> {
     facing: IsoDirection,
 }
 
-impl<'a> BuildingSpawner<'a> {
+impl<'a, 'c1, 'c2> BuildingSpawner<'a, 'c1, 'c2> {
     pub fn with_bespoke_art(self, mesh: Handle<Mesh>, material: Handle<StandardMaterial>) -> Self {
         Self {
             mesh: Some(mesh),
@@ -102,7 +102,7 @@ impl<'a> BuildingSpawner<'a> {
     }
 
     fn create_main(&mut self, art: &mut Vec<Entity>) -> Entity {
-        let main_entity = self.commands.spawn(()).current_entity().unwrap();
+        let main_entity = self.commands.spawn().current_entity().unwrap();
         self.obstruction_map
             .set_assuming_empty(self.origin, main_entity);
         if let (Some(mesh), Some(material)) = (self.mesh.take(), self.material.take()) {
@@ -122,7 +122,8 @@ impl<'a> BuildingSpawner<'a> {
     ) {
         let main_art = self
             .commands
-            .spawn(PbrBundle {
+            .spawn()
+            .with_bundle(PbrBundle {
                 mesh,
                 material,
                 transform: self.origin.building_transform(self.facing.axis()),
@@ -182,7 +183,8 @@ impl<'a> BuildingSpawner<'a> {
     fn spawn_empty_item_container(&mut self, pos: IsoPos, main_entity: Entity) -> Entity {
         let id = self
             .commands
-            .spawn((
+            .spawn()
+            .with_bundle((
                 pos,
                 ItemContainer::new_empty(ItemContainerAlignment::Centroid),
             ))

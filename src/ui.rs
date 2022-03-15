@@ -84,17 +84,17 @@ impl MouseAction {
 }
 
 fn startup(commands: &mut Commands, assets: Res<CommonAssets>) {
-    let mut bundle = Camera3dBundle::default();
+    let mut bundle = PerspectiveCameraBundle::default();
     bundle.transform = Transform {
         translation: Vec3::new(0.0, -7.0, 20.0),
         rotation: Quat::from_rotation_x(0.05 * TAU),
         scale: Vec3::one(),
     };
-    commands.spawn(bundle);
+    commands.spawn().with_bundle(bundle);
     let primary_camera = commands.current_entity().unwrap();
-    commands.spawn(CameraUiBundle::default());
+    commands.spawn().with_bundle(UiCameraBundle::default());
 
-    commands.spawn(TextBundle {
+    commands.spawn().with_bundle(TextBundle {
         style: Style {
             align_self: AlignSelf::FlexStart,
             position_type: PositionType::Absolute,
@@ -112,19 +112,20 @@ fn startup(commands: &mut Commands, assets: Res<CommonAssets>) {
                 ..Default::default()
             },
             font: assets.font.clone(),
+            ..Default::default()
         },
         ..Default::default()
     });
     let tool_text = commands.current_entity().unwrap();
 
-    commands.spawn(SpriteBundle {
+    commands.spawn().with_bundle(SpriteBundle {
         material: assets.cursor_accept_mat.clone(),
         transform: SPRITE_TRANSFORM,
         ..Default::default()
     });
     let world_cursor = commands.current_entity().unwrap();
 
-    commands.spawn(SpriteBundle {
+    commands.spawn().with_bundle(SpriteBundle {
         material: assets.arrow_mat.clone(),
         transform: SPRITE_TRANSFORM,
         ..Default::default()
@@ -349,7 +350,7 @@ fn ui_update(
 pub struct Plug;
 
 impl Plugin for Plug {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.init_resource::<MouseSystemState>()
             .add_startup_system(startup.system())
             .add_system_to_stage(fstage::UI, update_mouse_pos.system())

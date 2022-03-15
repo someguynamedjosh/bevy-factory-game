@@ -78,7 +78,7 @@ map_newtype!(BuildingObstructionMap, Entity);
 pub struct Plug;
 
 impl Plugin for Plug {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.add_resource(ConveyorMap::default());
         app.add_resource(ItemContainerMap::default());
         app.add_resource(BuildingObstructionMap::default());

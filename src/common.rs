@@ -1,14 +1,10 @@
-use bevy::{ecs::ShouldRun, prelude::*};
+use bevy::{prelude::*, ecs::schedule::ShouldRun};
 
 use crate::{iso::GRID_TRIANGLE_RADIUS, prelude::*};
 
 /// How big a pixel of a sprite should be.
 const _SPRITE_SCALE: f32 = GRID_TRIANGLE_RADIUS / 64.0;
-pub const SPRITE_SCALE: Vec3 = Vec3 {
-    x: _SPRITE_SCALE,
-    y: _SPRITE_SCALE,
-    z: _SPRITE_SCALE,
-};
+pub const SPRITE_SCALE: Vec3 = Vec3::new(_SPRITE_SCALE, _SPRITE_SCALE, _SPRITE_SCALE);
 pub const SPRITE_TRANSFORM: Transform = Transform {
     translation: Vec3::zero(),
     rotation: Quat::identity(),
@@ -77,9 +73,10 @@ pub fn start_tile<'c>(
     common_assets: &CommonAssets,
     pos: IsoPos,
     variant: TileVariant,
-) -> &'c mut Commands {
+) {
     commands
-        .spawn(SpriteBundle {
+        .spawn()
+        .with_bundle(SpriteBundle {
             material: common_assets.tiles[variant as usize].clone(),
             transform: pos.building_transform(Default::default()) * SPRITE_TRANSFORM,
             visible: Visible {
@@ -88,14 +85,14 @@ pub fn start_tile<'c>(
             },
             ..Default::default()
         })
-        .with(pos)
+        .with(pos);
 }
 
 pub struct Plug;
 
 impl Plugin for Plug {
-    fn build(&self, app: &mut AppBuilder) {
-        app.add_stage_after(stage::UPDATE, fstage::UI, SystemStage::serial())
+    fn build(&self, app: &mut App) {
+        app.add_stage_after("update", fstage::UI, SystemStage::serial())
             .add_stage_after(fstage::UI, fstage::SETUP, SystemStage::serial())
             .add_stage_after(
                 fstage::SETUP,

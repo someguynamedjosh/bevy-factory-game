@@ -12,7 +12,7 @@ pub use self::base::*;
 pub struct Plug;
 
 impl Plugin for Plug {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.add_plugin(util::Plug)
             .add_plugin(machine::Plug)
             .add_plugin(claw::Plug);

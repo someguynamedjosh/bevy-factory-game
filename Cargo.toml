@@ -1,8 +1,9 @@
 [package]
-name = "fav-genre"
-version = "0.1.0"
 authors = ["Joshua Maros <60271685+joshua-maros@users.noreply.github.com>"]
 edition = "2018"
+name = "fav-genre"
+resolver = "2"
+version = "0.1.0"
 
 [features]
 # Disables animation interpolation to more easily verify the soundness of ticking mechanisms.
@@ -13,14 +14,14 @@ quarter-speed = []
 draw-containers = []
 
 [dependencies]
-bevy_obj = "0.4.0"
+bevy_obj = "0.6.0"
 dyn-clone = "1.0.4"
 itertools = "0.10.3"
 scones = "0.1.2"
 
 [dependencies.bevy]
-version = "0.4.0"
 features = ["dynamic"] # Enable faster iterative compilation times.
+version = "0.6.0"
 
 # Enable optimizations for dependencies (incl. Bevy),
 # but not for our own code:

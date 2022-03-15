@@ -74,7 +74,7 @@ fn startup(
     common_assets.arrow_mat = make_mat("arrow.png");
 
     common_assets.clay_mat = mesh_mats.add(StandardMaterial {
-        albedo: Color::rgb(1.0, 1.0, 1.0),
+        base_color: Color::rgb(1.0, 1.0, 1.0),
         ..Default::default()
     });
 
@@ -84,7 +84,7 @@ fn startup(
 pub struct Plug;
 
 impl Plugin for Plug {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.add_resource(CommonAssets::default())
             .add_startup_system(startup.system());
     }

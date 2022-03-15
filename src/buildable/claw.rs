@@ -32,7 +32,8 @@ pub fn spawn_claw(
     length: u8,
 ) -> Entity {
     commands
-        .spawn(SpriteBundle {
+        .spawn()
+        .with_bundle(SpriteBundle {
             material: common_assets.claw_mat.clone(),
             transform: SPRITE_TRANSFORM,
             ..Default::default()
