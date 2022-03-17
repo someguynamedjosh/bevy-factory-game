@@ -15,7 +15,11 @@ impl Buildable for BConveyor {
     }
 
     fn maps(&self) -> Vec<WhichMap> {
-        vec![WhichMap::Buildings, WhichMap::Conveyors]
+        vec![
+            WhichMap::Buildings,
+            WhichMap::Conveyors,
+            WhichMap::ItemContainers,
+        ]
     }
 
     fn extra_root_components(&self, ctx: &mut BuildingComponentsContext) {
@@ -34,14 +38,13 @@ impl Buildable for BConveyor {
         } else {
             ctx.common_assets.conveyor_mat.1.clone()
         };
-        let transform = ctx.position.building_transform(ctx.direction.axis()) * sprite_transform();
         vec![ctx
             .commands
             .spawn()
             .insert_bundle(PbrBundle {
                 material,
                 mesh: ctx.common_assets.quad_mesh.clone(),
-                transform,
+                transform: sprite_transform(),
                 ..Default::default()
             })
             .id()]

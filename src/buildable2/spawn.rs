@@ -25,7 +25,8 @@ fn spawn_root(buildable: &Box<dyn Buildable>, ctx: &mut BuildingContext) -> Enti
         .commands
         .spawn()
         .insert(built)
-        .insert(Transform::identity())
+        .insert(ctx.position.building_transform(ctx.direction.axis()))
+        .insert(GlobalTransform::default())
         .id();
     root
 }
@@ -39,10 +40,28 @@ struct BuildableSpawner<'a, 'b1, 'b2, 'b3, 'c> {
 
 impl<'a, 'b1, 'b2, 'b3, 'c> BuildableSpawner<'a, 'b1, 'b2, 'b3, 'c> {
     fn finish_spawning(mut self) -> Entity {
-        self.spawn_art();
-        self.spawn_others();
+        let mut children = Vec::new();
+        self.spawn_art(&mut children);
+        self.spawn_extras(&mut children);
         self.mark_positions_on_maps();
+        for child in children {
+            self.ctx.commands.entity(self.root).add_child(child);
+        }
         self.root
+    }
+
+    fn spawn_art(&mut self, children: &mut Vec<Entity>) {
+        for art in self.buildable.spawn_art(self.ctx) {
+            self.ctx.commands.entity(art).insert(Parent(self.root));
+            children.push(art);
+        }
+    }
+
+    fn spawn_extras(&mut self, children: &mut Vec<Entity>) {
+        for extra in self.buildable.spawn_extras(self.ctx, self.maps) {
+            self.ctx.commands.entity(extra).insert(Parent(self.root));
+            children.push(extra);
+        }
     }
 
     fn mark_positions_on_maps(&mut self) {
@@ -52,18 +71,6 @@ impl<'a, 'b1, 'b2, 'b3, 'c> BuildableSpawner<'a, 'b1, 'b2, 'b3, 'c> {
             for pos in self.buildable.shape(self.ctx) {
                 map.set_assuming_empty(pos, self.root);
             }
-        }
-    }
-
-    fn spawn_art(&mut self) {
-        for art in self.buildable.spawn_art(self.ctx) {
-            self.ctx.commands.entity(art).insert(Parent(self.root));
-        }
-    }
-
-    fn spawn_others(&mut self) {
-        for extra in self.buildable.spawn_extras(self.ctx, self.maps) {
-            self.ctx.commands.entity(extra).insert(Parent(self.root));
         }
     }
 }
