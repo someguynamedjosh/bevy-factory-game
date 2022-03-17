@@ -1,6 +1,8 @@
+use bevy::prelude::Component;
+
 use super::*;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Component, Debug, PartialEq, Eq)]
 pub enum IsoDirection {
     PosA,
     NegC,

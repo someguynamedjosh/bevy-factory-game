@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, ecs::system::EntityCommands};
 
 use crate::{
     iso::{ItemContainerMap, SpatialMap},
@@ -7,6 +7,13 @@ use crate::{
 
 pub struct BuildingContext<'a, 'c1, 'c2> {
     pub commands: &'a mut Commands<'c1, 'c2>,
+    pub position: IsoPos,
+    pub direction: IsoDirection,
+    pub common_assets: &'a CommonAssets,
+}
+
+pub struct BuildingComponentsContext<'a, 'c1, 'c2> {
+    pub commands: &'a mut EntityCommands<'c1, 'c2, 'a>,
     pub position: IsoPos,
     pub direction: IsoDirection,
     pub common_assets: &'a CommonAssets,

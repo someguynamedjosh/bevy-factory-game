@@ -5,10 +5,13 @@ use crate::{
     prelude::*,
 };
 
+#[derive(Component)]
 pub struct DebugSpawner {
     rate: u8,
     spawn_cycle: u8,
 }
+
+#[derive(Component)]
 pub struct DebugDestroyer;
 
 pub fn spawn_spawner(
@@ -19,19 +22,18 @@ pub fn spawn_spawner(
 ) -> Entity {
     commands
         .spawn()
-        .with_bundle(SpriteBundle {
-            material: common_assets.spawner_mat.clone(),
-            transform: origin.building_transform(Default::default()) * SPRITE_TRANSFORM,
+        .insert_bundle(SpriteBundle {
+            texture: common_assets.spawner_mat.clone(),
+            transform: origin.building_transform(Default::default()) * sprite_transform(),
             ..Default::default()
         })
-        .with(origin)
-        .with(DebugSpawner {
+        .insert(origin)
+        .insert(DebugSpawner {
             rate,
             spawn_cycle: 0,
         })
-        .with(ItemContainer::new_empty(ItemContainerAlignment::Centroid))
-        .current_entity()
-        .unwrap()
+        .insert(ItemContainer::new_empty(ItemContainerAlignment::Centroid))
+        .id()
 }
 
 pub fn spawn_destroyer(
@@ -41,20 +43,19 @@ pub fn spawn_destroyer(
 ) -> Entity {
     commands
         .spawn()
-        .with_bundle(SpriteBundle {
-            material: common_assets.destroyer_mat.clone(),
-            transform: origin.building_transform(Default::default()) * SPRITE_TRANSFORM,
+        .insert_bundle(SpriteBundle {
+            texture: common_assets.destroyer_mat.clone(),
+            transform: origin.building_transform(Default::default()) * sprite_transform(),
             ..Default::default()
         })
-        .with(origin)
-        .with(DebugDestroyer)
-        .with(ItemContainer::new_empty(ItemContainerAlignment::Centroid))
-        .current_entity()
-        .unwrap()
+        .insert(origin)
+        .insert(DebugDestroyer)
+        .insert(ItemContainer::new_empty(ItemContainerAlignment::Centroid))
+        .id()
 }
 
 fn tick_spawners(
-    commands: &mut Commands,
+    mut commands: Commands,
     common_assets: Res<CommonAssets>,
     mut spawners: Query<(&mut DebugSpawner, &mut ItemContainer, &IsoPos)>,
 ) {
@@ -64,7 +65,7 @@ fn tick_spawners(
             if spawner.spawn_cycle >= spawner.rate {
                 spawner.spawn_cycle = 0;
                 let item = spawn_item(
-                    commands,
+                    &mut commands,
                     &common_assets,
                     ReferenceItem::IronOre.as_item(),
                     *pos,
@@ -78,7 +79,7 @@ fn tick_spawners(
 }
 
 fn tick_destroyers(
-    commands: &mut Commands,
+    mut commands: Commands,
     mut destroyers: Query<(&mut ItemContainer,), With<DebugDestroyer>>,
 ) {
     for (mut container,) in destroyers.iter_mut() {
@@ -86,14 +87,14 @@ fn tick_destroyers(
             continue;
         }
         if let Some(item) = container.try_take() {
-            commands.despawn(item);
+            commands.entity(item).despawn();
         }
     }
 }
 pub struct Plug;
 
 impl Plugin for Plug {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.add_system_to_stage(fstage::TICK, tick_spawners.system())
             .add_system_to_stage(fstage::TICK, tick_destroyers.system());
     }

@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use super::{animation::ItemAnim, ItemContainerAlignment};
 use crate::prelude::*;
 
+#[derive(Component)]
 pub struct ItemAnimator {
     anim: ItemAnim,
 }

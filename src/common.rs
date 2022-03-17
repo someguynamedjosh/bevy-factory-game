@@ -1,15 +1,22 @@
-use bevy::{prelude::*, ecs::schedule::ShouldRun};
+use bevy::{
+    ecs::{schedule::ShouldRun, system::EntityCommands},
+    prelude::*,
+};
 
 use crate::{iso::GRID_TRIANGLE_RADIUS, prelude::*};
 
 /// How big a pixel of a sprite should be.
 const _SPRITE_SCALE: f32 = GRID_TRIANGLE_RADIUS / 64.0;
-pub const SPRITE_SCALE: Vec3 = Vec3::new(_SPRITE_SCALE, _SPRITE_SCALE, _SPRITE_SCALE);
-pub const SPRITE_TRANSFORM: Transform = Transform {
-    translation: Vec3::zero(),
-    rotation: Quat::identity(),
-    scale: SPRITE_SCALE,
-};
+pub fn sprite_scale() -> Vec3 {
+    Vec3::new(_SPRITE_SCALE, _SPRITE_SCALE, _SPRITE_SCALE)
+}
+pub fn sprite_transform() -> Transform {
+    Transform {
+        translation: Vec3::ZERO,
+        rotation: Quat::IDENTITY,
+        scale: sprite_scale(),
+    }
+}
 
 pub mod fstage {
     pub const UI: &'static str = "factory_ui";
@@ -18,6 +25,7 @@ pub mod fstage {
     pub const ANIMATION: &'static str = "factory_animation";
 }
 
+#[derive(Component)]
 pub struct SetupNeeded;
 
 #[derive(Default)]
@@ -68,39 +76,35 @@ pub enum TileVariant {
     Misc,
 }
 
-pub fn start_tile<'c>(
-    commands: &'c mut Commands,
+pub fn start_tile<'c, 'c1, 'c2>(
+    commands: &'c mut Commands<'c1, 'c2>,
     common_assets: &CommonAssets,
     pos: IsoPos,
     variant: TileVariant,
-) {
-    commands
-        .spawn()
-        .with_bundle(SpriteBundle {
-            material: common_assets.tiles[variant as usize].clone(),
-            transform: pos.building_transform(Default::default()) * SPRITE_TRANSFORM,
-            visible: Visible {
-                is_transparent: true,
-                is_visible: true,
-            },
-            ..Default::default()
-        })
-        .with(pos);
+) -> EntityCommands<'c1, 'c2, 'c> {
+    let mut ec = commands.spawn();
+    ec.insert_bundle(SpriteBundle {
+        texture: common_assets.tiles[variant as usize].clone(),
+        transform: pos.building_transform(Default::default()) * sprite_transform(),
+        ..Default::default()
+    })
+    .insert(pos);
+    ec
 }
 
 pub struct Plug;
 
 impl Plugin for Plug {
     fn build(&self, app: &mut App) {
-        app.add_stage_after("update", fstage::UI, SystemStage::serial())
-            .add_stage_after(fstage::UI, fstage::SETUP, SystemStage::serial())
+        app.add_stage_after(CoreStage::Update, fstage::UI, SystemStage::parallel())
+            .add_stage_after(fstage::UI, fstage::SETUP, SystemStage::parallel())
             .add_stage_after(
                 fstage::SETUP,
                 fstage::TICK,
-                SystemStage::serial().with_run_criteria(only_on_tick.system()),
+                SystemStage::parallel().with_run_criteria(only_on_tick.system()),
             )
-            .add_stage_after(fstage::TICK, fstage::ANIMATION, SystemStage::serial())
-            .add_resource(TickClock::default())
+            .add_stage_after(fstage::TICK, fstage::ANIMATION, SystemStage::parallel())
+            .insert_resource(TickClock::default())
             .add_system_to_stage(fstage::SETUP, update_clock.system());
     }
 }

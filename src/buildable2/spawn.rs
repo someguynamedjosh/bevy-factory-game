@@ -24,20 +24,20 @@ fn spawn_root(buildable: &Box<dyn Buildable>, ctx: &mut BuildingContext) -> Enti
     let root = ctx
         .commands
         .spawn()
-        .with_bundle((built, Transform::identity()))
-        .current_entity()
-        .unwrap();
+        .insert(built)
+        .insert(Transform::identity())
+        .id();
     root
 }
 
-struct BuildableSpawner<'a, 'b, 'c> {
+struct BuildableSpawner<'a, 'b1, 'b2, 'b3, 'c> {
     buildable: &'a dyn Buildable,
     root: Entity,
-    ctx: &'a mut BuildingContext<'b>,
+    ctx: &'a mut BuildingContext<'b1, 'b2, 'b3>,
     maps: &'a mut MutBuildingMaps<'c>,
 }
 
-impl<'a, 'b, 'c> BuildableSpawner<'a, 'b, 'c> {
+impl<'a, 'b1, 'b2, 'b3, 'c> BuildableSpawner<'a, 'b1, 'b2, 'b3, 'c> {
     fn finish_spawning(mut self) -> Entity {
         self.spawn_art();
         self.spawn_others();
@@ -57,15 +57,13 @@ impl<'a, 'b, 'c> BuildableSpawner<'a, 'b, 'c> {
 
     fn spawn_art(&mut self) {
         for art in self.buildable.spawn_art(self.ctx) {
-            self.ctx.commands.set_current_entity(art);
-            self.ctx.commands.with(Parent(self.root));
+            self.ctx.commands.entity(art).insert(Parent(self.root));
         }
     }
 
     fn spawn_others(&mut self) {
         for extra in self.buildable.spawn_extras(self.ctx, self.maps) {
-            self.ctx.commands.set_current_entity(extra);
-            self.ctx.commands.with(Parent(self.root));
+            self.ctx.commands.entity(extra).insert(Parent(self.root));
         }
     }
 }
@@ -78,7 +76,7 @@ pub fn destroy_buildable(
     // The spawner parents everything to the root entity, so this will take care
     // of all art and other related entities as well as the buildable object
     // itself.
-    ctx.commands.despawn_recursive(buildable.0);
+    ctx.commands.entity(buildable.0).despawn_recursive();
     let buildable = &buildable.1.buildable;
     clear_positions_on_maps(buildable, maps, ctx);
 }

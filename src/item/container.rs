@@ -23,6 +23,7 @@ pub struct ItemContainerPos {
     pub alignment: ItemContainerAlignment,
 }
 
+#[derive(Component)]
 pub struct ItemContainer {
     alignment: ItemContainerAlignment,
     item: Option<Entity>,

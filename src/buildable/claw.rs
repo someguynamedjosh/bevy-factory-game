@@ -5,6 +5,7 @@ use crate::{
     prelude::*,
 };
 
+#[derive(Component)]
 pub struct Claw {
     take_from: Entity,
     move_to: Entity,
@@ -33,12 +34,12 @@ pub fn spawn_claw(
 ) -> Entity {
     commands
         .spawn()
-        .with_bundle(SpriteBundle {
-            material: common_assets.claw_mat.clone(),
-            transform: SPRITE_TRANSFORM,
+        .insert_bundle(SpriteBundle {
+            texture: common_assets.claw_mat.clone(),
+            transform: sprite_transform(),
             ..Default::default()
         })
-        .with(Claw {
+        .insert(Claw {
             // We can't guarantee that there is an item ready to pick up when we spawn.
             blocked: true,
             current_anim_tick: 0,
@@ -47,8 +48,7 @@ pub fn spawn_claw(
             move_to: to,
             length,
         })
-        .current_entity()
-        .unwrap()
+        .id()
 }
 
 fn tick(
@@ -115,7 +115,7 @@ fn animate(
 pub struct Plug;
 
 impl Plugin for Plug {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.add_system_to_stage(fstage::TICK, tick.system())
             .add_system_to_stage(fstage::ANIMATION, animate.system());
     }

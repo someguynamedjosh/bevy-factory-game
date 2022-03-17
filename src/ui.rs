@@ -1,4 +1,4 @@
-use bevy::{math::Vec4Swizzles, prelude::*, render::camera::Camera};
+use bevy::{app::Events, math::Vec4Swizzles, prelude::*, render::camera::Camera};
 
 use crate::{
     buildable::{claw::spawn_claw, machine::spawn_machine, machine_type::MachineType},
@@ -9,9 +9,7 @@ use crate::{
 };
 
 #[derive(Default)]
-struct MouseSystemState {
-    event_reader: EventReader<CursorMoved>,
-}
+struct MouseSystemState {}
 
 struct GuiState {
     mouse_pos: Vec2,
@@ -83,54 +81,61 @@ impl MouseAction {
     }
 }
 
-fn startup(commands: &mut Commands, assets: Res<CommonAssets>) {
+fn startup(mut commands: Commands, assets: Res<CommonAssets>) {
     let mut bundle = PerspectiveCameraBundle::default();
     bundle.transform = Transform {
         translation: Vec3::new(0.0, -7.0, 20.0),
         rotation: Quat::from_rotation_x(0.05 * TAU),
-        scale: Vec3::one(),
+        scale: Vec3::ONE,
     };
-    commands.spawn().with_bundle(bundle);
-    let primary_camera = commands.current_entity().unwrap();
-    commands.spawn().with_bundle(UiCameraBundle::default());
+    let primary_camera = commands.spawn().insert_bundle(bundle).id();
+    commands.spawn().insert_bundle(UiCameraBundle::default());
 
-    commands.spawn().with_bundle(TextBundle {
-        style: Style {
-            align_self: AlignSelf::FlexStart,
-            position_type: PositionType::Absolute,
-            position: Rect {
-                top: Val::Px(5.0),
-                left: Val::Px(5.0),
+    let tool_text = commands
+        .spawn()
+        .insert_bundle(TextBundle {
+            style: Style {
+                align_self: AlignSelf::FlexStart,
+                position_type: PositionType::Absolute,
+                position: Rect {
+                    top: Val::Px(5.0),
+                    left: Val::Px(5.0),
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            text: Text {
+                sections: vec![TextSection {
+                    value: "Hello world!".to_owned(),
+                    style: TextStyle {
+                        font_size: 16.0,
+                        font: assets.font.clone(),
+                        ..Default::default()
+                    },
+                }],
                 ..Default::default()
             },
             ..Default::default()
-        },
-        text: Text {
-            value: "Hello world!".to_owned(),
-            style: TextStyle {
-                font_size: 16.0,
-                ..Default::default()
-            },
-            font: assets.font.clone(),
+        })
+        .id();
+
+    let world_cursor = commands
+        .spawn()
+        .insert_bundle(SpriteBundle {
+            texture: assets.cursor_accept_mat.clone(),
+            transform: sprite_transform(),
             ..Default::default()
-        },
-        ..Default::default()
-    });
-    let tool_text = commands.current_entity().unwrap();
+        })
+        .id();
 
-    commands.spawn().with_bundle(SpriteBundle {
-        material: assets.cursor_accept_mat.clone(),
-        transform: SPRITE_TRANSFORM,
-        ..Default::default()
-    });
-    let world_cursor = commands.current_entity().unwrap();
-
-    commands.spawn().with_bundle(SpriteBundle {
-        material: assets.arrow_mat.clone(),
-        transform: SPRITE_TRANSFORM,
-        ..Default::default()
-    });
-    let arrow = commands.current_entity().unwrap();
+    let arrow = commands
+        .spawn()
+        .insert_bundle(SpriteBundle {
+            texture: assets.arrow_mat.clone(),
+            transform: sprite_transform(),
+            ..Default::default()
+        })
+        .id();
 
     commands.insert_resource(GuiState {
         mouse_pos: Vec2::default(),
@@ -146,13 +151,13 @@ fn startup(commands: &mut Commands, assets: Res<CommonAssets>) {
 
 fn update_mouse_pos(
     mut state: ResMut<MouseSystemState>,
-    events: Res<Events<CursorMoved>>,
+    mut reader: EventReader<CursorMoved>,
     mut gui_state: ResMut<GuiState>,
     windows: Res<Windows>,
     cameras: Query<&Camera>,
     mut transforms: Query<&mut Transform>,
 ) {
-    for event in state.event_reader.iter(&events) {
+    for event in reader.iter() {
         gui_state.mouse_pos = event.position;
     }
 
@@ -161,7 +166,7 @@ fn update_mouse_pos(
     let camera_transform = transforms.get_mut(gui_state.primary_camera).unwrap();
     let window = windows.get(camera.window).unwrap();
     let (width, height) = (window.width(), window.height());
-    let output_pos = gui_state.mouse_pos / Vec2::new(width, height) * 2.0 - Vec2::one();
+    let output_pos = gui_state.mouse_pos / Vec2::new(width, height) * 2.0 - Vec2::ONE;
     let clip_pos = camera
         .projection_matrix
         .inverse()
@@ -184,18 +189,18 @@ fn update_mouse_pos(
 
     let mut cursor_transform = transforms.get_mut(gui_state.world_cursor).unwrap();
     *cursor_transform =
-        gui_state.mouse_pos_in_world.building_transform(IsoAxis::A) * SPRITE_TRANSFORM;
+        gui_state.mouse_pos_in_world.building_transform(IsoAxis::A) * sprite_transform();
     cursor_transform.translation.z += 0.02;
 
     let mut arrow_transform = transforms.get_mut(gui_state.arrow).unwrap();
     arrow_transform.translation = (gui_state.mouse_pos_in_world.centroid_pos(), 0.06).into();
-    let angle = -gui_state.direction.unit_vec().angle_between(Vec2::unit_x());
+    let angle = -gui_state.direction.unit_vec().angle_between(Vec2::X);
     arrow_transform.rotation = Quat::from_rotation_z(angle);
     arrow_transform.translation.z += 0.02;
 }
 
 fn ui_update(
-    commands: &mut Commands,
+    mut commands: Commands,
     time: Res<Time>,
     common_assets: Res<CommonAssets>,
     mut state: ResMut<GuiState>,
@@ -207,7 +212,7 @@ fn ui_update(
     containers: Query<(Entity, &ItemContainer, &IsoPos)>,
     mut transforms: Query<&mut Transform>,
     mut texts: Query<&mut Text>,
-    mut materials: Query<&mut Handle<ColorMaterial>>,
+    mut materials: Query<&mut Handle<Image>>,
     items: Query<&Item>,
 ) {
     let mut hovered_container = None;
@@ -238,14 +243,14 @@ fn ui_update(
     } else {
         common_assets.cursor_deny_mat.clone()
     };
-    materials.set(state.world_cursor, cursor_mat).unwrap();
+    *materials.get_mut(state.world_cursor).unwrap() = cursor_mat;
     if input.just_pressed(MouseButton::Left) && ok {
         match &state.action {
             MouseAction::PlaceConveyor => {
                 buildable2::spawn_buildable(
                     Box::new(BConveyor),
                     &mut BuildingContext {
-                        commands,
+                        commands: &mut commands,
                         position: state.mouse_pos_in_world,
                         direction: state.direction,
                         common_assets: &*common_assets,
@@ -274,13 +279,13 @@ fn ui_update(
                     let distance = distance / GRID_EDGE_LENGTH * 2.0;
                     assert!(distance > 0.0 && distance < 255.0);
                     let length = (distance + 0.3).floor() as u8;
-                    spawn_claw(commands, &common_assets, *start_container, e, length);
+                    spawn_claw(&mut commands, &common_assets, *start_container, e, length);
                     state.action = MouseAction::PlaceClaw;
                 }
             }
             MouseAction::Build(typ) => {
                 typ.build(
-                    commands,
+                    &mut commands,
                     &common_assets,
                     &mut obstruction_map,
                     state.mouse_pos_in_world,
@@ -307,7 +312,7 @@ fn ui_update(
     if key_input.just_pressed(KeyCode::Q) {
         state.direction = state.direction.counter_clockwise();
     }
-    let mut camera_offset = Vec2::zero();
+    let mut camera_offset = Vec2::ZERO;
     if key_input.pressed(KeyCode::W) {
         camera_offset.y += 1.0;
     }
@@ -322,7 +327,8 @@ fn ui_update(
     }
     camera_offset *= time.delta_seconds() * 10.0;
     let mut cam_t = transforms.get_mut(state.primary_camera).unwrap();
-    cam_t.translation += (camera_offset, 0.0).into();
+    cam_t.translation.x += camera_offset.x;
+    cam_t.translation.y += camera_offset.y;
 
     let tooltip = match &state.action {
         MouseAction::PlaceClaw => format!("Claw Start"),
@@ -341,7 +347,7 @@ fn ui_update(
     } else {
         format!("")
     };
-    text.value = format!(
+    text.sections[0].value = format!(
         "{}\n{}\n{}",
         tooltip, /* credits.0.floor() */ 0, hovered_item
     );
@@ -353,7 +359,7 @@ impl Plugin for Plug {
     fn build(&self, app: &mut App) {
         app.init_resource::<MouseSystemState>()
             .add_startup_system(startup.system())
-            .add_system_to_stage(fstage::UI, update_mouse_pos.system())
+            // .add_system_to_stage(fstage::UI, update_mouse_pos.system())
             .add_system_to_stage(fstage::UI, ui_update.system());
     }
 }

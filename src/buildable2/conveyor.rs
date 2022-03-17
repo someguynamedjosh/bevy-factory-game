@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::{Buildable, BuildingContext, WhichMap};
+use super::{Buildable, BuildingContext, WhichMap, BuildingComponentsContext};
 use crate::{
     item::{ItemAnimator, ItemContainer, ItemContainerAlignment},
     prelude::*,
@@ -18,45 +18,49 @@ impl Buildable for BConveyor {
         vec![WhichMap::Buildings, WhichMap::Conveyors]
     }
 
-    fn extra_root_components(&self, ctx: &mut BuildingContext) {
+    fn extra_root_components(&self, ctx: &mut BuildingComponentsContext) {
         ctx.commands
-            .with(ConveyorLogic::default())
-            .with(ItemContainer::new_empty(
+            .insert(ConveyorLogic::default())
+            .insert(ItemContainer::new_empty(
                 ItemContainerAlignment::AxisAligned(ctx.direction.axis()),
             ))
-            .with(SetupNeeded);
+            .insert(SetupNeeded);
     }
 
     fn spawn_art(&self, ctx: &mut BuildingContext) -> Vec<Entity> {
         // xor
-        let material = if ctx.position.points_left() != ctx.direction.is_negative() {
+        let texture = if ctx.position.points_left() != ctx.direction.is_negative() {
             ctx.common_assets.conveyor_mat.0.clone()
         } else {
             ctx.common_assets.conveyor_mat.1.clone()
         };
-        let transform = ctx.position.building_transform(ctx.direction.axis()) * SPRITE_TRANSFORM;
-        ctx.commands.spawn().with_bundle(SpriteBundle {
-            material,
-            transform,
-            ..Default::default()
-        });
-        vec![ctx.commands.current_entity().unwrap()]
+        let transform = ctx.position.building_transform(ctx.direction.axis()) * sprite_transform();
+        vec![ctx
+            .commands
+            .spawn()
+            .insert_bundle(SpriteBundle {
+                texture,
+                transform,
+                ..Default::default()
+            })
+            .id()]
     }
 }
 
-#[derive(Default)]
+#[derive(Component, Default)]
 struct ConveyorLogic {
     upstream: Option<Entity>,
     incoming_timer: u8,
     outgoing_timer: u8,
 }
 /// Conveyors that do not have any downstream.
+#[derive(Component)]
 struct TailConveyor;
 /// It takes this many ticks for an item to ride one unit of a conveyor.
 const DURATION: u8 = 6;
 
 fn setup(
-    commands: &mut Commands,
+    mut commands: Commands,
     all_conveyors: Query<(Entity, &IsoPos, &IsoDirection), With<ConveyorLogic>>,
     mut unlinked_conveyors: Query<
         (Entity, &mut ConveyorLogic, &IsoPos, &IsoDirection),
@@ -76,7 +80,7 @@ fn setup(
                 if candidate_downstream_pos == *pos {
                     conveyor.upstream = Some(cid);
                     // They have a downstream now, they cannot be
-                    commands.remove_one::<TailConveyor>(cid);
+                    commands.entity(cid).remove::<TailConveyor>();
                 }
             }
             // If they are in our downstream position and we are in their upstream
@@ -89,14 +93,14 @@ fn setup(
                 }
             }
         }
-        commands.remove_one::<SetupNeeded>(id);
+        commands.entity(id).remove::<SetupNeeded>();
         if !has_downstream {
-            commands.insert_one(id, TailConveyor);
+            commands.entity(id).insert(TailConveyor);
         }
     }
     for id in check_has_setup_needed {
         if !unlinked_conveyors.get_mut(id).is_ok() {
-            commands.insert_one(id, SetupNeeded);
+            commands.entity(id).insert(SetupNeeded);
         }
     }
 }

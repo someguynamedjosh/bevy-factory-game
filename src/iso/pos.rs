@@ -1,3 +1,5 @@
+use bevy::prelude::Component;
+
 use super::*;
 
 /// Defines a coordinate on a grid of equilateral triangles. The origin at
@@ -8,7 +10,7 @@ use super::*;
 /// coordinates to uniquely describe a position, so we store x, y
 /// coordinates instead of A, B, C.
 #[make_constructor]
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Component, Debug, Default, PartialEq, Eq, Hash)]
 pub struct IsoPos {
     x: i32,
     /// +y points towards the top of the screen.

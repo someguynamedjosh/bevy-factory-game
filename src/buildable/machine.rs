@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use super::machine_type::MachineType;
 use crate::{buildable::BuildingSpawner, item::ItemContainer, prelude::*};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Component, Debug)]
 pub struct Machine {
     inputs: Vec<Entity>,
     outputs: Vec<Entity>,
@@ -51,12 +51,11 @@ pub fn spawn_machine(
         typ,
         processing_time: 0,
     };
-    commands.set_current_entity(origin);
-    commands.with(machine);
+    commands.entity(origin).insert(machine);
 }
 
 fn tick(
-    commands: &mut Commands,
+    mut commands: Commands,
     common_assets: Res<CommonAssets>,
     mut machines: Query<(&mut Machine,)>,
     mut containers: Query<(&mut ItemContainer, &IsoPos)>,
@@ -83,7 +82,7 @@ fn tick(
                 assert_eq!(results.len(), machine.outputs.len());
                 for (result, &output) in results.into_iter().zip(machine.outputs.iter()) {
                     let (mut output, pos) = containers.get_mut(output).unwrap();
-                    output.create_and_put_item(commands, &common_assets, *pos, result);
+                    output.create_and_put_item(&mut commands, &common_assets, *pos, result);
                 }
                 machine.processing_time = 0;
             }
@@ -99,7 +98,7 @@ fn tick(
             let (mut container, _) = containers.get_mut(container).unwrap();
             if buffer.is_none() {
                 if let Some(item) = container.try_take() {
-                    commands.despawn(item);
+                    commands.entity(item).despawn();
                     let item = items.get(item).unwrap().clone();
                     *buffer = Some(item);
                 }

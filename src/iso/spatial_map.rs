@@ -79,8 +79,8 @@ pub struct Plug;
 
 impl Plugin for Plug {
     fn build(&self, app: &mut App) {
-        app.add_resource(ConveyorMap::default());
-        app.add_resource(ItemContainerMap::default());
-        app.add_resource(BuildingObstructionMap::default());
+        app.insert_resource(ConveyorMap::default());
+        app.insert_resource(ItemContainerMap::default());
+        app.insert_resource(BuildingObstructionMap::default());
     }
 }

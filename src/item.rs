@@ -18,28 +18,27 @@ pub fn spawn_item(
     origin: IsoPos,
     alignment: ItemContainerAlignment,
 ) -> Entity {
-    let material = match item.as_known_item() {
+    let texture = match item.as_known_item() {
         Some(ReferenceItem::IronOre) => common_assets.metal_rubble_mat.clone(),
         Some(ReferenceItem::IronNugget) => common_assets.metal_mat.clone(),
         None => common_assets.claw_mat.clone(),
     };
     commands
         .spawn()
-        .with_bundle(SpriteBundle {
-            material,
-            transform: SPRITE_TRANSFORM,
+        .insert_bundle(SpriteBundle {
+            texture,
+            transform: sprite_transform(),
             ..Default::default()
         })
-        .with(item)
-        .with(ItemAnimator::new(alignment.get_item_pos(origin)))
-        .current_entity()
-        .unwrap()
+        .insert(item)
+        .insert(ItemAnimator::new(alignment.get_item_pos(origin)))
+        .id()
 }
 
 pub struct Plug;
 
 impl Plugin for Plug {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.add_system_to_stage(fstage::ANIMATION, animate_items.system());
 
         if cfg!(feature = "draw-containers") {

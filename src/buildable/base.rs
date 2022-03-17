@@ -102,7 +102,7 @@ impl<'a, 'c1, 'c2> BuildingSpawner<'a, 'c1, 'c2> {
     }
 
     fn create_main(&mut self, art: &mut Vec<Entity>) -> Entity {
-        let main_entity = self.commands.spawn().current_entity().unwrap();
+        let main_entity = self.commands.spawn().id();
         self.obstruction_map
             .set_assuming_empty(self.origin, main_entity);
         if let (Some(mesh), Some(material)) = (self.mesh.take(), self.material.take()) {
@@ -123,15 +123,14 @@ impl<'a, 'c1, 'c2> BuildingSpawner<'a, 'c1, 'c2> {
         let main_art = self
             .commands
             .spawn()
-            .with_bundle(PbrBundle {
+            .insert_bundle(PbrBundle {
                 mesh,
                 material,
                 transform: self.origin.building_transform(self.facing.axis()),
                 ..Default::default()
             })
-            .with(Parent(main_entity))
-            .current_entity()
-            .unwrap();
+            .insert(Parent(main_entity))
+            .id();
         art.push(main_art);
     }
 
@@ -173,9 +172,8 @@ impl<'a, 'c1, 'c2> BuildingSpawner<'a, 'c1, 'c2> {
     ) {
         if let Some(ca) = self.common_assets {
             let ent = start_tile(self.commands, ca, pos, variant)
-                .with(Parent(main_entity))
-                .current_entity()
-                .unwrap();
+                .insert(Parent(main_entity))
+                .id();
             art.push(ent);
         }
     }
@@ -184,13 +182,10 @@ impl<'a, 'c1, 'c2> BuildingSpawner<'a, 'c1, 'c2> {
         let id = self
             .commands
             .spawn()
-            .with_bundle((
-                pos,
-                ItemContainer::new_empty(ItemContainerAlignment::Centroid),
-            ))
-            .with(Parent(main_entity))
-            .current_entity()
-            .unwrap();
+            .insert(pos)
+            .insert(ItemContainer::new_empty(ItemContainerAlignment::Centroid))
+            .insert(Parent(main_entity))
+            .id();
         id
     }
 }
