@@ -22,8 +22,9 @@ pub fn spawn_spawner(
 ) -> Entity {
     commands
         .spawn()
-        .insert_bundle(SpriteBundle {
-            texture: common_assets.spawner_mat.clone(),
+        .insert_bundle(PbrBundle {
+            material: common_assets.spawner_mat.clone(),
+            mesh: common_assets.quad_mesh.clone(),
             transform: origin.building_transform(Default::default()) * sprite_transform(),
             ..Default::default()
         })
@@ -43,8 +44,9 @@ pub fn spawn_destroyer(
 ) -> Entity {
     commands
         .spawn()
-        .insert_bundle(SpriteBundle {
-            texture: common_assets.destroyer_mat.clone(),
+        .insert_bundle(PbrBundle {
+            material: common_assets.destroyer_mat.clone(),
+            mesh: common_assets.quad_mesh.clone(),
             transform: origin.building_transform(Default::default()) * sprite_transform(),
             ..Default::default()
         })

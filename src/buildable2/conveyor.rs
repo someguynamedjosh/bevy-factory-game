@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::{Buildable, BuildingContext, WhichMap, BuildingComponentsContext};
+use super::{Buildable, BuildingComponentsContext, BuildingContext, WhichMap};
 use crate::{
     item::{ItemAnimator, ItemContainer, ItemContainerAlignment},
     prelude::*,
@@ -29,7 +29,7 @@ impl Buildable for BConveyor {
 
     fn spawn_art(&self, ctx: &mut BuildingContext) -> Vec<Entity> {
         // xor
-        let texture = if ctx.position.points_left() != ctx.direction.is_negative() {
+        let material = if ctx.position.points_left() != ctx.direction.is_negative() {
             ctx.common_assets.conveyor_mat.0.clone()
         } else {
             ctx.common_assets.conveyor_mat.1.clone()
@@ -38,8 +38,9 @@ impl Buildable for BConveyor {
         vec![ctx
             .commands
             .spawn()
-            .insert_bundle(SpriteBundle {
-                texture,
+            .insert_bundle(PbrBundle {
+                material,
+                mesh: ctx.common_assets.quad_mesh.clone(),
                 transform,
                 ..Default::default()
             })

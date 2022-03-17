@@ -83,8 +83,9 @@ pub fn start_tile<'c, 'c1, 'c2>(
     variant: TileVariant,
 ) -> EntityCommands<'c1, 'c2, 'c> {
     let mut ec = commands.spawn();
-    ec.insert_bundle(SpriteBundle {
-        texture: common_assets.tiles[variant as usize].clone(),
+    ec.insert_bundle(PbrBundle {
+        material: common_assets.tiles[variant as usize].clone(),
+        mesh: common_assets.quad_mesh.clone(),
         transform: pos.building_transform(Default::default()) * sprite_transform(),
         ..Default::default()
     })

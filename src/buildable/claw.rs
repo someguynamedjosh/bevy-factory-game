@@ -34,8 +34,9 @@ pub fn spawn_claw(
 ) -> Entity {
     commands
         .spawn()
-        .insert_bundle(SpriteBundle {
-            texture: common_assets.claw_mat.clone(),
+        .insert_bundle(PbrBundle {
+            material: common_assets.claw_mat.clone(),
+            mesh: common_assets.quad_mesh.clone(),
             transform: sprite_transform(),
             ..Default::default()
         })

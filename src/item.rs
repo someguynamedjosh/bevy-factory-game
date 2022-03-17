@@ -18,15 +18,16 @@ pub fn spawn_item(
     origin: IsoPos,
     alignment: ItemContainerAlignment,
 ) -> Entity {
-    let texture = match item.as_known_item() {
+    let material = match item.as_known_item() {
         Some(ReferenceItem::IronOre) => common_assets.metal_rubble_mat.clone(),
         Some(ReferenceItem::IronNugget) => common_assets.metal_mat.clone(),
         None => common_assets.claw_mat.clone(),
     };
     commands
         .spawn()
-        .insert_bundle(SpriteBundle {
-            texture,
+        .insert_bundle(PbrBundle {
+            material,
+            mesh: common_assets.quad_mesh.clone(),
             transform: sprite_transform(),
             ..Default::default()
         })

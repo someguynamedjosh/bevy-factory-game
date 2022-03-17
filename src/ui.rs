@@ -131,8 +131,9 @@ fn startup(mut commands: Commands, assets: Res<CommonAssets>) {
 
     let arrow = commands
         .spawn()
-        .insert_bundle(SpriteBundle {
-            texture: assets.arrow_mat.clone(),
+        .insert_bundle(PbrBundle {
+            material: assets.arrow_mat.clone(),
+            mesh: assets.quad_mesh.clone(),
             transform: sprite_transform(),
             ..Default::default()
         })
