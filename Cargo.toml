@@ -21,7 +21,7 @@ scones = "0.1.2"
 
 [dependencies.bevy]
 features = ["dynamic"] # Enable faster iterative compilation times.
-version = "0.6.0"
+version = "0.6.1"
 
 # Enable optimizations for dependencies (incl. Bevy),
 # but not for our own code:

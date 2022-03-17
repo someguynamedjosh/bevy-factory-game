@@ -39,7 +39,13 @@ fn startup(
     let mut make_tex = |filename: &str| asset_server.load(filename);
     let mut make_mat = |filename: &str| {
         let tex = asset_server.load(filename);
-        mesh_mats.add(tex.into())
+        let mat = StandardMaterial {
+            alpha_mode: AlphaMode::Blend,
+            base_color_texture: Some(tex),
+            unlit: true,
+            ..Default::default()
+        };
+        mesh_mats.add(mat)
     };
     common_assets.font = asset_server.load("LiberationMono-Regular.ttf");
     for (i, path) in [
