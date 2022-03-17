@@ -73,6 +73,7 @@ fn setup(
 ) {
     let mut check_has_setup_needed = Vec::new();
     for (id, mut conveyor, pos, facing) in unlinked_conveyors.iter_mut() {
+        println!("CALLED!");
         let upstream_pos = pos.offset_direction(*facing, -1);
         let downstream_pos = pos.offset_direction(*facing, 1);
         let mut has_downstream = false;

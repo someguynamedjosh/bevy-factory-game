@@ -33,6 +33,7 @@ fn main() {
         .add_plugin(assets::Plug)
         .add_plugin(ui::Plug)
         .add_plugin(buildable::Plug)
+        .add_plugin(buildable2::Plug)
         .add_plugin(item::Plug)
         .add_startup_system(test_scene.system())
         .run();

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::{Buildable, BuildingContext, Built, MutBuildingMaps};
+use super::{Buildable, BuildingComponentsContext, BuildingContext, Built, MutBuildingMaps};
 
 pub fn spawn_buildable(
     buildable: Box<dyn Buildable>,
@@ -24,6 +24,8 @@ fn spawn_root(buildable: &Box<dyn Buildable>, ctx: &mut BuildingContext) -> Enti
     let root = ctx
         .commands
         .spawn()
+        .insert(ctx.position)
+        .insert(ctx.direction)
         .insert(built)
         .insert(ctx.position.building_transform(ctx.direction.axis()))
         .insert(GlobalTransform::default())
@@ -40,27 +42,31 @@ struct BuildableSpawner<'a, 'b1, 'b2, 'b3, 'c> {
 
 impl<'a, 'b1, 'b2, 'b3, 'c> BuildableSpawner<'a, 'b1, 'b2, 'b3, 'c> {
     fn finish_spawning(mut self) -> Entity {
-        let mut children = Vec::new();
-        self.spawn_art(&mut children);
-        self.spawn_extras(&mut children);
-        self.mark_positions_on_maps();
-        for child in children {
-            self.ctx.commands.entity(self.root).add_child(child);
+        {
+            let mut commands = self.ctx.commands.entity(self.root);
+            let mut ctx = BuildingComponentsContext {
+                commands: &mut commands,
+                position: self.ctx.position,
+                direction: self.ctx.direction,
+                common_assets: self.ctx.common_assets,
+            };
+            self.buildable.extra_root_components(&mut ctx);
         }
+        self.spawn_art();
+        self.spawn_extras();
+        self.mark_positions_on_maps();
         self.root
     }
 
-    fn spawn_art(&mut self, children: &mut Vec<Entity>) {
+    fn spawn_art(&mut self) {
         for art in self.buildable.spawn_art(self.ctx) {
-            self.ctx.commands.entity(art).insert(Parent(self.root));
-            children.push(art);
+            self.ctx.commands.entity(self.root).add_child(art);
         }
     }
 
-    fn spawn_extras(&mut self, children: &mut Vec<Entity>) {
+    fn spawn_extras(&mut self) {
         for extra in self.buildable.spawn_extras(self.ctx, self.maps) {
-            self.ctx.commands.entity(extra).insert(Parent(self.root));
-            children.push(extra);
+            self.ctx.commands.entity(self.root).add_child(extra);
         }
     }
 

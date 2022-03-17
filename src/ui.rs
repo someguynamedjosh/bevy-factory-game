@@ -134,7 +134,8 @@ fn startup(mut commands: Commands, assets: Res<CommonAssets>) {
         .insert_bundle(PbrBundle {
             material: assets.arrow_mat.clone(),
             mesh: assets.quad_mesh.clone(),
-            transform: sprite_transform(),
+            // Why the hell do we need to do this twice?!?!
+            transform: sprite_transform() * sprite_transform(),
             ..Default::default()
         })
         .id();
@@ -190,8 +191,10 @@ fn update_mouse_pos(
     gui_state.mouse_pos_in_world = IsoPos::from_world_pos(world_pos_2, snapping);
 
     let mut cursor_transform = transforms.get_mut(gui_state.world_cursor).unwrap();
-    *cursor_transform =
-        gui_state.mouse_pos_in_world.building_transform(IsoAxis::A) * sprite_transform();
+    *cursor_transform = gui_state.mouse_pos_in_world.building_transform(IsoAxis::A)
+    // Why the hell do we need to do this twice?!?!
+        * sprite_transform()
+        * sprite_transform();
     cursor_transform.translation.z += 0.02;
 
     let mut arrow_transform = transforms.get_mut(gui_state.arrow).unwrap();
