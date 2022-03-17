@@ -121,8 +121,9 @@ fn startup(mut commands: Commands, assets: Res<CommonAssets>) {
 
     let world_cursor = commands
         .spawn()
-        .insert_bundle(SpriteBundle {
-            texture: assets.cursor_accept_mat.clone(),
+        .insert_bundle(PbrBundle {
+            material: assets.cursor_accept_mat.clone(),
+            mesh: assets.quad_mesh.clone(),
             transform: sprite_transform(),
             ..Default::default()
         })
@@ -212,7 +213,8 @@ fn ui_update(
     containers: Query<(Entity, &ItemContainer, &IsoPos)>,
     mut transforms: Query<&mut Transform>,
     mut texts: Query<&mut Text>,
-    mut materials: Query<&mut Handle<Image>>,
+    mut images: Query<&mut Handle<Image>>,
+    mut materials: Query<&mut Handle<StandardMaterial>>,
     items: Query<&Item>,
 ) {
     let mut hovered_container = None;

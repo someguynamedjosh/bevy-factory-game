@@ -19,21 +19,28 @@ pub struct CommonAssets {
 
     pub debug_container_mat: Handle<Image>,
     pub debug_blocked_container_mat: Handle<Image>,
-    pub cursor_accept_mat: Handle<Image>,
-    pub cursor_deny_mat: Handle<Image>,
+    pub cursor_accept_mat: Handle<StandardMaterial>,
+    pub cursor_deny_mat: Handle<StandardMaterial>,
     pub arrow_mat: Handle<Image>,
 
     pub clay_mat: Handle<StandardMaterial>,
 
+    pub quad_mesh: Handle<Mesh>,
     pub furnace_mesh: Handle<Mesh>,
 }
 
 fn startup(
     asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut sprite_mats: ResMut<Assets<ColorMaterial>>,
     mut mesh_mats: ResMut<Assets<StandardMaterial>>,
     mut common_assets: ResMut<CommonAssets>,
 ) {
     let mut make_tex = |filename: &str| asset_server.load(filename);
+    let mut make_mat = |filename: &str| {
+        let tex = asset_server.load(filename);
+        mesh_mats.add(tex.into())
+    };
     common_assets.font = asset_server.load("LiberationMono-Regular.ttf");
     for (i, path) in [
         "tile.png",
@@ -62,8 +69,8 @@ fn startup(
 
     common_assets.debug_container_mat = make_tex("debug_container.png");
     common_assets.debug_blocked_container_mat = make_tex("debug_blocked_container.png");
-    common_assets.cursor_accept_mat = make_tex("cursor_accept.png");
-    common_assets.cursor_deny_mat = make_tex("cursor_deny.png");
+    common_assets.cursor_accept_mat = make_mat("cursor_accept.png");
+    common_assets.cursor_deny_mat = make_mat("cursor_deny.png");
     common_assets.arrow_mat = make_tex("arrow.png");
 
     common_assets.clay_mat = mesh_mats.add(StandardMaterial {
@@ -71,6 +78,7 @@ fn startup(
         ..Default::default()
     });
 
+    common_assets.quad_mesh = meshes.add(shape::Quad::new(Vec2::ONE).into());
     common_assets.furnace_mesh = asset_server.load("furnace.obj");
 }
 
