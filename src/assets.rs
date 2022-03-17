@@ -93,6 +93,6 @@ pub struct Plug;
 impl Plugin for Plug {
     fn build(&self, app: &mut App) {
         app.insert_resource(CommonAssets::default())
-            .add_startup_system(startup.system());
+            .add_startup_system_to_stage(StartupStage::PreStartup, startup.system());
     }
 }

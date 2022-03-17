@@ -6,7 +6,7 @@ use bevy::{
 use crate::{iso::GRID_TRIANGLE_RADIUS, prelude::*};
 
 /// How big a pixel of a sprite should be.
-const _SPRITE_SCALE: f32 = GRID_TRIANGLE_RADIUS / 1.0;
+const _SPRITE_SCALE: f32 = GRID_TRIANGLE_RADIUS / 0.5;
 pub fn sprite_scale() -> Vec3 {
     Vec3::new(_SPRITE_SCALE, _SPRITE_SCALE, _SPRITE_SCALE)
 }

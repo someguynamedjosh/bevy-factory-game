@@ -361,7 +361,7 @@ impl Plugin for Plug {
     fn build(&self, app: &mut App) {
         app.init_resource::<MouseSystemState>()
             .add_startup_system(startup.system())
-            // .add_system_to_stage(fstage::UI, update_mouse_pos.system())
+            .add_system_to_stage(fstage::UI, update_mouse_pos.system())
             .add_system_to_stage(fstage::UI, ui_update.system());
     }
 }
