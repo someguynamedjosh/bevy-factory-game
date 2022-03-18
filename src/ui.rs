@@ -1,8 +1,8 @@
 use bevy::{app::Events, math::Vec4Swizzles, prelude::*, render::camera::Camera};
 
 use crate::{
-    buildable::{claw::spawn_claw, machine::spawn_machine, machine_type::MachineType},
-    buildable2::{self, conveyor::BConveyor, BuildingContext, MutBuildingMaps},
+    buildable::{claw::spawn_claw, machine::spawn_machine},
+    buildable2::{self, BConveyor, BMachine, BuildingContext, MachineType, MutBuildingMaps},
     iso::{ItemContainerMap, GRID_EDGE_LENGTH},
     item::ItemContainer,
     prelude::*,
@@ -25,39 +25,6 @@ struct GuiState {
     action: MouseAction,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-enum Buildable {
-    Machine(MachineType),
-}
-
-impl Buildable {
-    fn build(
-        &self,
-        commands: &mut Commands,
-        common_assets: &Res<CommonAssets>,
-        obstruction_map: &mut ResMut<BuildingObstructionMap>,
-        origin: IsoPos,
-        facing: IsoDirection,
-    ) {
-        match self {
-            Self::Machine(typ) => spawn_machine(
-                commands,
-                common_assets,
-                obstruction_map,
-                *typ,
-                origin,
-                facing,
-            ),
-        }
-    }
-
-    fn get_shape(&self) -> &'static Shape {
-        match self {
-            Self::Machine(typ) => typ.get_shape(),
-        }
-    }
-}
-
 enum MouseAction {
     PlaceConveyor,
     PlaceClaw,
@@ -65,7 +32,7 @@ enum MouseAction {
         start_pos: IsoPos,
         start_container: Entity,
     },
-    Build(Buildable),
+    Machine(MachineType),
 }
 
 impl MouseAction {
@@ -76,7 +43,7 @@ impl MouseAction {
             Self::PlaceClawEnd { start_pos, .. } => Snapping::AlongAnyLine {
                 through: *start_pos,
             },
-            Self::Build(..) => Snapping::require_edge_pointing_in(selected_direction),
+            Self::Machine(..) => Snapping::require_edge_pointing_in(selected_direction),
         }
     }
 }
@@ -231,7 +198,7 @@ fn ui_update(
     let ok = match &state.action {
         MouseAction::PlaceConveyor => !obstruction_map.is_occupied(state.mouse_pos_in_world),
         MouseAction::PlaceClaw | MouseAction::PlaceClawEnd { .. } => hovered_container.is_some(),
-        MouseAction::Build(typ) => {
+        MouseAction::Machine(typ) => {
             let shape = typ.get_shape();
             (|| {
                 let iters = shape.positions(state.mouse_pos_in_world, state.direction);
@@ -289,13 +256,20 @@ fn ui_update(
                     state.action = MouseAction::PlaceClaw;
                 }
             }
-            MouseAction::Build(typ) => {
-                typ.build(
-                    &mut commands,
-                    &common_assets,
-                    &mut obstruction_map,
-                    state.mouse_pos_in_world,
-                    state.direction,
+            MouseAction::Machine(typ) => {
+                buildable2::spawn_buildable(
+                    Box::new(BMachine(*typ)),
+                    &mut BuildingContext {
+                        commands: &mut commands,
+                        position: state.mouse_pos_in_world,
+                        direction: state.direction,
+                        common_assets: &*common_assets,
+                    },
+                    &mut MutBuildingMaps {
+                        buildings: &mut *obstruction_map,
+                        conveyors: &mut *conveyor_map,
+                        item_containers: &mut *item_container_map,
+                    },
                 );
             }
         }
@@ -307,10 +281,10 @@ fn ui_update(
         state.action = MouseAction::PlaceClaw;
     }
     if key_input.just_pressed(KeyCode::Key3) {
-        state.action = MouseAction::Build(Buildable::Machine(MachineType::Purifier));
+        state.action = MouseAction::Machine(MachineType::Purifier);
     }
     if key_input.just_pressed(KeyCode::Key4) {
-        state.action = MouseAction::Build(Buildable::Machine(MachineType::Joiner));
+        state.action = MouseAction::Machine(MachineType::Joiner);
     }
     if key_input.just_pressed(KeyCode::E) {
         state.direction = state.direction.clockwise();
@@ -340,7 +314,7 @@ fn ui_update(
         MouseAction::PlaceClaw => format!("Claw Start"),
         MouseAction::PlaceClawEnd { .. } => format!("Claw End"),
         MouseAction::PlaceConveyor => format!("Conveyor"),
-        MouseAction::Build(typ) => format!("{:?}", typ),
+        MouseAction::Machine(typ) => format!("{:?}", typ),
     };
     let mut text = texts.get_mut(state.tool_text).unwrap();
     let hovered_item = if let Some((_, container, _)) = hovered_container {

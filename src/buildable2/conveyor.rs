@@ -10,6 +10,8 @@ use crate::{
 pub struct BConveyor;
 
 impl Buildable for BConveyor {
+    type ExtraData = ();
+
     fn shape(&self, ctx: &mut BuildingContext) -> Vec<IsoPos> {
         vec![ctx.position]
     }
@@ -22,13 +24,21 @@ impl Buildable for BConveyor {
         ]
     }
 
-    fn extra_root_components(&self, ctx: &mut BuildingComponentsContext) {
+    fn extra_root_components(&self, ctx: &mut BuildingComponentsContext, _data: ()) {
         ctx.commands
             .insert(ConveyorLogic::default())
             .insert(ItemContainer::new_empty(
                 ItemContainerAlignment::AxisAligned(ctx.direction.axis()),
             ))
             .insert(SetupNeeded);
+    }
+
+    fn spawn_extras(
+        &self,
+        ctx: &mut BuildingContext,
+        maps: &mut super::MutBuildingMaps,
+    ) -> (Vec<Entity>, Self::ExtraData) {
+        (vec![], ())
     }
 
     fn spawn_art(&self, ctx: &mut BuildingContext) -> Vec<Entity> {
@@ -73,7 +83,6 @@ fn setup(
 ) {
     let mut check_has_setup_needed = Vec::new();
     for (id, mut conveyor, pos, facing) in unlinked_conveyors.iter_mut() {
-        println!("CALLED!");
         let upstream_pos = pos.offset_direction(*facing, -1);
         let downstream_pos = pos.offset_direction(*facing, 1);
         let mut has_downstream = false;
