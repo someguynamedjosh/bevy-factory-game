@@ -1,7 +1,7 @@
-use bevy::{app::Events, math::Vec4Swizzles, prelude::*, render::camera::Camera};
+use bevy::{math::Vec4Swizzles, prelude::*, render::camera::Camera};
 
 use crate::{
-    buildable::{claw::spawn_claw, machine::spawn_machine},
+    buildable::claw::spawn_claw,
     buildable2::{self, BConveyor, BMachine, BuildingContext, MachineType, MutBuildingMaps},
     iso::{ItemContainerMap, GRID_EDGE_LENGTH},
     item::ItemContainer,

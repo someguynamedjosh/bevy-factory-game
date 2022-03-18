@@ -1,8 +1,7 @@
 use bevy::prelude::*;
 
-use super::{logic::MachineLogic, typee::MachineType};
+use super::{logic::MachineLogic, shape::Shape, typee::MachineType};
 use crate::{
-    buildable::BuildingSpawner,
     buildable2::{
         Buildable, BuildingComponentsContext, BuildingContext, MutBuildingMaps, WhichMap,
     },
@@ -81,6 +80,7 @@ impl Buildable for BMachine {
                 ctx.commands,
                 ctx.common_assets,
                 &self.0.get_shape(),
+                ctx.position,
                 ctx.direction,
             )
         }
@@ -106,12 +106,20 @@ fn spawn_placeholder_art(
     commands: &mut Commands,
     common_assets: &CommonAssets,
     shape: &Shape,
+    position: IsoPos,
     direction: IsoDirection,
 ) -> Vec<Entity> {
     let mut all = Vec::new();
-    let p = shape.positions(IsoPos::origin(), direction);
+    let p = shape.positions(position, direction);
     for pos in p.blanks {
         all.push(start_tile(commands, common_assets, pos, TileVariant::Blank).id());
     }
+    for pos in p.inputs {
+        all.push(start_tile(commands, common_assets, pos, TileVariant::Input).id());
+    }
+    for pos in p.outputs {
+        all.push(start_tile(commands, common_assets, pos, TileVariant::Output).id());
+    }
+    all.push(start_tile(commands, common_assets, position, TileVariant::Misc).id());
     all
 }

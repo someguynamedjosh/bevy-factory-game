@@ -35,8 +35,8 @@ impl Buildable for BConveyor {
 
     fn spawn_extras(
         &self,
-        ctx: &mut BuildingContext,
-        maps: &mut super::MutBuildingMaps,
+        _ctx: &mut BuildingContext,
+        _maps: &mut super::MutBuildingMaps,
     ) -> (Vec<Entity>, Self::ExtraData) {
         (vec![], ())
     }
@@ -54,7 +54,8 @@ impl Buildable for BConveyor {
             .insert_bundle(PbrBundle {
                 material,
                 mesh: ctx.common_assets.quad_mesh.clone(),
-                transform: sprite_transform(),
+                transform: ctx.position.building_transform(ctx.direction.axis())
+                    * sprite_transform(),
                 ..Default::default()
             })
             .id()]

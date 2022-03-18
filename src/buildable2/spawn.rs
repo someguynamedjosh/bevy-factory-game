@@ -1,8 +1,6 @@
 use bevy::prelude::*;
 
-use super::{
-    Buildable, BuildingComponentsContext, BuildingContext, Built, DynBuildable, MutBuildingMaps,
-};
+use super::{BuildingContext, Built, DynBuildable, MutBuildingMaps};
 
 pub fn spawn_buildable(
     buildable: Box<dyn DynBuildable>,
@@ -12,7 +10,9 @@ pub fn spawn_buildable(
     let built = Built {
         buildable: dyn_clone::clone_box(&*buildable),
     };
-    buildable.spawn_self(built, ctx, maps)
+    let root = buildable.spawn_self(built, ctx, maps);
+    set_positions_on_maps(&buildable, maps, ctx, root);
+    root
 }
 
 fn set_positions_on_maps(

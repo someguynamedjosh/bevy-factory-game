@@ -15,7 +15,11 @@ pub trait Buildable: DynClone + Sync + Send + 'static {
     fn shape(&self, ctx: &mut BuildingContext) -> Vec<IsoPos>;
     fn maps(&self) -> Vec<WhichMap>;
     fn extra_root_components(&self, ctx: &mut BuildingComponentsContext, data: Self::ExtraData);
-    fn spawn_extras(&self, ctx: &mut BuildingContext, maps: &mut MutBuildingMaps) -> (Vec<Entity>, Self::ExtraData);
+    fn spawn_extras(
+        &self,
+        ctx: &mut BuildingContext,
+        maps: &mut MutBuildingMaps,
+    ) -> (Vec<Entity>, Self::ExtraData);
     fn spawn_art(&self, ctx: &mut BuildingContext) -> Vec<Entity>;
 }
 
@@ -51,7 +55,7 @@ impl<B: Buildable> DynBuildable for B {
             .insert(ctx.position)
             .insert(ctx.direction)
             .insert(built)
-            .insert(ctx.position.building_transform(ctx.direction.axis()))
+            .insert(Transform::identity())
             .insert(GlobalTransform::default())
             .id();
         let (extras, data) = self.spawn_extras(ctx, maps);
