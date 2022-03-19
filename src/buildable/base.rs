@@ -60,7 +60,7 @@ pub struct BuildingSpawner<'a, 'c1, 'c2> {
     #[value(None for start)]
     material: Option<Handle<StandardMaterial>>,
 
-    obstruction_map: &'a mut BuildingObstructionMap,
+    obstruction_map: &'a mut BuildingMap,
     shape: &'a Shape,
     origin: IsoPos,
     facing: IsoDirection,

@@ -73,7 +73,7 @@ macro_rules! map_newtype {
 
 map_newtype!(ConveyorMap, Entity);
 map_newtype!(ItemContainerMap, Entity);
-map_newtype!(BuildingObstructionMap, Entity);
+map_newtype!(BuildingMap, Entity);
 
 pub struct Plug;
 
@@ -81,6 +81,6 @@ impl Plugin for Plug {
     fn build(&self, app: &mut App) {
         app.insert_resource(ConveyorMap::default());
         app.insert_resource(ItemContainerMap::default());
-        app.insert_resource(BuildingObstructionMap::default());
+        app.insert_resource(BuildingMap::default());
     }
 }

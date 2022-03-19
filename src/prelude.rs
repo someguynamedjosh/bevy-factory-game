@@ -9,6 +9,6 @@ pub use scones::make_constructor;
 pub use crate::{
     assets::CommonAssets,
     common::{fstage, sprite_transform, start_tile, SetupNeeded, TickClock, TileVariant},
-    iso::{BuildingObstructionMap, ConveyorMap, IsoAxis, IsoDirection, IsoPos, Snapping},
+    iso::{BuildingMap, ConveyorMap, IsoAxis, IsoDirection, IsoPos, Snapping},
     item::Item,
 };

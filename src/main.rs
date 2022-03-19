@@ -9,13 +9,36 @@ mod sprite_render;
 mod ui;
 
 use bevy::prelude::*;
-use buildable::util::{spawn_destroyer, spawn_spawner};
+use buildable2::{
+    destroyer::BDestroyer, spawn_buildable, spawner::BSpawner, BuildingContext, MutBuildingMaps,
+};
+use iso::ItemContainerMap;
 use prelude::*;
 
-fn test_scene(mut commands: Commands, common_assets: Res<CommonAssets>) {
-    spawn_spawner(&mut commands, &common_assets, IsoPos::new(-5, -3), 8);
-    spawn_spawner(&mut commands, &common_assets, IsoPos::new(-5, -4), 8);
-    spawn_destroyer(&mut commands, &common_assets, IsoPos::new(-5, -6));
+fn test_scene(
+    mut commands: Commands,
+    common_assets: Res<CommonAssets>,
+    mut buildings: ResMut<BuildingMap>,
+    mut item_containers: ResMut<ItemContainerMap>,
+    mut conveyors: ResMut<ConveyorMap>,
+) {
+    let mut ctx = BuildingContext {
+        commands: &mut commands,
+        position: IsoPos::default(),
+        direction: IsoDirection::default(),
+        common_assets: &common_assets,
+    };
+    let mut maps = MutBuildingMaps {
+        buildings: &mut buildings,
+        item_containers: &mut item_containers,
+        conveyors: &mut conveyors,
+    };
+    ctx.position = IsoPos::new(-5, -3);
+    spawn_buildable(Box::new(BSpawner { interval: 8 }), &mut ctx, &mut maps);
+    ctx.position = IsoPos::new(-5, -4);
+    spawn_buildable(Box::new(BSpawner { interval: 8 }), &mut ctx, &mut maps);
+    ctx.position = IsoPos::new(-5, -6);
+    spawn_buildable(Box::new(BDestroyer), &mut ctx, &mut maps);
 }
 
 fn main() {

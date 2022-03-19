@@ -2,7 +2,12 @@ use bevy::{math::Vec4Swizzles, prelude::*, render::camera::Camera};
 
 use crate::{
     buildable::claw::spawn_claw,
-    buildable2::{self, BConveyor, BMachine, BuildingContext, MachineType, MutBuildingMaps},
+    buildable2::{
+        self,
+        conveyor::BConveyor,
+        machine::{BMachine, MachineType},
+        BuildingContext, MutBuildingMaps,
+    },
     iso::{ItemContainerMap, GRID_EDGE_LENGTH},
     item::ItemContainer,
     prelude::*,
@@ -178,7 +183,7 @@ fn ui_update(
     mut state: ResMut<GuiState>,
     input: Res<Input<MouseButton>>,
     key_input: Res<Input<KeyCode>>,
-    mut obstruction_map: ResMut<BuildingObstructionMap>,
+    mut obstruction_map: ResMut<BuildingMap>,
     mut conveyor_map: ResMut<ConveyorMap>,
     mut item_container_map: ResMut<ItemContainerMap>,
     containers: Query<(Entity, &ItemContainer, &IsoPos)>,

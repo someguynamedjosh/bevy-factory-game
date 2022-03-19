@@ -20,7 +20,7 @@ pub struct BuildingComponentsContext<'a, 'c1, 'c2> {
 }
 
 pub struct MutBuildingMaps<'a> {
-    pub buildings: &'a mut BuildingObstructionMap,
+    pub buildings: &'a mut BuildingMap,
     pub item_containers: &'a mut ItemContainerMap,
     pub conveyors: &'a mut ConveyorMap,
 }
