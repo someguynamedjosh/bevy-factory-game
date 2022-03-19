@@ -5,7 +5,6 @@ mod common;
 pub mod iso;
 mod item;
 pub mod prelude;
-mod sprite_render;
 mod ui;
 
 use bevy::prelude::*;
@@ -43,7 +42,6 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .add_plugin(bevy_obj::ObjPlugin)
-        .add_plugin(sprite_render::Plug)
         .add_plugin(iso::Plug)
         .add_plugin(common::Plug)
         .add_plugin(assets::Plug)
