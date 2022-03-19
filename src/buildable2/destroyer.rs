@@ -37,7 +37,7 @@ impl Buildable for BDestroyer {
     fn spawn_extras(
         &self,
         _ctx: &mut super::BuildingContext,
-        _maps: &mut super::MutBuildingMaps,
+        _maps: &mut super::BuildingMaps,
     ) -> (Vec<bevy::prelude::Entity>, Self::ExtraData) {
         (vec![], ())
     }

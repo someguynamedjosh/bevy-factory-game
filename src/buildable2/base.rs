@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use dyn_clone::DynClone;
 
-use super::{BuildingComponentsContext, BuildingContext, MutBuildingMaps, WhichMap};
+use super::{BuildingComponentsContext, BuildingContext, BuildingMaps, WhichMap};
 use crate::prelude::*;
 
 #[derive(Component)]
@@ -18,7 +18,7 @@ pub trait Buildable: DynClone + Sync + Send + 'static {
     fn spawn_extras(
         &self,
         ctx: &mut BuildingContext,
-        maps: &mut MutBuildingMaps,
+        maps: &mut BuildingMaps,
     ) -> (Vec<Entity>, Self::ExtraData);
     fn spawn_art(&self, ctx: &mut BuildingContext) -> Vec<Entity>;
 }
@@ -30,7 +30,7 @@ pub trait DynBuildable: DynClone + Sync + Send + 'static {
         &self,
         built: Built,
         ctx: &mut BuildingContext,
-        maps: &mut MutBuildingMaps,
+        maps: &mut BuildingMaps,
     ) -> Entity;
 }
 
@@ -47,7 +47,7 @@ impl<B: Buildable> DynBuildable for B {
         &self,
         built: Built,
         ctx: &mut BuildingContext,
-        maps: &mut MutBuildingMaps,
+        maps: &mut BuildingMaps,
     ) -> Entity {
         let root = ctx
             .commands

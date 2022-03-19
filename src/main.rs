@@ -10,7 +10,7 @@ mod ui;
 
 use bevy::prelude::*;
 use buildable2::{
-    destroyer::BDestroyer, spawn_buildable, spawner::BSpawner, BuildingContext, MutBuildingMaps,
+    destroyer::BDestroyer, spawn_buildable, spawner::BSpawner, BuildingContext, BuildingMaps,
 };
 use iso::ItemContainerMap;
 use prelude::*;
@@ -18,20 +18,13 @@ use prelude::*;
 fn test_scene(
     mut commands: Commands,
     common_assets: Res<CommonAssets>,
-    mut buildings: ResMut<BuildingMap>,
-    mut item_containers: ResMut<ItemContainerMap>,
-    mut conveyors: ResMut<ConveyorMap>,
+    mut maps: BuildingMaps,
 ) {
     let mut ctx = BuildingContext {
         commands: &mut commands,
         position: IsoPos::default(),
         direction: IsoDirection::default(),
         common_assets: &common_assets,
-    };
-    let mut maps = MutBuildingMaps {
-        buildings: &mut buildings,
-        item_containers: &mut item_containers,
-        conveyors: &mut conveyors,
     };
     ctx.position = IsoPos::new(-5, -3);
     spawn_buildable(Box::new(BSpawner { interval: 8 }), &mut ctx, &mut maps);

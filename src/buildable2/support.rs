@@ -1,4 +1,4 @@
-use bevy::{prelude::*, ecs::system::EntityCommands};
+use bevy::{prelude::*, ecs::{system::{EntityCommands, SystemParam}, query::WorldQuery}};
 
 use crate::{
     iso::{ItemContainerMap, SpatialMap},
@@ -19,10 +19,13 @@ pub struct BuildingComponentsContext<'a, 'c1, 'c2> {
     pub common_assets: &'a CommonAssets,
 }
 
-pub struct MutBuildingMaps<'a> {
-    pub buildings: &'a mut BuildingMap,
-    pub item_containers: &'a mut ItemContainerMap,
-    pub conveyors: &'a mut ConveyorMap,
+#[derive(SystemParam)]
+pub struct BuildingMaps<'w, 's> {
+    pub buildings: ResMut<'w, BuildingMap>,
+    pub item_containers: ResMut<'w, ItemContainerMap>,
+    pub conveyors: ResMut<'w, ConveyorMap>,
+    #[allow(dead_code)]
+    s: Query<'w, 's, ()>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -35,7 +38,7 @@ pub enum WhichMap {
 impl WhichMap {
     pub fn get_from_maps_mut<'b>(
         self,
-        maps: &'b mut MutBuildingMaps,
+        maps: &'b mut BuildingMaps,
     ) -> &'b mut SpatialMap<Entity> {
         match self {
             WhichMap::Buildings => &mut **maps.buildings,

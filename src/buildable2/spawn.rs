@@ -1,11 +1,11 @@
 use bevy::prelude::*;
 
-use super::{BuildingContext, Built, DynBuildable, MutBuildingMaps};
+use super::{BuildingContext, Built, DynBuildable, BuildingMaps};
 
 pub fn spawn_buildable(
     buildable: Box<dyn DynBuildable>,
     ctx: &mut BuildingContext,
-    maps: &mut MutBuildingMaps,
+    maps: &mut BuildingMaps,
 ) -> Entity {
     let built = Built {
         buildable: dyn_clone::clone_box(&*buildable),
@@ -17,7 +17,7 @@ pub fn spawn_buildable(
 
 fn set_positions_on_maps(
     buildable: &Box<dyn DynBuildable>,
-    maps: &mut MutBuildingMaps,
+    maps: &mut BuildingMaps,
     ctx: &mut BuildingContext,
     root: Entity,
 ) {
@@ -33,7 +33,7 @@ fn set_positions_on_maps(
 pub fn destroy_buildable(
     buildable: (Entity, &Built),
     ctx: &mut BuildingContext,
-    maps: &mut MutBuildingMaps,
+    maps: &mut BuildingMaps,
 ) {
     // The spawner parents everything to the root entity, so this will take care
     // of all art and other related entities as well as the buildable object
@@ -45,7 +45,7 @@ pub fn destroy_buildable(
 
 fn clear_positions_on_maps(
     buildable: &Box<dyn DynBuildable>,
-    maps: &mut MutBuildingMaps,
+    maps: &mut BuildingMaps,
     ctx: &mut BuildingContext,
 ) {
     let requested_maps = buildable.maps();

@@ -6,7 +6,7 @@ use crate::{
         self,
         conveyor::BConveyor,
         machine::{BMachine, MachineType},
-        BuildingContext, MutBuildingMaps,
+        BuildingContext, BuildingMaps,
     },
     iso::{ItemContainerMap, GRID_EDGE_LENGTH},
     item::ItemContainer,
@@ -183,9 +183,7 @@ fn ui_update(
     mut state: ResMut<GuiState>,
     input: Res<Input<MouseButton>>,
     key_input: Res<Input<KeyCode>>,
-    mut obstruction_map: ResMut<BuildingMap>,
-    mut conveyor_map: ResMut<ConveyorMap>,
-    mut item_container_map: ResMut<ItemContainerMap>,
+    mut maps: BuildingMaps,
     containers: Query<(Entity, &ItemContainer, &IsoPos)>,
     mut transforms: Query<&mut Transform>,
     mut texts: Query<&mut Text>,
@@ -201,14 +199,14 @@ fn ui_update(
         }
     }
     let ok = match &state.action {
-        MouseAction::PlaceConveyor => !obstruction_map.is_occupied(state.mouse_pos_in_world),
+        MouseAction::PlaceConveyor => !maps.buildings.is_occupied(state.mouse_pos_in_world),
         MouseAction::PlaceClaw | MouseAction::PlaceClawEnd { .. } => hovered_container.is_some(),
         MouseAction::Machine(typ) => {
             let shape = typ.get_shape();
             (|| {
                 let iters = shape.positions(state.mouse_pos_in_world, state.direction);
                 for p in iters.blanks.chain(iters.inputs.chain(iters.outputs)) {
-                    if obstruction_map.is_occupied(p) {
+                    if maps.buildings.is_occupied(p) {
                         return false;
                     }
                 }
@@ -233,11 +231,7 @@ fn ui_update(
                         direction: state.direction,
                         common_assets: &*common_assets,
                     },
-                    &mut MutBuildingMaps {
-                        buildings: &mut *obstruction_map,
-                        conveyors: &mut *conveyor_map,
-                        item_containers: &mut *item_container_map,
-                    },
+                    &mut maps,
                 );
             }
             MouseAction::PlaceClaw => {
@@ -270,11 +264,7 @@ fn ui_update(
                         direction: state.direction,
                         common_assets: &*common_assets,
                     },
-                    &mut MutBuildingMaps {
-                        buildings: &mut *obstruction_map,
-                        conveyors: &mut *conveyor_map,
-                        item_containers: &mut *item_container_map,
-                    },
+                    &mut maps,
                 );
             }
         }

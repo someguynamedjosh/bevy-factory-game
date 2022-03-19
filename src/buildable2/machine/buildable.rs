@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use super::{logic::MachineLogic, shape::Shape, typee::MachineType};
 use crate::{
     buildable2::{
-        Buildable, BuildingComponentsContext, BuildingContext, MutBuildingMaps, WhichMap,
+        Buildable, BuildingComponentsContext, BuildingContext, BuildingMaps, WhichMap,
     },
     item::{ItemContainer, ItemContainerAlignment},
     prelude::*,
@@ -32,7 +32,7 @@ impl Buildable for BMachine {
     fn spawn_extras(
         &self,
         ctx: &mut BuildingContext,
-        _maps: &mut MutBuildingMaps,
+        _maps: &mut BuildingMaps,
     ) -> (Vec<Entity>, MachineIo) {
         let mut io = MachineIo {
             inputs: vec![],

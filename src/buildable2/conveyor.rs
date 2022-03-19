@@ -36,7 +36,7 @@ impl Buildable for BConveyor {
     fn spawn_extras(
         &self,
         _ctx: &mut BuildingContext,
-        _maps: &mut super::MutBuildingMaps,
+        _maps: &mut super::BuildingMaps,
     ) -> (Vec<Entity>, Self::ExtraData) {
         (vec![], ())
     }
