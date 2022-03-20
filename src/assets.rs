@@ -32,7 +32,6 @@ pub struct CommonAssets {
 fn startup(
     asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut sprite_mats: ResMut<Assets<ColorMaterial>>,
     mut mesh_mats: ResMut<Assets<StandardMaterial>>,
     mut common_assets: ResMut<CommonAssets>,
 ) {

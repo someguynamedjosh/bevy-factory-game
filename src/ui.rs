@@ -1,7 +1,7 @@
 use bevy::{math::Vec4Swizzles, prelude::*, render::camera::Camera};
 
 use crate::{
-    buildable2::{
+    buildable::{
         self,
         claw::BClaw,
         conveyor::BConveyor,
@@ -223,7 +223,7 @@ fn ui_update(
         };
         match &state.action {
             MouseAction::PlaceConveyor => {
-                buildable2::spawn_buildable(Box::new(BConveyor), &mut ctx, &mut maps);
+                buildable::spawn_buildable(Box::new(BConveyor), &mut ctx, &mut maps);
             }
             MouseAction::PlaceClaw => {
                 if let Some(_) = hovered_container {
@@ -239,7 +239,7 @@ fn ui_update(
                 }
             }
             MouseAction::Machine(typ) => {
-                buildable2::spawn_buildable(Box::new(BMachine(*typ)), &mut ctx, &mut maps);
+                buildable::spawn_buildable(Box::new(BMachine(*typ)), &mut ctx, &mut maps);
             }
         }
     }

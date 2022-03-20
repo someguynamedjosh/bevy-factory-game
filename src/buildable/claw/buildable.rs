@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use super::{Buildable, BuildingComponentsContext, BuildingContext, WhichMap};
 use crate::{
-    buildable2::{claw::logic::ClawLogic, BuildingMaps},
+    buildable::{claw::logic::ClawLogic, BuildingMaps},
     iso::GRID_EDGE_LENGTH,
     prelude::*,
 };

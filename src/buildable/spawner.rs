@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use super::Buildable;
 use crate::{
-    buildable2::WhichMap,
+    buildable::WhichMap,
     item::{spawn_item, ItemContainer, ItemContainerAlignment, ReferenceItem},
     prelude::*,
 };

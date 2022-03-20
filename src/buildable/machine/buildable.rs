@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use super::{logic::MachineLogic, shape::Shape, typee::MachineType};
 use crate::{
-    buildable2::{
+    buildable::{
         Buildable, BuildingComponentsContext, BuildingContext, BuildingMaps, WhichMap,
     },
     item::{ItemContainer, ItemContainerAlignment},

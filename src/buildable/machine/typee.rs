@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use itertools::Itertools;
 
-use crate::{buildable2::machine::shape::Shape, item::Element, prelude::*};
+use crate::{buildable::machine::shape::Shape, item::Element, prelude::*};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MachineType {

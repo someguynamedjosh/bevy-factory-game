@@ -1,5 +1,5 @@
 mod assets;
-mod buildable2;
+mod buildable;
 mod common;
 pub mod iso;
 mod item;
@@ -7,7 +7,7 @@ pub mod prelude;
 mod ui;
 
 use bevy::prelude::*;
-use buildable2::{
+use buildable::{
     destroyer::BDestroyer, spawn_buildable, spawner::BSpawner, BuildingContext, BuildingMaps,
 };
 use iso::ItemContainerMap;
@@ -45,7 +45,7 @@ fn main() {
         .add_plugin(common::Plug)
         .add_plugin(assets::Plug)
         .add_plugin(ui::Plug)
-        .add_plugin(buildable2::Plug)
+        .add_plugin(buildable::Plug)
         .add_plugin(item::Plug)
         .add_startup_system(test_scene.system())
         .run();
