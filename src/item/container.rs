@@ -18,11 +18,6 @@ impl ItemContainerAlignment {
     }
 }
 
-pub struct ItemContainerPos {
-    pub pos: IsoPos,
-    pub alignment: ItemContainerAlignment,
-}
-
 #[derive(Component)]
 pub struct ItemContainer {
     alignment: ItemContainerAlignment,

@@ -1,4 +1,7 @@
-use bevy::{prelude::*, ecs::{system::{EntityCommands, SystemParam}, query::WorldQuery}};
+use bevy::{
+    ecs::system::{EntityCommands, SystemParam},
+    prelude::*,
+};
 
 use crate::{
     iso::{ItemContainerMap, SpatialMap},
@@ -36,10 +39,7 @@ pub enum WhichMap {
 }
 
 impl WhichMap {
-    pub fn get_from_maps_mut<'b>(
-        self,
-        maps: &'b mut BuildingMaps,
-    ) -> &'b mut SpatialMap<Entity> {
+    pub fn get_from_maps_mut<'b>(self, maps: &'b mut BuildingMaps) -> &'b mut SpatialMap<Entity> {
         match self {
             WhichMap::Buildings => &mut **maps.buildings,
             WhichMap::Conveyors => &mut **maps.conveyors,

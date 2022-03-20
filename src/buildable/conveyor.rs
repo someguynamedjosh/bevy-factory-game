@@ -72,7 +72,7 @@ struct ConveyorLogic {
 #[derive(Component)]
 struct TailConveyor;
 /// It takes this many ticks for an item to ride one unit of a conveyor.
-const DURATION: u8 = 6;
+const DURATION: u8 = 4;
 
 fn setup(
     mut commands: Commands,

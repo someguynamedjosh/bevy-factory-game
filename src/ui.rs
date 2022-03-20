@@ -8,7 +8,6 @@ use crate::{
         machine::{BMachine, MachineType},
         spawn_buildable, BuildingContext, BuildingMaps,
     },
-    iso::{ItemContainerMap, GRID_EDGE_LENGTH},
     item::ItemContainer,
     prelude::*,
 };
@@ -125,7 +124,6 @@ fn startup(mut commands: Commands, assets: Res<CommonAssets>) {
 }
 
 fn update_mouse_pos(
-    mut state: ResMut<MouseSystemState>,
     mut reader: EventReader<CursorMoved>,
     mut gui_state: ResMut<GuiState>,
     windows: Res<Windows>,
@@ -187,7 +185,6 @@ fn ui_update(
     containers: Query<&ItemContainer>,
     mut transforms: Query<&mut Transform>,
     mut texts: Query<&mut Text>,
-    mut images: Query<&mut Handle<Image>>,
     mut materials: Query<&mut Handle<StandardMaterial>>,
     items: Query<&Item>,
 ) {
