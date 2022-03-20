@@ -18,7 +18,7 @@ impl Plugin for Plug {
             .add_system_to_stage(fstage::UI_PRE, cursor::update_pre.system())
             .add_system_to_stage(fstage::UI, action::update.system())
             .add_system_to_stage(fstage::UI, camera::update.system())
-            .add_system_to_stage(fstage::UI, tooltip::update.system())
-            .add_system_to_stage(fstage::UI_POST, cursor::update_post.system());
+            .add_system_to_stage(fstage::UI_POST, cursor::update_post.system())
+            .add_system_to_stage(fstage::UI_POST, tooltip::update_post.system());
     }
 }

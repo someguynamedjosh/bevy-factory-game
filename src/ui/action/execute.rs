@@ -6,8 +6,9 @@ use crate::{
         self,
         claw::BClaw,
         conveyor::BConveyor,
+        destroy_buildable,
         machine::{BMachine, MachineType},
-        spawn_buildable, BuildingContext, BuildingMaps,
+        spawn_buildable, BuildingContext, BuildingMaps, Built,
     },
     prelude::*,
     ui::cursor::CursorState,
@@ -19,6 +20,7 @@ pub fn execute_action(
     common_assets: Res<CommonAssets>,
     action_state: &mut ResMut<ActionState>,
     mut maps: BuildingMaps,
+    built: Query<&Built>,
 ) {
     let mut ctx = BuildingContext {
         commands: &mut commands,
@@ -33,7 +35,15 @@ pub fn execute_action(
             execute_place_claw_end(cursor_state, take_from, &mut ctx, &mut maps, action_state)
         }
         Action::PlaceMachine(typ) => execute_place_machine(typ, ctx, maps),
+        Action::Destroy => execute_destroy(built, ctx, maps),
     }
+}
+
+fn execute_destroy(built: Query<&Built>, mut ctx: BuildingContext, mut maps: BuildingMaps) {
+    let pos = ctx.position;
+    let ent = *maps.buildings.get(pos).unwrap();
+    let built = built.get(ent).unwrap();
+    destroy_buildable((ent, built), &mut ctx, &mut maps)
 }
 
 fn execute_place_machine(typ: &MachineType, mut ctx: BuildingContext, mut maps: BuildingMaps) {

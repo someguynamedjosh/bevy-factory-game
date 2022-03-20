@@ -48,7 +48,7 @@ pub fn startup(mut commands: Commands, assets: Res<CommonAssets>) {
     commands.insert_resource(TooltipState { tool_text });
 }
 
-pub fn update(
+pub fn update_post(
     maps: BuildingMaps,
     containers: Query<&ItemContainer>,
     mut texts: Query<&mut Text>,
@@ -64,6 +64,7 @@ pub fn update(
         Action::PlaceClawEnd { .. } => format!("Claw End"),
         Action::PlaceConveyor => format!("Conveyor"),
         Action::PlaceMachine(typ) => format!("{:?}", typ),
+        Action::Destroy => format!("Destroy"),
     };
     let mut text = texts.get_mut(tooltip_state.tool_text).unwrap();
     let hovered_item = if let Some(container) = hovered_container {

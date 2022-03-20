@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use super::{Action, ActionState};
 use crate::{
-    buildable::{machine::MachineType, BuildingMaps},
+    buildable::{machine::MachineType, BuildingMaps, Built},
     prelude::*,
     ui::cursor::CursorState,
 };
@@ -15,6 +15,7 @@ pub fn update(
     input: Res<Input<MouseButton>>,
     key_input: Res<Input<KeyCode>>,
     maps: BuildingMaps,
+    built: Query<&Built>,
 ) {
     super::ok::update_action_ok(&mut action_state, &maps, &cursor_state);
     if input.just_pressed(MouseButton::Left) && action_state.ok {
@@ -24,6 +25,7 @@ pub fn update(
             common_assets,
             &mut action_state,
             maps,
+            built,
         );
     }
     handle_change_action_input(key_input, action_state);
@@ -33,6 +35,9 @@ fn handle_change_action_input(
     key_input: Res<Input<KeyCode>>,
     mut action_state: ResMut<ActionState>,
 ) {
+    if key_input.just_pressed(KeyCode::Grave) {
+        action_state.action = Action::Destroy
+    }
     if key_input.just_pressed(KeyCode::Key1) {
         action_state.action = Action::PlaceConveyor
     }

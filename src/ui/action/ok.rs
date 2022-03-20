@@ -25,5 +25,6 @@ pub fn update_action_ok(
                 true
             })()
         }
+        Action::Destroy => maps.buildings.is_occupied(cursor_state.world_pos),
     };
 }

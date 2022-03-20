@@ -12,6 +12,7 @@ pub enum Action {
     PlaceClawStart,
     PlaceClawEnd { take_from: IsoPos },
     PlaceMachine(MachineType),
+    Destroy,
 }
 
 pub struct ActionState {
@@ -31,6 +32,7 @@ impl Action {
                 through: *start_pos,
             },
             Self::PlaceMachine(..) => Snapping::require_edge_pointing_in(selected_direction),
+            Self::Destroy => Snapping::None,
         }
     }
 }

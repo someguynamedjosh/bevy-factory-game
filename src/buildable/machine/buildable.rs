@@ -1,10 +1,10 @@
+use std::iter;
+
 use bevy::prelude::*;
 
 use super::{logic::MachineLogic, shape::Shape, typee::MachineType};
 use crate::{
-    buildable::{
-        Buildable, BuildingComponentsContext, BuildingContext, BuildingMaps, WhichMap,
-    },
+    buildable::{Buildable, BuildingComponentsContext, BuildingContext, BuildingMaps, WhichMap},
     item::{ItemContainer, ItemContainerAlignment},
     prelude::*,
 };
@@ -22,7 +22,11 @@ impl Buildable for BMachine {
 
     fn shape(&self, ctx: &mut BuildingContext) -> Vec<IsoPos> {
         let p = self.0.get_shape().positions(ctx.position, ctx.direction);
-        p.blanks.chain(p.inputs).chain(p.outputs).collect()
+        p.blanks
+            .chain(p.inputs)
+            .chain(p.outputs)
+            .chain(iter::once(ctx.position))
+            .collect()
     }
 
     fn maps(&self) -> Vec<WhichMap> {
@@ -32,7 +36,7 @@ impl Buildable for BMachine {
     fn spawn_extras(
         &self,
         ctx: &mut BuildingContext,
-        _maps: &mut BuildingMaps,
+        maps: &mut BuildingMaps,
     ) -> (Vec<Entity>, MachineIo) {
         let mut io = MachineIo {
             inputs: vec![],
@@ -47,6 +51,7 @@ impl Buildable for BMachine {
                 .insert(pos)
                 .insert(ItemContainer::new_empty(ItemContainerAlignment::Centroid))
                 .id();
+            maps.item_containers.set_assuming_empty(pos, ent);
             io.inputs.push(ent);
             all.push(ent);
         }
@@ -57,6 +62,7 @@ impl Buildable for BMachine {
                 .insert(pos)
                 .insert(ItemContainer::new_empty(ItemContainerAlignment::Centroid))
                 .id();
+            maps.item_containers.set_assuming_empty(pos, ent);
             io.outputs.push(ent);
             all.push(ent);
         }
