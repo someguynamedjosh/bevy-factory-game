@@ -1,12 +1,12 @@
 use bevy::{math::Vec4Swizzles, prelude::*, render::camera::Camera};
 
 use crate::{
-    buildable::claw::spawn_claw,
     buildable2::{
         self,
+        claw::BClaw,
         conveyor::BConveyor,
         machine::{BMachine, MachineType},
-        BuildingContext, BuildingMaps,
+        spawn_buildable, BuildingContext, BuildingMaps,
     },
     iso::{ItemContainerMap, GRID_EDGE_LENGTH},
     item::ItemContainer,
@@ -33,10 +33,7 @@ struct GuiState {
 enum MouseAction {
     PlaceConveyor,
     PlaceClaw,
-    PlaceClawEnd {
-        start_pos: IsoPos,
-        start_container: Entity,
-    },
+    PlaceClawEnd { take_from: IsoPos },
     Machine(MachineType),
 }
 
@@ -45,7 +42,10 @@ impl MouseAction {
         match self {
             Self::PlaceConveyor => Snapping::None,
             Self::PlaceClaw => Snapping::None,
-            Self::PlaceClawEnd { start_pos, .. } => Snapping::AlongAnyLine {
+            Self::PlaceClawEnd {
+                take_from: start_pos,
+                ..
+            } => Snapping::AlongAnyLine {
                 through: *start_pos,
             },
             Self::Machine(..) => Snapping::require_edge_pointing_in(selected_direction),
@@ -184,20 +184,14 @@ fn ui_update(
     input: Res<Input<MouseButton>>,
     key_input: Res<Input<KeyCode>>,
     mut maps: BuildingMaps,
-    containers: Query<(Entity, &ItemContainer, &IsoPos)>,
+    containers: Query<&ItemContainer>,
     mut transforms: Query<&mut Transform>,
     mut texts: Query<&mut Text>,
     mut images: Query<&mut Handle<Image>>,
     mut materials: Query<&mut Handle<StandardMaterial>>,
     items: Query<&Item>,
 ) {
-    let mut hovered_container = None;
-    for (entity, container, pos) in containers.iter() {
-        if *pos == state.mouse_pos_in_world {
-            hovered_container = Some((entity, container, *pos));
-            break;
-        }
-    }
+    let hovered_container = maps.item_containers.get(state.mouse_pos_in_world).copied();
     let ok = match &state.action {
         MouseAction::PlaceConveyor => !maps.buildings.is_occupied(state.mouse_pos_in_world),
         MouseAction::PlaceClaw | MouseAction::PlaceClawEnd { .. } => hovered_container.is_some(),
@@ -221,51 +215,31 @@ fn ui_update(
     };
     *materials.get_mut(state.world_cursor).unwrap() = cursor_mat;
     if input.just_pressed(MouseButton::Left) && ok {
+        let mut ctx = BuildingContext {
+            commands: &mut commands,
+            position: state.mouse_pos_in_world,
+            direction: state.direction,
+            common_assets: &*common_assets,
+        };
         match &state.action {
             MouseAction::PlaceConveyor => {
-                buildable2::spawn_buildable(
-                    Box::new(BConveyor),
-                    &mut BuildingContext {
-                        commands: &mut commands,
-                        position: state.mouse_pos_in_world,
-                        direction: state.direction,
-                        common_assets: &*common_assets,
-                    },
-                    &mut maps,
-                );
+                buildable2::spawn_buildable(Box::new(BConveyor), &mut ctx, &mut maps);
             }
             MouseAction::PlaceClaw => {
-                if let Some((e, _, p)) = hovered_container {
+                if let Some(_) = hovered_container {
                     state.action = MouseAction::PlaceClawEnd {
-                        start_pos: p,
-                        start_container: e,
+                        take_from: state.mouse_pos_in_world,
                     };
                 }
             }
-            MouseAction::PlaceClawEnd {
-                start_container,
-                start_pos,
-            } => {
-                if let Some((e, _, p)) = hovered_container {
-                    let distance = p.centroid_pos().distance(start_pos.centroid_pos()) + 0.01;
-                    let distance = distance / GRID_EDGE_LENGTH * 2.0;
-                    assert!(distance > 0.0 && distance < 255.0);
-                    let length = (distance + 0.3).floor() as u8;
-                    spawn_claw(&mut commands, &common_assets, *start_container, e, length);
+            &MouseAction::PlaceClawEnd { take_from } => {
+                if let Some(_) = hovered_container {
+                    spawn_buildable(Box::new(BClaw { take_from }), &mut ctx, &mut maps);
                     state.action = MouseAction::PlaceClaw;
                 }
             }
             MouseAction::Machine(typ) => {
-                buildable2::spawn_buildable(
-                    Box::new(BMachine(*typ)),
-                    &mut BuildingContext {
-                        commands: &mut commands,
-                        position: state.mouse_pos_in_world,
-                        direction: state.direction,
-                        common_assets: &*common_assets,
-                    },
-                    &mut maps,
-                );
+                buildable2::spawn_buildable(Box::new(BMachine(*typ)), &mut ctx, &mut maps);
             }
         }
     }
@@ -312,8 +286,8 @@ fn ui_update(
         MouseAction::Machine(typ) => format!("{:?}", typ),
     };
     let mut text = texts.get_mut(state.tool_text).unwrap();
-    let hovered_item = if let Some((_, container, _)) = hovered_container {
-        if let Some(item) = container.item() {
+    let hovered_item = if let Some(container) = hovered_container {
+        if let Some(item) = containers.get(container).unwrap().item() {
             let item = items.get(item).unwrap();
             format!("{:?}", item.as_elements())
         } else {

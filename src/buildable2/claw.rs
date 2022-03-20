@@ -1,12 +1,74 @@
 use bevy::prelude::*;
 
+use super::{Buildable, BuildingComponentsContext, BuildingContext, WhichMap};
 use crate::{
+    iso::GRID_EDGE_LENGTH,
     item::{ItemAnimator, ItemContainer},
     prelude::*,
 };
 
+#[derive(Clone)]
+pub struct BClaw {
+    pub take_from: IsoPos,
+}
+
+impl Buildable for BClaw {
+    type ExtraData = (Entity, Entity);
+
+    fn shape(&self, ctx: &mut BuildingContext) -> Vec<IsoPos> {
+        vec![self.take_from, ctx.position]
+    }
+
+    fn maps(&self) -> Vec<WhichMap> {
+        vec![]
+    }
+
+    fn extra_root_components(
+        &self,
+        ctx: &mut BuildingComponentsContext,
+        (take_from, move_to): Self::ExtraData,
+    ) {
+        let (start, end) = (ctx.position, self.take_from);
+        let distance = start.centroid_pos().distance(end.centroid_pos());
+        let distance = distance + 0.01;
+        let distance = distance / GRID_EDGE_LENGTH * 2.0;
+        assert!(distance > 0.0 && distance < 255.0);
+        let length = (distance + 0.3).floor() as u8;
+        assert!(length >= 1);
+        ctx.commands
+            .insert(ClawLogic {
+                take_from,
+                move_to,
+                held_item: None,
+                length,
+                current_anim_tick: 0,
+                blocked: true,
+            })
+            .insert_bundle(PbrBundle {
+                material: ctx.common_assets.claw_mat.clone(),
+                mesh: ctx.common_assets.quad_mesh.clone(),
+                transform: sprite_transform(),
+                ..Default::default()
+            });
+    }
+
+    fn spawn_extras(
+        &self,
+        ctx: &mut BuildingContext,
+        maps: &mut super::BuildingMaps,
+    ) -> (Vec<Entity>, Self::ExtraData) {
+        let take_from = *maps.item_containers.get(self.take_from).unwrap();
+        let move_to = *maps.item_containers.get(ctx.position).unwrap();
+        (vec![], (take_from, move_to))
+    }
+
+    fn spawn_art(&self, _ctx: &mut BuildingContext) -> Vec<Entity> {
+        vec![]
+    }
+}
+
 #[derive(Component)]
-pub struct Claw {
+pub struct ClawLogic {
     take_from: Entity,
     move_to: Entity,
     held_item: Option<Entity>,
@@ -18,42 +80,16 @@ pub struct Claw {
 // How long it takes for the claw to traverse a segment of its path.
 const SEGMENT_DURATION: u8 = 2;
 
-impl Claw {
+impl ClawLogic {
+    /// How many ticks it takes to make a two-way trip.
     fn anim_length(&self) -> u8 {
-        // A 1 length claw has to traverse 4 segments, 2 length 6 segments, 3/8, etc.
-        (self.length + 1) * 3 * SEGMENT_DURATION
+        // A 1 length claw has to traverse 2 segments, 2 length 3 segments, 3/4, etc.
+        (self.length + 1) * SEGMENT_DURATION * 2
     }
 }
 
-pub fn spawn_claw(
-    commands: &mut Commands,
-    common_assets: &Res<CommonAssets>,
-    from: Entity,
-    to: Entity,
-    length: u8,
-) -> Entity {
-    commands
-        .spawn()
-        .insert_bundle(PbrBundle {
-            material: common_assets.claw_mat.clone(),
-            mesh: common_assets.quad_mesh.clone(),
-            transform: sprite_transform(),
-            ..Default::default()
-        })
-        .insert(Claw {
-            // We can't guarantee that there is an item ready to pick up when we spawn.
-            blocked: true,
-            current_anim_tick: 0,
-            held_item: None,
-            take_from: from,
-            move_to: to,
-            length,
-        })
-        .id()
-}
-
 fn tick(
-    mut claws: Query<(&mut Claw,)>,
+    mut claws: Query<(&mut ClawLogic,)>,
     mut containers: Query<(&mut ItemContainer, &IsoPos)>,
     mut items: Query<&mut ItemAnimator>,
 ) {
@@ -83,7 +119,7 @@ fn tick(
 
 fn animate(
     tick_clock: Res<TickClock>,
-    mut claws: Query<(&Claw, &mut Transform)>,
+    mut claws: Query<(&ClawLogic, &mut Transform)>,
     item_containers: Query<(&ItemContainer, &IsoPos)>,
     mut items: Query<(&mut ItemAnimator,)>,
 ) {

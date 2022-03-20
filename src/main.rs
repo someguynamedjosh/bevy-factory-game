@@ -1,5 +1,4 @@
 mod assets;
-mod buildable;
 mod buildable2;
 mod common;
 pub mod iso;
@@ -46,7 +45,6 @@ fn main() {
         .add_plugin(common::Plug)
         .add_plugin(assets::Plug)
         .add_plugin(ui::Plug)
-        .add_plugin(buildable::Plug)
         .add_plugin(buildable2::Plug)
         .add_plugin(item::Plug)
         .add_startup_system(test_scene.system())

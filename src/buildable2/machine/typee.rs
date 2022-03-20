@@ -31,8 +31,9 @@ impl MachineType {
     }
 
     pub fn get_shape(self) -> &'static Shape {
-        // (T, ||) -> the origin will always have a vertex pointing +T (side pointing
-        // -T) If the direction is up, || is up, and T is left.
+        // coordinates are in the form (perp, par) -> the origin will always
+        // have a vertex pointing +perp (side pointing -perp) If the direction
+        // is up, par is up, and perp is left.
         match self {
             Self::Purifier => &Shape {
                 blanks: &[(0, 1), (0, -1), (1, 1), (1, -1)],
