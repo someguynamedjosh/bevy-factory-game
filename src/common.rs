@@ -19,7 +19,9 @@ pub fn sprite_transform() -> Transform {
 }
 
 pub mod fstage {
+    pub const UI_PRE: &'static str = "factory_ui_pre";
     pub const UI: &'static str = "factory_ui";
+    pub const UI_POST: &'static str = "factory_ui_post";
     pub const SETUP: &'static str = "factory_setup";
     pub const TICK: &'static str = "factory_tick";
     pub const ANIMATION: &'static str = "factory_animation";
@@ -97,8 +99,10 @@ pub struct Plug;
 
 impl Plugin for Plug {
     fn build(&self, app: &mut App) {
-        app.add_stage_after(CoreStage::Update, fstage::UI, SystemStage::parallel())
-            .add_stage_after(fstage::UI, fstage::SETUP, SystemStage::parallel())
+        app.add_stage_after(CoreStage::Update, fstage::UI_PRE, SystemStage::parallel())
+            .add_stage_after(fstage::UI_PRE, fstage::UI, SystemStage::parallel())
+            .add_stage_after(fstage::UI, fstage::UI_POST, SystemStage::parallel())
+            .add_stage_after(fstage::UI_POST, fstage::SETUP, SystemStage::parallel())
             .add_stage_after(
                 fstage::SETUP,
                 fstage::TICK,
