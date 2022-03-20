@@ -60,10 +60,10 @@ pub fn update(
     let hovered_container = maps.item_containers.get(cursor_state.world_pos).copied();
 
     let tooltip = match &action_state.action {
-        Action::PlaceClaw => format!("Claw Start"),
+        Action::PlaceClawStart => format!("Claw Start"),
         Action::PlaceClawEnd { .. } => format!("Claw End"),
         Action::PlaceConveyor => format!("Conveyor"),
-        Action::Machine(typ) => format!("{:?}", typ),
+        Action::PlaceMachine(typ) => format!("{:?}", typ),
     };
     let mut text = texts.get_mut(tooltip_state.tool_text).unwrap();
     let hovered_item = if let Some(container) = hovered_container {
