@@ -18,7 +18,7 @@ pub fn update(
     built: Query<&Built>,
 ) {
     super::ok::update_action_ok(&mut action_state, &maps, &cursor_state);
-    if input.just_pressed(MouseButton::Left) && action_state.ok {
+    if input.pressed(MouseButton::Left) && action_state.ok {
         super::execute::execute_action(
             &mut commands,
             &cursor_state,
