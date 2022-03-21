@@ -10,10 +10,12 @@ use crate::{
 #[derive(Clone)]
 pub struct BSpawner {
     pub interval: u8,
+    pub item: ReferenceItem,
 }
 
 #[derive(Component)]
 pub struct SpawnerLogic {
+    item: ReferenceItem,
     interval: u8,
     /// Tracks how many ticks until the next item is spawned.
     timer: u8,
@@ -37,6 +39,7 @@ impl Buildable for BSpawner {
     ) {
         ctx.commands
             .insert(SpawnerLogic {
+                item: self.item,
                 interval: self.interval,
                 timer: 0,
             })
@@ -79,7 +82,7 @@ fn tick(
             let item = spawn_item(
                 &mut commands,
                 &common_assets,
-                ReferenceItem::IronOre.as_item(),
+                spawner.item.as_item(),
                 *pos,
                 ItemContainerAlignment::Centroid,
             );

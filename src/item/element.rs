@@ -1,5 +1,6 @@
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Element {
-    Ferrite,
+    Animus,
+    Ferrous,
     Impurity,
 }

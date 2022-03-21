@@ -12,7 +12,8 @@ pub enum MachineType {
 impl MachineType {
     pub fn processing_time(self) -> u8 {
         match self {
-            _ => 12,
+            Self::Purifier => 40,
+            Self::Joiner => 20,
         }
     }
 

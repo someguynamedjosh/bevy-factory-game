@@ -12,8 +12,12 @@ pub struct CommonAssets {
     pub spawner_mat: Handle<StandardMaterial>,
     pub destroyer_mat: Handle<StandardMaterial>,
 
-    pub iron_ore_mat: Handle<StandardMaterial>,
-    pub iron_mat: Handle<StandardMaterial>,
+    pub magnetite_mat: Handle<StandardMaterial>,
+    pub pure_ferrous_mat: Handle<StandardMaterial>,
+    pub iron_lump_mat: Handle<StandardMaterial>,
+
+    pub animite_mat: Handle<StandardMaterial>,
+    pub pure_animus_mat: Handle<StandardMaterial>,
 
     pub debug_container_mat: Handle<StandardMaterial>,
     pub debug_blocked_container_mat: Handle<StandardMaterial>,
@@ -23,7 +27,6 @@ pub struct CommonAssets {
     pub clay_mat: Handle<StandardMaterial>,
 
     pub quad_mesh: Handle<Mesh>,
-    pub furnace_mesh: Handle<Mesh>,
 }
 
 fn startup(
@@ -64,8 +67,12 @@ fn startup(
     common_assets.spawner_mat = make_mat("spawner.png");
     common_assets.destroyer_mat = make_mat("destroyer.png");
 
-    common_assets.iron_ore_mat = make_mat("iron_ore.png");
-    common_assets.iron_mat = make_mat("iron.png");
+    common_assets.magnetite_mat = make_mat("magnetite.png");
+    common_assets.pure_ferrous_mat = make_mat("pure_ferrous.png");
+    common_assets.iron_lump_mat = make_mat("iron_lump.png");
+
+    common_assets.animite_mat = make_mat("animite.png");
+    common_assets.pure_animus_mat = make_mat("pure_animus.png");
 
     common_assets.debug_container_mat = make_mat("debug_container.png");
     common_assets.debug_blocked_container_mat = make_mat("debug_blocked_container.png");
@@ -78,7 +85,6 @@ fn startup(
     });
 
     common_assets.quad_mesh = meshes.add(shape::Quad::new(Vec2::ONE).into());
-    common_assets.furnace_mesh = asset_server.load("furnace.obj");
 }
 
 pub struct Plug;

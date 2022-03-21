@@ -47,7 +47,7 @@ impl Buildable for BDestroyer {
             .commands
             .spawn()
             .insert_bundle(PbrBundle {
-                material: ctx.common_assets.spawner_mat.clone(),
+                material: ctx.common_assets.destroyer_mat.clone(),
                 mesh: ctx.common_assets.quad_mesh.clone(),
                 transform: ctx.position.building_transform(Default::default()) * sprite_transform(),
                 ..Default::default()
