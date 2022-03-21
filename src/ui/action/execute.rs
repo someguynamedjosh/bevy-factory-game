@@ -15,22 +15,22 @@ use crate::{
 };
 
 pub fn execute_action(
-    mut commands: Commands,
-    cursor_state: Res<CursorState>,
-    common_assets: Res<CommonAssets>,
+    commands: &mut Commands,
+    cursor_state: &CursorState,
+    common_assets: &CommonAssets,
     action_state: &mut ResMut<ActionState>,
     mut maps: BuildingMaps,
     built: Query<&Built>,
 ) {
     let mut ctx = BuildingContext {
-        commands: &mut commands,
+        commands,
         position: cursor_state.world_pos,
         direction: cursor_state.direction,
         common_assets: &*common_assets,
     };
     match &action_state.action {
         Action::PlaceConveyor => execute_place_conveyor(&mut ctx, &mut maps),
-        Action::PlaceClawStart => execute_place_claw_start(&cursor_state, action_state),
+        Action::PlaceClawStart => execute_place_claw_start(cursor_state, action_state),
         &Action::PlaceClawEnd { take_from } => {
             execute_place_claw_end(cursor_state, take_from, &mut ctx, &mut maps, action_state)
         }
@@ -51,7 +51,7 @@ fn execute_place_machine(typ: &MachineType, mut ctx: BuildingContext, mut maps: 
 }
 
 fn execute_place_claw_end(
-    cursor_state: Res<CursorState>,
+    cursor_state: &CursorState,
     take_from: IsoPos,
     ctx: &mut BuildingContext,
     maps: &mut BuildingMaps,
@@ -64,7 +64,7 @@ fn execute_place_claw_end(
 }
 
 fn execute_place_claw_start(
-    cursor_state: &Res<CursorState>,
+    cursor_state: &CursorState,
     action_state: &mut ResMut<ActionState>,
 ) {
     if let Some(_) = cursor_state.hovered_container {

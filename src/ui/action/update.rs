@@ -2,13 +2,13 @@ use bevy::prelude::*;
 
 use super::{Action, ActionState};
 use crate::{
-    buildable::{machine::MachineType, BuildingMaps, Built},
+    buildable::{machine::MachineType, BuildingContext, BuildingMaps, Built},
     prelude::*,
     ui::cursor::CursorState,
 };
 
 pub fn update(
-    commands: Commands,
+    mut commands: Commands,
     common_assets: Res<CommonAssets>,
     mut action_state: ResMut<ActionState>,
     cursor_state: Res<CursorState>,
@@ -20,21 +20,24 @@ pub fn update(
     super::ok::update_action_ok(&mut action_state, &maps, &cursor_state);
     if input.just_pressed(MouseButton::Left) && action_state.ok {
         super::execute::execute_action(
-            commands,
-            cursor_state,
-            common_assets,
+            &mut commands,
+            &cursor_state,
+            &common_assets,
             &mut action_state,
             maps,
             built,
         );
     }
-    handle_change_action_input(key_input, action_state);
+    handle_change_action_input(key_input, &mut action_state);
+    update_preview(
+        &mut commands,
+        &mut action_state,
+        &cursor_state,
+        &common_assets,
+    );
 }
 
-fn handle_change_action_input(
-    key_input: Res<Input<KeyCode>>,
-    mut action_state: ResMut<ActionState>,
-) {
+fn handle_change_action_input(key_input: Res<Input<KeyCode>>, action_state: &mut ActionState) {
     if key_input.just_pressed(KeyCode::Grave) {
         action_state.action = Action::Destroy
     }
@@ -50,4 +53,22 @@ fn handle_change_action_input(
     if key_input.just_pressed(KeyCode::Key4) {
         action_state.action = Action::PlaceMachine(MachineType::Joiner);
     }
+}
+
+fn update_preview(
+    commands: &mut Commands,
+    action_state: &mut ActionState,
+    cursor_state: &CursorState,
+    common_assets: &CommonAssets,
+) {
+    for ent in std::mem::take(&mut action_state.preview) {
+        commands.entity(ent).despawn_recursive();
+    }
+    let ctx = &mut BuildingContext {
+        commands,
+        position: cursor_state.world_pos,
+        direction: cursor_state.direction,
+        common_assets,
+    };
+    action_state.preview = action_state.action.spawn_art(ctx);
 }

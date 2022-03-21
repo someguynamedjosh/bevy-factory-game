@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::{Buildable, BuildingComponentsContext, BuildingContext, WhichMap};
+use super::{Buildable, BuildingComponentsContext, BuildingContext, BuildingMaps, WhichMap};
 use crate::{
     item::{ItemAnimator, ItemContainer, ItemContainerAlignment},
     prelude::*,
@@ -36,7 +36,7 @@ impl Buildable for BConveyor {
     fn spawn_extras(
         &self,
         _ctx: &mut BuildingContext,
-        _maps: &mut super::BuildingMaps,
+        _maps: &mut BuildingMaps,
     ) -> (Vec<Entity>, Self::ExtraData) {
         (vec![], ())
     }
@@ -59,6 +59,14 @@ impl Buildable for BConveyor {
                 ..Default::default()
             })
             .id()]
+    }
+
+    fn on_destroy(&self, ctx: &mut BuildingContext, maps: &mut BuildingMaps) {
+        for pos in ctx.position.surroundings() {
+            if let Some(&conveyor) = maps.conveyors.get(pos) {
+                ctx.commands.entity(conveyor).insert(SetupNeeded);
+            }
+        }
     }
 }
 
@@ -87,6 +95,7 @@ fn setup(
         let upstream_pos = pos.offset_direction(*facing, -1);
         let downstream_pos = pos.offset_direction(*facing, 1);
         let mut has_downstream = false;
+        conveyor.upstream = None;
         for (cid, cpos, cfacing) in all_conveyors.iter() {
             // If they are in our upstream position and we are in their downstream
             // position...

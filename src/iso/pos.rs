@@ -147,6 +147,16 @@ impl IsoPos {
         self.points_left() == dir.is_negative()
     }
 
+    /// Returns the 3 bordering positions of this position.
+    pub fn surroundings(self) -> Vec<Self> {
+        let delta = if self.points_left() { 1 } else { -1 };
+        vec![
+            self.offset_a(delta),
+            self.offset_b(delta),
+            self.offset_c(delta),
+        ]
+    }
+
     /// Move the coordinate left or right (+A points to the right.)
     pub const fn offset_a(self, offset: i32) -> Self {
         Self {
