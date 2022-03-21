@@ -16,13 +16,13 @@ pub(super) struct ClawLogic {
     pub(super) blocked: bool,
 }
 // How long it takes for the claw to traverse a segment of its path.
-const SEGMENT_DURATION: u8 = 2;
+const SEGMENT_DURATION: u8 = 4;
 
 impl ClawLogic {
     /// How many ticks it takes to make a two-way trip.
     fn anim_length(&self) -> u8 {
-        // A 1 length claw has to traverse 2 segments, 2 length 3 segments, 3/4, etc.
-        (self.length + 1) * SEGMENT_DURATION * 2
+        // *2 for round trip instead of one way.
+        self.length * SEGMENT_DURATION * 2
     }
 }
 
