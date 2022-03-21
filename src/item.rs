@@ -19,9 +19,9 @@ pub fn spawn_item(
     alignment: ItemContainerAlignment,
 ) -> Entity {
     let material = match item.as_known_item() {
-        Some(ReferenceItem::IronOre) => common_assets.metal_rubble_mat.clone(),
-        Some(ReferenceItem::IronNugget) => common_assets.metal_mat.clone(),
-        None => common_assets.claw_mat.clone(),
+        Some(ReferenceItem::IronOre) => common_assets.iron_ore_mat.clone(),
+        Some(ReferenceItem::IronNugget) => common_assets.iron_mat.clone(),
+        None => common_assets.item_mat.clone(),
     };
     commands
         .spawn()

@@ -45,7 +45,7 @@ impl Buildable for BClaw {
                 blocked: true,
             })
             .insert_bundle(PbrBundle {
-                material: ctx.common_assets.claw_mat.clone(),
+                material: ctx.common_assets.claw_mat.0.clone(),
                 mesh: ctx.common_assets.quad_mesh.clone(),
                 transform: sprite_transform(),
                 ..Default::default()

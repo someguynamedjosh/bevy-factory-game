@@ -27,11 +27,12 @@ impl ClawLogic {
 }
 
 pub(super) fn tick(
-    mut claws: Query<(&mut ClawLogic,)>,
+    mut claws: Query<(&mut ClawLogic, &mut Handle<StandardMaterial>)>,
     mut containers: Query<(&mut ItemContainer, &IsoPos)>,
     mut items: Query<&mut ItemAnimator>,
+    common_assets: Res<CommonAssets>,
 ) {
-    for (mut claw,) in claws.iter_mut() {
+    for (mut claw, mut mat) in claws.iter_mut() {
         let anim_length = claw.anim_length();
         if !claw.blocked {
             claw.current_anim_tick = (claw.current_anim_tick + 1) % anim_length;
@@ -44,6 +45,7 @@ pub(super) fn tick(
                 .unwrap();
             if let Some(item) = from.try_take() {
                 claw.held_item = Some(item);
+                *mat = common_assets.claw_mat.1.clone();
             } else {
                 claw.blocked = true;
             }
@@ -51,6 +53,9 @@ pub(super) fn tick(
             if let Ok((mut to, to_pos)) = containers.get_mut(claw.move_to) {
                 to.try_put_from(&mut claw.held_item, *to_pos, &mut items);
                 claw.blocked = claw.held_item.is_some();
+                if !claw.blocked {
+                    *mat = common_assets.claw_mat.0.clone();
+                }
             }
         }
     }
