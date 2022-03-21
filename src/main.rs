@@ -10,13 +10,10 @@ use bevy::prelude::*;
 use buildable::{
     destroyer::BDestroyer, spawn_buildable, spawner::BSpawner, BuildingContext, BuildingMaps,
 };
+use item::ReferenceItem;
 use prelude::*;
 
-fn test_scene(
-    mut commands: Commands,
-    common_assets: Res<CommonAssets>,
-    mut maps: BuildingMaps,
-) {
+fn test_scene(mut commands: Commands, common_assets: Res<CommonAssets>, mut maps: BuildingMaps) {
     let mut ctx = BuildingContext {
         commands: &mut commands,
         position: IsoPos::default(),
@@ -24,9 +21,23 @@ fn test_scene(
         common_assets: &common_assets,
     };
     ctx.position = IsoPos::new(-5, -3);
-    spawn_buildable(Box::new(BSpawner { interval: 8 }), &mut ctx, &mut maps);
+    spawn_buildable(
+        Box::new(BSpawner {
+            item: ReferenceItem::Magnetite,
+            interval: 8,
+        }),
+        &mut ctx,
+        &mut maps,
+    );
     ctx.position = IsoPos::new(-5, -4);
-    spawn_buildable(Box::new(BSpawner { interval: 8 }), &mut ctx, &mut maps);
+    spawn_buildable(
+        Box::new(BSpawner {
+            item: ReferenceItem::Animite,
+            interval: 8,
+        }),
+        &mut ctx,
+        &mut maps,
+    );
     ctx.position = IsoPos::new(-5, -6);
     spawn_buildable(Box::new(BDestroyer), &mut ctx, &mut maps);
 }

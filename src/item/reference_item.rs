@@ -2,19 +2,31 @@ use super::{Element, Item};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ReferenceItem {
-    IronOre,
-    IronNugget,
+    Magnetite,
+    PureFerrous,
+    IronLump,
+    Animite,
+    PureAnimus,
 }
 
 impl ReferenceItem {
     pub fn all() -> &'static [Self] {
-        &[Self::IronOre, Self::IronNugget]
+        &[
+            Self::Magnetite,
+            Self::PureFerrous,
+            Self::IronLump,
+            Self::Animite,
+            Self::PureAnimus,
+        ]
     }
 
     pub fn as_item(&self) -> Item {
         match self {
-            Self::IronOre => vec![Element::Impurity, Element::Ferrite, Element::Impurity].into(),
-            Self::IronNugget => vec![Element::Ferrite, Element::Ferrite].into(),
+            Self::Magnetite => vec![Element::Impurity, Element::Ferrous, Element::Impurity].into(),
+            Self::PureFerrous => vec![Element::Ferrous].into(),
+            Self::IronLump => vec![Element::Ferrous, Element::Ferrous].into(),
+            Self::Animite => vec![Element::Impurity, Element::Animus, Element::Impurity].into(),
+            Self::PureAnimus => vec![Element::Animus].into(),
         }
     }
 }
