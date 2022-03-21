@@ -41,7 +41,7 @@ pub fn execute_action(
 
 fn execute_destroy(built: Query<&Built>, mut ctx: BuildingContext, mut maps: BuildingMaps) {
     let pos = ctx.position;
-    let ent = *maps.buildings.get(pos).unwrap();
+    let ent = *maps.claws.get(pos).or(maps.buildings.get(pos)).unwrap();
     let built = built.get(ent).unwrap();
     destroy_buildable((ent, built), &mut ctx, &mut maps)
 }

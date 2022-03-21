@@ -20,7 +20,7 @@ impl Buildable for BClaw {
     }
 
     fn maps(&self) -> Vec<WhichMap> {
-        vec![]
+        vec![WhichMap::Claws]
     }
 
     fn extra_root_components(

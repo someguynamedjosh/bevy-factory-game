@@ -11,7 +11,8 @@ pub fn update_action_ok(
     action_state.ok = match &action_state.action {
         Action::PlaceConveyor => !maps.buildings.is_occupied(cursor_state.world_pos),
         Action::PlaceClawStart | Action::PlaceClawEnd { .. } => {
-            cursor_state.hovered_container.is_some()
+            !maps.claws.is_occupied(cursor_state.world_pos)
+                && cursor_state.hovered_container.is_some()
         }
         Action::PlaceMachine(typ) => {
             let shape = typ.get_shape();
@@ -25,6 +26,9 @@ pub fn update_action_ok(
                 true
             })()
         }
-        Action::Destroy => maps.buildings.is_occupied(cursor_state.world_pos),
+        Action::Destroy => {
+            maps.buildings.is_occupied(cursor_state.world_pos)
+                || maps.claws.is_occupied(cursor_state.world_pos)
+        }
     };
 }

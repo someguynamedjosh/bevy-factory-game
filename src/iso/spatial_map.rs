@@ -74,6 +74,7 @@ macro_rules! map_newtype {
 map_newtype!(ConveyorMap, Entity);
 map_newtype!(ItemContainerMap, Entity);
 map_newtype!(BuildingMap, Entity);
+map_newtype!(ClawMap, Entity);
 
 pub struct Plug;
 
@@ -82,5 +83,6 @@ impl Plugin for Plug {
         app.insert_resource(ConveyorMap::default());
         app.insert_resource(ItemContainerMap::default());
         app.insert_resource(BuildingMap::default());
+        app.insert_resource(ClawMap::default());
     }
 }

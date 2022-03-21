@@ -4,7 +4,7 @@ use bevy::{
 };
 
 use crate::{
-    iso::{ItemContainerMap, SpatialMap},
+    iso::{ItemContainerMap, SpatialMap, ClawMap},
     prelude::*,
 };
 
@@ -25,6 +25,7 @@ pub struct BuildingComponentsContext<'a, 'c1, 'c2> {
 #[derive(SystemParam)]
 pub struct BuildingMaps<'w, 's> {
     pub buildings: ResMut<'w, BuildingMap>,
+    pub claws: ResMut<'w, ClawMap>,
     pub item_containers: ResMut<'w, ItemContainerMap>,
     pub conveyors: ResMut<'w, ConveyorMap>,
     #[allow(dead_code)]
@@ -34,6 +35,7 @@ pub struct BuildingMaps<'w, 's> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum WhichMap {
     Buildings,
+    Claws,
     Conveyors,
     ItemContainers,
 }
@@ -42,6 +44,7 @@ impl WhichMap {
     pub fn get_from_maps_mut<'b>(self, maps: &'b mut BuildingMaps) -> &'b mut SpatialMap<Entity> {
         match self {
             WhichMap::Buildings => &mut **maps.buildings,
+            WhichMap::Claws => &mut **maps.claws,
             WhichMap::Conveyors => &mut **maps.conveyors,
             WhichMap::ItemContainers => &mut **maps.item_containers,
         }
