@@ -7,6 +7,8 @@ use crate::prelude::*;
 #[derive(Component)]
 pub struct Built {
     pub buildable: Box<dyn DynBuildable>,
+    pub position: IsoPos,
+    pub direction: IsoDirection,
 }
 
 pub trait Buildable: DynClone + Sync + Send + 'static {
@@ -21,6 +23,8 @@ pub trait Buildable: DynClone + Sync + Send + 'static {
         maps: &mut BuildingMaps,
     ) -> (Vec<Entity>, Self::ExtraData);
     fn spawn_art(&self, ctx: &mut BuildingContext) -> Vec<Entity>;
+    #[allow(unused_variables)]
+    fn on_destroy(&self, ctx: &mut BuildingContext, maps: &mut BuildingMaps) {}
 }
 
 pub trait DynBuildable: DynClone + Sync + Send + 'static {
@@ -32,6 +36,7 @@ pub trait DynBuildable: DynClone + Sync + Send + 'static {
         ctx: &mut BuildingContext,
         maps: &mut BuildingMaps,
     ) -> Entity;
+    fn on_destroy(&self, ctx: &mut BuildingContext, maps: &mut BuildingMaps);
 }
 
 impl<B: Buildable> DynBuildable for B {
@@ -74,5 +79,9 @@ impl<B: Buildable> DynBuildable for B {
             self.extra_root_components(&mut ctx, data);
         }
         root
+    }
+
+    fn on_destroy(&self, ctx: &mut BuildingContext, maps: &mut BuildingMaps) {
+        Buildable::on_destroy(self, ctx, maps)
     }
 }

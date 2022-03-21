@@ -9,6 +9,8 @@ pub fn spawn_buildable(
 ) -> Entity {
     let built = Built {
         buildable: dyn_clone::clone_box(&*buildable),
+        position: ctx.position,
+        direction: ctx.direction,
     };
     let root = buildable.spawn_self(built, ctx, maps);
     set_positions_on_maps(&buildable, maps, ctx, root);
@@ -38,8 +40,11 @@ pub fn destroy_buildable(
     // The spawner parents everything to the root entity, so this will take care
     // of all art and other related entities as well as the buildable object
     // itself.
+    ctx.position = buildable.1.position;
+    ctx.direction = buildable.1.direction;
     ctx.commands.entity(buildable.0).despawn_recursive();
     let buildable = &buildable.1.buildable;
+    buildable.on_destroy(ctx, maps);
     clear_positions_on_maps(buildable, maps, ctx);
 }
 

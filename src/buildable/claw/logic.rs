@@ -48,9 +48,10 @@ pub(super) fn tick(
                 claw.blocked = true;
             }
         } else if claw.current_anim_tick == anim_length / 2 {
-            let (mut to, to_pos) = containers.get_mut(claw.move_to).unwrap();
-            to.try_put_from(&mut claw.held_item, *to_pos, &mut items);
-            claw.blocked = claw.held_item.is_some();
+            if let Ok((mut to, to_pos)) = containers.get_mut(claw.move_to) {
+                to.try_put_from(&mut claw.held_item, *to_pos, &mut items);
+                claw.blocked = claw.held_item.is_some();
+            }
         }
     }
 }
@@ -62,8 +63,13 @@ pub(super) fn animate(
     mut items: Query<(&mut ItemAnimator,)>,
 ) {
     for (claw, mut transform) in claws.iter_mut() {
-        let (from_container, from_pos) = item_containers.get(claw.take_from).unwrap();
-        let (to_container, to_pos) = item_containers.get(claw.move_to).unwrap();
+        let from = item_containers.get(claw.take_from);
+        let to = item_containers.get(claw.move_to);
+        if from.is_err() || to.is_err() {
+            continue;
+        }
+        let (from_container, from_pos) = from.unwrap();
+        let (to_container, to_pos) = to.unwrap();
         let from_pos = from_container.alignment().get_item_pos(*from_pos);
         let to_pos = to_container.alignment().get_item_pos(*to_pos);
         let anim_length = claw.anim_length();

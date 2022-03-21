@@ -91,6 +91,13 @@ impl Buildable for BMachine {
             )
         }
     }
+
+    fn on_destroy(&self, ctx: &mut BuildingContext, maps: &mut BuildingMaps) {
+        let p = self.0.get_shape().positions(ctx.position, ctx.direction);
+        for container in p.inputs.chain(p.outputs) {
+            maps.item_containers.clear(container);
+        }
+    }
 }
 
 fn spawn_bespoke_art(
