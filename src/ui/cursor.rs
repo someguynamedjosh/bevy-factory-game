@@ -11,7 +11,6 @@ pub struct CursorState {
     pub hovered_container: Option<Entity>,
 
     world_cursor: Entity,
-    arrow: Entity,
 }
 
 pub fn startup(mut commands: Commands, assets: Res<CommonAssets>) {
@@ -25,24 +24,12 @@ pub fn startup(mut commands: Commands, assets: Res<CommonAssets>) {
         })
         .id();
 
-    let arrow = commands
-        .spawn()
-        .insert_bundle(PbrBundle {
-            material: assets.arrow_mat.clone(),
-            mesh: assets.quad_mesh.clone(),
-            // Why the hell do we need to do this twice?!?!
-            transform: sprite_transform() * sprite_transform(),
-            ..Default::default()
-        })
-        .id();
-
     commands.insert_resource(CursorState {
         pos: Vec2::default(),
         world_pos: IsoPos::default(),
         direction: Default::default(),
         hovered_container: None,
         world_cursor,
-        arrow,
     });
 }
 
@@ -100,12 +87,6 @@ pub fn update_pre(
     * sprite_transform()
     * sprite_transform();
     cursor_transform.translation.z += 0.02;
-
-    let mut arrow_transform = transforms.get_mut(cursor_state.arrow).unwrap();
-    arrow_transform.translation = (cursor_state.world_pos.centroid_pos(), 0.06).into();
-    let angle = -cursor_state.direction.unit_vec().angle_between(Vec2::X);
-    arrow_transform.rotation = Quat::from_rotation_z(angle);
-    arrow_transform.translation.z += 0.02;
 
     cursor_state.hovered_container = maps.item_containers.get(cursor_state.world_pos).copied();
 }

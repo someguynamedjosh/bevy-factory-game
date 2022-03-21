@@ -70,5 +70,7 @@ fn update_preview(
         direction: cursor_state.direction,
         common_assets,
     };
-    action_state.preview = action_state.action.spawn_art(ctx);
+    if action_state.ok {
+        action_state.preview = action_state.action.spawn_art(ctx);
+    }
 }

@@ -10,9 +10,14 @@ pub fn update_action_ok(
 ) {
     action_state.ok = match &action_state.action {
         Action::PlaceConveyor => !maps.buildings.is_occupied(cursor_state.world_pos),
-        Action::PlaceClawStart | Action::PlaceClawEnd { .. } => {
+        Action::PlaceClawStart => {
             !maps.claws.is_occupied(cursor_state.world_pos)
                 && cursor_state.hovered_container.is_some()
+        }
+        &Action::PlaceClawEnd { take_from } => {
+            !maps.claws.is_occupied(cursor_state.world_pos)
+                && cursor_state.hovered_container.is_some()
+                && cursor_state.world_pos != take_from
         }
         Action::PlaceMachine(typ) => {
             let shape = typ.get_shape();
