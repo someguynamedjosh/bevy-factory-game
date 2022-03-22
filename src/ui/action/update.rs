@@ -4,7 +4,7 @@ use super::{Action, ActionState};
 use crate::{
     buildable::{
         machine::{BMachine, MachineType},
-        storage::BSmallWarehouse,
+        storage::{BSmallWarehouse, Storage},
         BuildingContext, BuildingMaps, Built,
     },
     prelude::*,
@@ -20,8 +20,9 @@ pub fn update(
     key_input: Res<Input<KeyCode>>,
     maps: BuildingMaps,
     built: Query<&Built>,
+    storages: Query<(&mut Storage,)>,
 ) {
-    super::ok::update_action_ok(&mut action_state, &maps, &cursor_state);
+    super::ok::update_action_ok(&mut action_state, &maps, &cursor_state, &storages);
     if input.pressed(MouseButton::Left) && action_state.ok {
         super::execute::execute_action(
             &mut commands,
@@ -30,6 +31,7 @@ pub fn update(
             &mut action_state,
             maps,
             built,
+            storages,
         );
     }
     handle_change_action_input(key_input, &mut action_state);

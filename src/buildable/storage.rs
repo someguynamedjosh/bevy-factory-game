@@ -1,7 +1,6 @@
-use bevy::{
-    prelude::{App, Component, Entity, Plugin, Query, Commands, DespawnRecursiveExt},
-    utils::HashMap,
-};
+use std::collections::HashMap;
+
+use bevy::prelude::{App, Commands, Component, DespawnRecursiveExt, Entity, Plugin, Query};
 
 use super::{
     machine::{self, Shape},
@@ -12,10 +11,71 @@ use crate::{
     prelude::{fstage, IsoDirection, IsoPos},
 };
 
+#[derive(Clone)]
+pub struct ItemList(HashMap<Item, u32>);
+
+impl ItemList {
+    pub fn new() -> ItemList {
+        Self(HashMap::default())
+    }
+
+    pub fn from_counts(counts: HashMap<Item, u32>) -> ItemList {
+        Self(counts)
+    }
+
+    pub fn add(&mut self, item: Item) {
+        if let Some(count) = self.0.get_mut(&item) {
+            *count += 1;
+        } else {
+            self.0.insert(item, 1);
+        }
+    }
+
+    pub fn count(&self, of: &Item) -> u32 {
+        self.0.get(of).copied().unwrap_or(0)
+    }
+
+    /// Returns the actual number of items removed, which may be less than the
+    /// requested count if the requested count is greater than what's available.
+    pub fn remove_bulk(&mut self, item: &Item, count: u32) -> u32 {
+        if count == 0 {
+            return 0;
+        }
+        if let Some(my_count) = self.0.get_mut(item) {
+            if count > *my_count {
+                let removed = *my_count;
+                *my_count = 0;
+                removed
+            } else {
+                *my_count -= count;
+                count
+            }
+        } else {
+            0
+        }
+    }
+
+    /// Returns the total number of items in the list.
+    pub fn total_count(&self) -> u32 {
+        self.0.iter().map(|x| *x.1).sum()
+    }
+
+    pub fn summary(&self) -> String {
+        let mut result = String::new();
+        for (item, &count) in &self.0 {
+            if count == 0 {
+                continue;
+            }
+            result.push_str(&format!("{}x {:?}\n", count, item));
+        }
+        result
+    }
+}
+
 #[derive(Component)]
 pub struct Storage {
     inputs: Vec<Entity>,
-    items: HashMap<Item, usize>,
+    items: ItemList,
     item_volume: u32,
     item_volume_limit: u32,
 }
@@ -26,34 +86,44 @@ impl Storage {
             return Err(());
         }
         self.item_volume += item.volume();
-        if let Some(count) = self.items.get_mut(&item) {
-            *count += 1;
-        } else {
-            self.items.insert(item, 1);
-        }
+        self.items.add(item);
         Ok(())
     }
 
-    pub fn count(&self, of: &Item) -> usize {
-        self.items.get(of).copied().unwrap_or(0)
+    pub fn count(&self, of: &Item) -> u32 {
+        self.items.count(of)
     }
 
-    pub fn remove_bulk(&mut self, item: &Item, count: usize) {
-        if count == 0 {
-            return;
+    /// Returns the actual number of items removed, which may be less than the
+    /// requested count if the requested count is greater than what's available.
+    pub fn remove_bulk(&mut self, item: &Item, count: u32) -> u32 {
+        let count = self.items.remove_bulk(item, count);
+        self.item_volume -= item.volume() * count;
+        count
+    }
+
+    /// Does not modify `self`.
+    pub fn subtract_available_inventory_from(&self, list: &mut ItemList) {
+        for (item, count) in &mut list.0 {
+            let my_count = self.items.count(item);
+            if my_count >= *count {
+                *count = 0;
+            } else {
+                *count -= my_count;
+            }
         }
-        debug_assert!(self.count(item) >= count);
-        *self.items.get_mut(item).unwrap() -= count;
+    }
+
+    /// Modifies `self` in addition to `list`.
+    pub fn subtract_available_inventory_from_self_and(&mut self, list: &mut ItemList) {
+        for (item, count) in &mut list.0 {
+            let removed = self.remove_bulk(item, *count);
+            *count -= removed;
+        }
     }
 
     pub fn summary(&self) -> String {
-        let mut result = String::new();
-        for (item, &count) in &self.items {
-            if count == 0 {
-                continue;
-            }
-            result.push_str(&format!("{}x {:?}\n", count, item));
-        }
+        let mut result = self.items.summary();
         result.push_str(&format!("{}/{}L", self.item_volume, self.item_volume_limit));
         result
     }
@@ -93,7 +163,7 @@ impl Buildable for BSmallWarehouse {
     fn extra_root_components(&self, ctx: &mut BuildingComponentsContext, data: Self::ExtraData) {
         ctx.commands.insert(Storage {
             inputs: data,
-            items: HashMap::default(),
+            items: ItemList::new(),
             item_volume: 0,
             item_volume_limit: 20_000,
         });

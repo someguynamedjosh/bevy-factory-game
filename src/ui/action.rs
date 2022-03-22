@@ -10,7 +10,7 @@ use crate::{
         claw::BClaw,
         conveyor::BConveyor,
         machine::{BMachine, MachineType},
-        Buildable, BuildingContext, DynBuildable,
+        Buildable, BuildingContext, DynBuildable, storage::ItemList,
     },
     prelude::*,
 };
@@ -26,6 +26,7 @@ pub enum Action {
 pub struct ActionState {
     pub action: Action,
     pub ok: bool,
+    pub required_items: ItemList,
     preview: Vec<Entity>,
 }
 
@@ -63,6 +64,7 @@ pub fn startup(mut commands: Commands) {
     commands.insert_resource(ActionState {
         action: Action::PlaceConveyor,
         ok: false,
+        required_items: ItemList::new(),
         preview: vec![],
     })
 }

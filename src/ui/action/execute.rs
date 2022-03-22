@@ -8,7 +8,7 @@ use crate::{
         conveyor::BConveyor,
         destroy_buildable,
         machine::{BMachine, MachineType},
-        spawn_buildable, BuildingContext, BuildingMaps, Built, DynBuildable,
+        spawn_buildable, BuildingContext, BuildingMaps, Built, DynBuildable, storage::Storage,
     },
     prelude::*,
     ui::cursor::CursorState,
@@ -21,6 +21,7 @@ pub fn execute_action(
     action_state: &mut ResMut<ActionState>,
     mut maps: BuildingMaps,
     built: Query<&Built>,
+    mut storages: Query<(&mut Storage,)>,
 ) {
     let mut ctx = BuildingContext {
         commands,
@@ -28,6 +29,9 @@ pub fn execute_action(
         direction: cursor_state.direction,
         common_assets: &*common_assets,
     };
+    for (mut storage,) in storages.iter_mut() {
+        storage.subtract_available_inventory_from_self_and(&mut action_state.required_items);
+    }
     match &action_state.action {
         Action::PlaceConveyor => execute_place_conveyor(&mut ctx, &mut maps),
         Action::PlaceClawStart => execute_place_claw_start(cursor_state, action_state),
@@ -36,7 +40,8 @@ pub fn execute_action(
         }
         Action::PlaceBuildable(bld) => execute_place_buildable(bld, ctx, maps),
         Action::Destroy => execute_destroy(built, ctx, maps),
-    }
+    };
+
 }
 
 fn execute_destroy(built: Query<&Built>, mut ctx: BuildingContext, mut maps: BuildingMaps) {
