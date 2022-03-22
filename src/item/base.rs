@@ -34,6 +34,16 @@ impl Item {
         }
         None
     }
+
+    /// Mass in Kilograms, equivalent to the sum of the masses of this item's elements.
+    pub fn mass(&self) -> u32 {
+        self.elements.iter().copied().map(Element::mass).sum()
+    }
+
+    /// Volume in Liters, equivalent to 2 plus the sum of the volumes of this item's elements.
+    pub fn volume(&self) -> u32 {
+        2 + self.elements.iter().copied().map(Element::volume).sum::<u32>()
+    }
 }
 
 impl From<Vec<Element>> for Item {

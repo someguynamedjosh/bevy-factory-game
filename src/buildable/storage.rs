@@ -16,15 +16,22 @@ use crate::{
 pub struct Storage {
     inputs: Vec<Entity>,
     items: HashMap<Item, usize>,
+    item_volume: u32,
+    item_volume_limit: u32,
 }
 
 impl Storage {
-    pub fn add(&mut self, item: Item) {
+    pub fn add(&mut self, item: Item) -> Result<(), ()> {
+        if self.item_volume + item.volume() > self.item_volume_limit {
+            return Err(());
+        }
+        self.item_volume += item.volume();
         if let Some(count) = self.items.get_mut(&item) {
             *count += 1;
         } else {
             self.items.insert(item, 1);
         }
+        Ok(())
     }
 
     pub fn count(&self, of: &Item) -> usize {
@@ -47,6 +54,7 @@ impl Storage {
             }
             result.push_str(&format!("{}x {:?}\n", count, item));
         }
+        result.push_str(&format!("{}/{}L", self.item_volume, self.item_volume_limit));
         result
     }
 }
@@ -86,6 +94,8 @@ impl Buildable for BSmallWarehouse {
         ctx.commands.insert(Storage {
             inputs: data,
             items: HashMap::default(),
+            item_volume: 0,
+            item_volume_limit: 20_000,
         });
     }
 
@@ -121,9 +131,14 @@ fn tick(
 ) {
     for (mut warehouse,) in warehouses.iter_mut() {
         for input in warehouse.inputs.clone() {
-            if let Some(item) = containers.get_mut(input).unwrap().0.try_take() {
-                warehouse.add(items.get(item).unwrap().0.clone());
-                commands.entity(item).despawn_recursive();
+            let mut container = containers.get_mut(input).unwrap().0;
+            if let Some(item) = container.try_take() {
+                let success = warehouse.add(items.get(item).unwrap().0.clone());
+                if success.is_ok() {
+                    commands.entity(item).despawn_recursive();
+                } else {
+                    container.put_item(item);
+                }
             }
         }
     }

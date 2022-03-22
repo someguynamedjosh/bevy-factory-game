@@ -29,7 +29,7 @@ fn test_scene(mut commands: Commands, common_assets: Res<CommonAssets>, mut maps
         &mut ctx,
         &mut maps,
     );
-    ctx.position = IsoPos::new(-5, -4);
+    ctx.position = IsoPos::new(-5, -5);
     spawn_buildable(
         Box::new(BSpawner {
             item: ReferenceItem::Animite,
@@ -38,7 +38,7 @@ fn test_scene(mut commands: Commands, common_assets: Res<CommonAssets>, mut maps
         &mut ctx,
         &mut maps,
     );
-    ctx.position = IsoPos::new(-5, -6);
+    ctx.position = IsoPos::new(-5, -7);
     spawn_buildable(Box::new(BDestroyer), &mut ctx, &mut maps);
 }
 
