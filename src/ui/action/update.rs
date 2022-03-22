@@ -4,7 +4,7 @@ use super::{Action, ActionState};
 use crate::{
     buildable::{
         machine::{BMachine, MachineType},
-        storage::{BSmallWarehouse, Storage},
+        storage::{BSmallWarehouse, ItemList, Storage},
         BuildingContext, BuildingMaps, Built,
     },
     prelude::*,
@@ -60,7 +60,7 @@ fn handle_change_action_input(key_input: Res<Input<KeyCode>>, action_state: &mut
         action_state.action = Action::PlaceBuildable(Box::new(BMachine(MachineType::Joiner)));
     }
     if key_input.just_pressed(KeyCode::Key5) {
-        action_state.action = Action::PlaceBuildable(Box::new(BSmallWarehouse));
+        action_state.action = Action::PlaceBuildable(Box::new(BSmallWarehouse(ItemList::new())));
     }
 }
 

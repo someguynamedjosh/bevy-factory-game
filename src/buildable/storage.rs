@@ -11,7 +11,7 @@ use crate::{
     prelude::{fstage, IsoDirection, IsoPos},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ItemList(HashMap<Item, u32>);
 
 impl ItemList {
@@ -24,10 +24,14 @@ impl ItemList {
     }
 
     pub fn add(&mut self, item: Item) {
-        if let Some(count) = self.0.get_mut(&item) {
-            *count += 1;
+        self.add_bulk(item, 1)
+    }
+
+    pub fn add_bulk(&mut self, item: Item, count: u32) {
+        if let Some(total_count) = self.0.get_mut(&item) {
+            *total_count += count;
         } else {
-            self.0.insert(item, 1);
+            self.0.insert(item, count);
         }
     }
 
@@ -60,6 +64,11 @@ impl ItemList {
         self.0.iter().map(|x| *x.1).sum()
     }
 
+    /// Returns the total number of liters this item list occupies.
+    pub fn total_volume(&self) -> u32 {
+        self.0.iter().map(|(i, c)| i.volume() * *c).sum()
+    }
+
     pub fn summary(&self) -> String {
         let mut result = String::new();
         for (item, &count) in &self.0 {
@@ -82,11 +91,16 @@ pub struct Storage {
 
 impl Storage {
     pub fn add(&mut self, item: Item) -> Result<(), ()> {
-        if self.item_volume + item.volume() > self.item_volume_limit {
+        self.add_bulk(item, 1)
+    }
+
+    pub fn add_bulk(&mut self, item: Item, count: u32) -> Result<(), ()> {
+        let additional_volume = item.volume() * count;
+        if self.item_volume + additional_volume > self.item_volume_limit {
             return Err(());
         }
-        self.item_volume += item.volume();
-        self.items.add(item);
+        self.item_volume += additional_volume;
+        self.items.add_bulk(item, count);
         Ok(())
     }
 
@@ -130,7 +144,7 @@ impl Storage {
 }
 
 #[derive(Clone, Debug)]
-pub struct BSmallWarehouse;
+pub struct BSmallWarehouse(pub ItemList);
 
 const SHAPE: Shape = Shape {
     blanks: &[
@@ -163,8 +177,8 @@ impl Buildable for BSmallWarehouse {
     fn extra_root_components(&self, ctx: &mut BuildingComponentsContext, data: Self::ExtraData) {
         ctx.commands.insert(Storage {
             inputs: data,
-            items: ItemList::new(),
-            item_volume: 0,
+            items: self.0.clone(),
+            item_volume: self.0.total_volume(),
             item_volume_limit: 20_000,
         });
     }

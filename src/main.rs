@@ -8,7 +8,8 @@ mod ui;
 
 use bevy::prelude::*;
 use buildable::{
-    destroyer::BDestroyer, spawn_buildable, spawner::BSpawner, BuildingContext, BuildingMaps,
+    destroyer::BDestroyer, spawn_buildable, spawner::BSpawner, storage::{BSmallWarehouse, ItemList},
+    BuildingContext, BuildingMaps,
 };
 use item::ReferenceItem;
 use prelude::*;
@@ -20,6 +21,7 @@ fn test_scene(mut commands: Commands, common_assets: Res<CommonAssets>, mut maps
         direction: IsoDirection::default(),
         common_assets: &common_assets,
     };
+
     ctx.position = IsoPos::new(-5, -3);
     spawn_buildable(
         Box::new(BSpawner {
@@ -29,6 +31,7 @@ fn test_scene(mut commands: Commands, common_assets: Res<CommonAssets>, mut maps
         &mut ctx,
         &mut maps,
     );
+
     ctx.position = IsoPos::new(-5, -5);
     spawn_buildable(
         Box::new(BSpawner {
@@ -38,8 +41,16 @@ fn test_scene(mut commands: Commands, common_assets: Res<CommonAssets>, mut maps
         &mut ctx,
         &mut maps,
     );
+
     ctx.position = IsoPos::new(-5, -7);
     spawn_buildable(Box::new(BDestroyer), &mut ctx, &mut maps);
+
+    ctx.position = IsoPos::new(-4, 8);
+    ctx.direction = IsoDirection::PosB;
+    let mut items = ItemList::new();
+    items.add_bulk(ReferenceItem::IronLump.as_item(), 300);
+    items.add_bulk(ReferenceItem::PureAnimus.as_item(), 100);
+    spawn_buildable(Box::new(BSmallWarehouse(items)), &mut ctx, &mut maps);
 }
 
 fn main() {
