@@ -2,7 +2,11 @@ use bevy::prelude::*;
 
 use super::{Action, ActionState};
 use crate::{
-    buildable::{machine::MachineType, BuildingContext, BuildingMaps, Built},
+    buildable::{
+        machine::{BMachine, MachineType},
+        storage::BSmallWarehouse,
+        BuildingContext, BuildingMaps, Built,
+    },
     prelude::*,
     ui::cursor::CursorState,
 };
@@ -48,10 +52,13 @@ fn handle_change_action_input(key_input: Res<Input<KeyCode>>, action_state: &mut
         action_state.action = Action::PlaceClawStart;
     }
     if key_input.just_pressed(KeyCode::Key3) {
-        action_state.action = Action::PlaceMachine(MachineType::Purifier);
+        action_state.action = Action::PlaceBuildable(Box::new(BMachine(MachineType::Purifier)));
     }
     if key_input.just_pressed(KeyCode::Key4) {
-        action_state.action = Action::PlaceMachine(MachineType::Joiner);
+        action_state.action = Action::PlaceBuildable(Box::new(BMachine(MachineType::Joiner)));
+    }
+    if key_input.just_pressed(KeyCode::Key5) {
+        action_state.action = Action::PlaceBuildable(Box::new(BSmallWarehouse));
     }
 }
 

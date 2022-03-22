@@ -26,7 +26,7 @@ fn set_positions_on_maps(
     let requested_maps = buildable.maps();
     for map in requested_maps {
         let map = map.get_from_maps_mut(maps);
-        for pos in buildable.shape(ctx) {
+        for pos in buildable.shape(ctx.position, ctx.direction) {
             map.set(pos, root);
         }
     }
@@ -56,7 +56,7 @@ fn clear_positions_on_maps(
     let requested_maps = buildable.maps();
     for map in requested_maps {
         let map = map.get_from_maps_mut(maps);
-        for pos in buildable.shape(ctx) {
+        for pos in buildable.shape(ctx.position, ctx.direction) {
             map.clear(pos);
         }
     }

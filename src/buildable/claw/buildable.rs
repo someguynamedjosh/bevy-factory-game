@@ -7,7 +7,7 @@ use crate::{
     prelude::*,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BClaw {
     pub take_from: IsoPos,
 }
@@ -15,8 +15,8 @@ pub struct BClaw {
 impl Buildable for BClaw {
     type ExtraData = (Entity, Entity);
 
-    fn shape(&self, ctx: &mut BuildingContext) -> Vec<IsoPos> {
-        vec![self.take_from, ctx.position]
+    fn shape(&self, position: IsoPos, direction: IsoDirection) -> Vec<IsoPos> {
+        vec![self.take_from, position]
     }
 
     fn maps(&self) -> Vec<WhichMap> {

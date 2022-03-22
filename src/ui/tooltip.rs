@@ -63,7 +63,7 @@ pub fn update_post(
         Action::PlaceClawStart => format!("Claw Start"),
         Action::PlaceClawEnd { .. } => format!("Claw End"),
         Action::PlaceConveyor => format!("Conveyor"),
-        Action::PlaceMachine(typ) => format!("{:?}", typ),
+        Action::PlaceBuildable(bld) => format!("{:?}", bld),
         Action::Destroy => format!("Destroy"),
     };
     let mut text = texts.get_mut(tooltip_state.tool_text).unwrap();

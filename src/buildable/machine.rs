@@ -5,7 +5,11 @@ mod typee;
 
 use bevy::prelude::{App, Plugin};
 
-pub use self::{buildable::BMachine, typee::*};
+pub use self::{
+    buildable::{spawn_placeholder_art, BMachine},
+    shape::*,
+    typee::*,
+};
 
 pub struct Plug;
 

@@ -6,6 +6,7 @@ pub mod machine;
 mod spawn;
 pub mod spawner;
 mod support;
+pub mod storage;
 
 use bevy::prelude::{App, Plugin};
 

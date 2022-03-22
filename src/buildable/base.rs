@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use bevy::prelude::*;
 use dyn_clone::DynClone;
 
@@ -11,10 +13,10 @@ pub struct Built {
     pub direction: IsoDirection,
 }
 
-pub trait Buildable: DynClone + Sync + Send + 'static {
+pub trait Buildable: Debug + DynClone + Sync + Send + 'static {
     type ExtraData;
 
-    fn shape(&self, ctx: &mut BuildingContext) -> Vec<IsoPos>;
+    fn shape(&self, position: IsoPos, direction: IsoDirection) -> Vec<IsoPos>;
     fn maps(&self) -> Vec<WhichMap>;
     fn extra_root_components(&self, ctx: &mut BuildingComponentsContext, data: Self::ExtraData);
     fn spawn_extras(
@@ -27,8 +29,8 @@ pub trait Buildable: DynClone + Sync + Send + 'static {
     fn on_destroy(&self, ctx: &mut BuildingContext, maps: &mut BuildingMaps) {}
 }
 
-pub trait DynBuildable: DynClone + Sync + Send + 'static {
-    fn shape(&self, ctx: &mut BuildingContext) -> Vec<IsoPos>;
+pub trait DynBuildable: Debug + DynClone + Sync + Send + 'static {
+    fn shape(&self, position: IsoPos, direction: IsoDirection) -> Vec<IsoPos>;
     fn maps(&self) -> Vec<WhichMap>;
     fn spawn_self(
         &self,
@@ -36,12 +38,13 @@ pub trait DynBuildable: DynClone + Sync + Send + 'static {
         ctx: &mut BuildingContext,
         maps: &mut BuildingMaps,
     ) -> Entity;
+    fn dyn_spawn_art(&self, ctx: &mut BuildingContext) -> Vec<Entity>;
     fn on_destroy(&self, ctx: &mut BuildingContext, maps: &mut BuildingMaps);
 }
 
 impl<B: Buildable> DynBuildable for B {
-    fn shape(&self, ctx: &mut BuildingContext) -> Vec<IsoPos> {
-        Buildable::shape(self, ctx)
+    fn shape(&self, position: IsoPos, direction: IsoDirection) -> Vec<IsoPos> {
+        Buildable::shape(self, position, direction)
     }
 
     fn maps(&self) -> Vec<WhichMap> {
@@ -79,6 +82,10 @@ impl<B: Buildable> DynBuildable for B {
             self.extra_root_components(&mut ctx, data);
         }
         root
+    }
+
+    fn dyn_spawn_art(&self, ctx: &mut BuildingContext) -> Vec<Entity> {
+        Buildable::spawn_art(self, ctx)
     }
 
     fn on_destroy(&self, ctx: &mut BuildingContext, maps: &mut BuildingMaps) {

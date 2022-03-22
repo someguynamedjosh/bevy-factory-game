@@ -7,7 +7,7 @@ use crate::{
     prelude::*,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BSpawner {
     pub interval: u8,
     pub item: ReferenceItem,
@@ -24,8 +24,8 @@ pub struct SpawnerLogic {
 impl Buildable for BSpawner {
     type ExtraData = ();
 
-    fn shape(&self, ctx: &mut super::BuildingContext) -> Vec<crate::prelude::IsoPos> {
-        vec![ctx.position]
+    fn shape(&self, position: IsoPos, direction: IsoDirection) -> Vec<IsoPos> {
+        vec![position]
     }
 
     fn maps(&self) -> Vec<super::WhichMap> {

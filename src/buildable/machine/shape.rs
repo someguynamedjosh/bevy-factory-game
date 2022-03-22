@@ -35,4 +35,13 @@ impl Shape {
             outputs: Self::positions_impl(self.outputs, origin, facing),
         }
     }
+
+    pub fn all_positions(
+        &self,
+        origin: IsoPos,
+        facing: IsoDirection,
+    ) -> impl Iterator<Item = IsoPos> {
+        let p = self.positions(origin, facing);
+        std::iter::once(origin).chain(p.blanks).chain(p.inputs).chain(p.outputs)
+    }
 }

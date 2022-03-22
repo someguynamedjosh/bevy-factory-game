@@ -6,14 +6,14 @@ use crate::{
     prelude::*,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BConveyor;
 
 impl Buildable for BConveyor {
     type ExtraData = ();
 
-    fn shape(&self, ctx: &mut BuildingContext) -> Vec<IsoPos> {
-        vec![ctx.position]
+    fn shape(&self, position: IsoPos, direction: IsoDirection) -> Vec<IsoPos> {
+        vec![position]
     }
 
     fn maps(&self) -> Vec<WhichMap> {

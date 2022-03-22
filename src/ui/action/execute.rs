@@ -8,7 +8,7 @@ use crate::{
         conveyor::BConveyor,
         destroy_buildable,
         machine::{BMachine, MachineType},
-        spawn_buildable, BuildingContext, BuildingMaps, Built,
+        spawn_buildable, BuildingContext, BuildingMaps, Built, DynBuildable,
     },
     prelude::*,
     ui::cursor::CursorState,
@@ -34,7 +34,7 @@ pub fn execute_action(
         &Action::PlaceClawEnd { take_from } => {
             execute_place_claw_end(cursor_state, take_from, &mut ctx, &mut maps, action_state)
         }
-        Action::PlaceMachine(typ) => execute_place_machine(typ, ctx, maps),
+        Action::PlaceBuildable(bld) => execute_place_buildable(bld, ctx, maps),
         Action::Destroy => execute_destroy(built, ctx, maps),
     }
 }
@@ -48,6 +48,10 @@ fn execute_destroy(built: Query<&Built>, mut ctx: BuildingContext, mut maps: Bui
 
 fn execute_place_machine(typ: &MachineType, mut ctx: BuildingContext, mut maps: BuildingMaps) {
     buildable::spawn_buildable(Box::new(BMachine(*typ)), &mut ctx, &mut maps);
+}
+
+fn execute_place_buildable(bld: &Box<dyn DynBuildable>, mut ctx: BuildingContext, mut maps: BuildingMaps) {
+    buildable::spawn_buildable(dyn_clone::clone_box(&**bld), &mut ctx, &mut maps);
 }
 
 fn execute_place_claw_end(

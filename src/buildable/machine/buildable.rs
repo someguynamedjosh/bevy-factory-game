@@ -1,5 +1,3 @@
-use std::iter;
-
 use bevy::prelude::*;
 
 use super::{logic::MachineLogic, shape::Shape, typee::MachineType};
@@ -9,7 +7,7 @@ use crate::{
     prelude::*,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BMachine(pub MachineType);
 
 pub struct MachineIo {
@@ -20,12 +18,10 @@ pub struct MachineIo {
 impl Buildable for BMachine {
     type ExtraData = MachineIo;
 
-    fn shape(&self, ctx: &mut BuildingContext) -> Vec<IsoPos> {
-        let p = self.0.get_shape().positions(ctx.position, ctx.direction);
-        p.blanks
-            .chain(p.inputs)
-            .chain(p.outputs)
-            .chain(iter::once(ctx.position))
+    fn shape(&self, position: IsoPos, direction: IsoDirection) -> Vec<IsoPos> {
+        self.0
+            .get_shape()
+            .all_positions(position, direction)
             .collect()
     }
 
@@ -82,13 +78,7 @@ impl Buildable for BMachine {
         if let Some((mesh, mat)) = self.0.get_appearence(&ctx.common_assets) {
             vec![spawn_bespoke_art(ctx.commands, mesh, mat)]
         } else {
-            spawn_placeholder_art(
-                ctx.commands,
-                ctx.common_assets,
-                &self.0.get_shape(),
-                ctx.position,
-                ctx.direction,
-            )
+            spawn_placeholder_art(ctx, &self.0.get_shape())
         }
     }
 
@@ -115,13 +105,14 @@ fn spawn_bespoke_art(
         .id()
 }
 
-fn spawn_placeholder_art(
-    commands: &mut Commands,
-    common_assets: &CommonAssets,
-    shape: &Shape,
-    position: IsoPos,
-    direction: IsoDirection,
-) -> Vec<Entity> {
+pub fn spawn_placeholder_art(ctx: &mut BuildingContext, shape: &Shape) -> Vec<Entity> {
+    let BuildingContext {
+        commands,
+        position,
+        direction,
+        common_assets,
+    } = ctx;
+    let (position, direction) = (*position, *direction);
     let mut all = Vec::new();
     let p = shape.positions(position, direction);
     for pos in p.blanks {

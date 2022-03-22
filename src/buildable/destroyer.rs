@@ -7,7 +7,7 @@ use crate::{
     prelude::*,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BDestroyer;
 
 #[derive(Component)]
@@ -16,8 +16,8 @@ pub struct DestroyerLogic;
 impl Buildable for BDestroyer {
     type ExtraData = ();
 
-    fn shape(&self, ctx: &mut super::BuildingContext) -> Vec<crate::prelude::IsoPos> {
-        vec![ctx.position]
+    fn shape(&self, position: IsoPos, direction: IsoDirection) -> Vec<IsoPos> {
+        vec![position]
     }
 
     fn maps(&self) -> Vec<super::WhichMap> {

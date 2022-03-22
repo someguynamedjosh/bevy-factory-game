@@ -19,11 +19,10 @@ pub fn update_action_ok(
                 && cursor_state.hovered_container.is_some()
                 && cursor_state.world_pos != take_from
         }
-        Action::PlaceMachine(typ) => {
-            let shape = typ.get_shape();
+        Action::PlaceBuildable(bld) => {
+            let shape = bld.shape(cursor_state.world_pos, cursor_state.direction);
             (|| {
-                let iters = shape.positions(cursor_state.world_pos, cursor_state.direction);
-                for p in iters.blanks.chain(iters.inputs.chain(iters.outputs)) {
+                for p in shape {
                     if maps.buildings.is_occupied(p) {
                         return false;
                     }

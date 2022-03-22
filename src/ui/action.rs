@@ -10,7 +10,7 @@ use crate::{
         claw::BClaw,
         conveyor::BConveyor,
         machine::{BMachine, MachineType},
-        Buildable, BuildingContext,
+        Buildable, BuildingContext, DynBuildable,
     },
     prelude::*,
 };
@@ -19,7 +19,7 @@ pub enum Action {
     PlaceConveyor,
     PlaceClawStart,
     PlaceClawEnd { take_from: IsoPos },
-    PlaceMachine(MachineType),
+    PlaceBuildable(Box<dyn DynBuildable>),
     Destroy,
 }
 
@@ -40,7 +40,7 @@ impl Action {
             } => Snapping::AlongAnyLine {
                 through: *start_pos,
             },
-            Self::PlaceMachine(..) => Snapping::require_edge_pointing_in(selected_direction),
+            Self::PlaceBuildable(..) => Snapping::require_edge_pointing_in(selected_direction),
             Self::Destroy => Snapping::None,
         }
     }
@@ -53,7 +53,7 @@ impl Action {
             }
             .spawn_art(ctx),
             &Self::PlaceClawEnd { take_from } => BClaw { take_from }.spawn_art(ctx),
-            &Self::PlaceMachine(typ) => BMachine(typ).spawn_art(ctx),
+            Self::PlaceBuildable(bld) => bld.dyn_spawn_art(ctx),
             Self::Destroy => vec![],
         }
     }
