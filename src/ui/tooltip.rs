@@ -6,7 +6,7 @@ use super::{
 };
 use crate::{
     buildable::{
-        BuildingMaps,
+        BuildingMaps, storage::Storage,
     },
     item::ItemContainer,
     prelude::*,
@@ -51,6 +51,7 @@ pub fn startup(mut commands: Commands, assets: Res<CommonAssets>) {
 pub fn update_post(
     maps: BuildingMaps,
     containers: Query<&ItemContainer>,
+    warehouses: Query<(&Storage, &IsoPos)>,
     mut texts: Query<&mut Text>,
     items: Query<&Item>,
     action_state: Res<ActionState>,
@@ -77,8 +78,14 @@ pub fn update_post(
     } else {
         format!("")
     };
+    let mut hovered_warehouse = String::new();
+    for (warehouse, &pos) in warehouses.iter() {
+        if pos == cursor_state.world_pos {
+            hovered_warehouse = warehouse.summary();
+        }
+    }
     text.sections[0].value = format!(
-        "{}\n{}\n{}",
-        tooltip, /* credits.0.floor() */ 0, hovered_item
+        "{}\n{}\n{}\n{}",
+        tooltip, /* credits.0.floor() */ 0, hovered_item, hovered_warehouse
     );
 }

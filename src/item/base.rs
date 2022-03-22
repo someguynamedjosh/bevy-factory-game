@@ -2,7 +2,7 @@ use bevy::prelude::Component;
 
 use super::{Element, ReferenceItem};
 
-#[derive(Clone, Component, Debug, PartialEq, Eq)]
+#[derive(Clone, Component, Debug, PartialEq, Eq, Hash)]
 pub struct Item {
     elements: Vec<Element>,
 }

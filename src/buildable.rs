@@ -20,6 +20,7 @@ impl Plugin for Plug {
             .add_plugin(conveyor::Plug)
             .add_plugin(destroyer::Plug)
             .add_plugin(machine::Plug)
-            .add_plugin(spawner::Plug);
+            .add_plugin(spawner::Plug)
+            .add_plugin(storage::Plug);
     }
 }
