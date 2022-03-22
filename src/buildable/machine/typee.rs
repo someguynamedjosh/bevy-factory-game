@@ -1,7 +1,12 @@
 use bevy::prelude::*;
 use itertools::Itertools;
+use maplit::hashmap;
 
-use crate::{buildable::machine::shape::Shape, item::Element, prelude::*};
+use crate::{
+    buildable::{machine::shape::Shape, storage::ItemList},
+    item::{Element, ReferenceItem},
+    prelude::*,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MachineType {
@@ -57,5 +62,18 @@ impl MachineType {
             // Self::Furnace => Some((assets.furnace_mesh.clone(), assets.clay_mat.clone())),
             _ => None,
         }
+    }
+
+    pub(crate) fn get_cost(&self) -> ItemList {
+        ItemList::from_counts(match self {
+            Self::Joiner => hashmap![
+                ReferenceItem::IronLump.as_item() => 4,
+                ReferenceItem::PureAnimus.as_item() => 2,
+            ],
+            Self::Purifier => hashmap![
+                ReferenceItem::IronLump.as_item() => 6,
+                ReferenceItem::PureAnimus.as_item() => 1,
+            ],
+        })
     }
 }

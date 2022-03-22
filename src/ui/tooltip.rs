@@ -1,13 +1,11 @@
-use bevy::{prelude::*};
+use bevy::prelude::*;
 
 use super::{
     action::{Action, ActionState},
     cursor::CursorState,
 };
 use crate::{
-    buildable::{
-        BuildingMaps, storage::Storage,
-    },
+    buildable::{storage::Storage, BuildingMaps},
     item::ItemContainer,
     prelude::*,
 };
@@ -84,8 +82,9 @@ pub fn update_post(
             hovered_warehouse = warehouse.summary();
         }
     }
+    let action_cost = action_state.required_items.summary();
     text.sections[0].value = format!(
-        "{}\n{}\n{}\n{}",
-        tooltip, /* credits.0.floor() */ 0, hovered_item, hovered_warehouse
+        "{}\n{}\n{}\n{}\nCost:\n{}",
+        tooltip, /* credits.0.floor() */ 0, hovered_item, hovered_warehouse, action_cost
     );
 }

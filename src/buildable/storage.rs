@@ -1,13 +1,15 @@
 use std::collections::HashMap;
 
 use bevy::prelude::{App, Commands, Component, DespawnRecursiveExt, Entity, Plugin, Query};
+use itertools::Itertools;
+use maplit::hashmap;
 
 use super::{
     machine::{self, Shape},
     Buildable, BuildingComponentsContext, BuildingContext, BuildingMaps, WhichMap,
 };
 use crate::{
-    item::{Item, ItemContainer, ItemContainerAlignment},
+    item::{Item, ItemContainer, ItemContainerAlignment, ReferenceItem},
     prelude::{fstage, IsoDirection, IsoPos},
 };
 
@@ -71,7 +73,9 @@ impl ItemList {
 
     pub fn summary(&self) -> String {
         let mut result = String::new();
-        for (item, &count) in &self.0 {
+        let mut entries = self.0.iter().collect_vec();
+        entries.sort_by_key(|x| x.0);
+        for (item, &count) in entries {
             if count == 0 {
                 continue;
             }
@@ -172,6 +176,13 @@ impl Buildable for BSmallWarehouse {
 
     fn maps(&self) -> Vec<WhichMap> {
         vec![WhichMap::Buildings]
+    }
+
+    fn cost(&self, _position: IsoPos) -> ItemList {
+        ItemList::from_counts(hashmap![
+            ReferenceItem::IronLump.as_item() => 10,
+            ReferenceItem::PureAnimus.as_item() => 1,
+        ])
     }
 
     fn extra_root_components(&self, ctx: &mut BuildingComponentsContext, data: Self::ExtraData) {

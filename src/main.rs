@@ -49,7 +49,7 @@ fn test_scene(mut commands: Commands, common_assets: Res<CommonAssets>, mut maps
     ctx.direction = IsoDirection::PosB;
     let mut items = ItemList::new();
     items.add_bulk(ReferenceItem::IronLump.as_item(), 300);
-    items.add_bulk(ReferenceItem::PureAnimus.as_item(), 100);
+    items.add_bulk(ReferenceItem::PureAnimus.as_item(), 300);
     spawn_buildable(Box::new(BSmallWarehouse(items)), &mut ctx, &mut maps);
 }
 

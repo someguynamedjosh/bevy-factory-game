@@ -4,8 +4,10 @@ use maplit::hashmap;
 use super::{Action, ActionState};
 use crate::{
     buildable::{
+        claw::BClaw,
+        conveyor::BConveyor,
         storage::{ItemList, Storage},
-        BuildingMaps,
+        Buildable, BuildingMaps,
     },
     item::ReferenceItem,
     ui::cursor::CursorState,
@@ -17,26 +19,27 @@ pub fn update_action_ok(
     cursor_state: &Res<CursorState>,
     storages: &Query<(&mut Storage,)>,
 ) {
+    let position = cursor_state.world_pos;
     let (prereqs_ok, required_items) = match &action_state.action {
         Action::PlaceConveyor => (
-            !maps.buildings.is_occupied(cursor_state.world_pos),
-            ItemList::from_counts(hashmap![
-                (ReferenceItem::Magnetite.as_item()) => 1,
-            ]),
+            !maps.buildings.is_occupied(position),
+            BConveyor.cost(position),
         ),
         Action::PlaceClawStart => (
-            !maps.claws.is_occupied(cursor_state.world_pos)
-                && cursor_state.hovered_container.is_some(),
-            ItemList::new(),
+            !maps.claws.is_occupied(position) && cursor_state.hovered_container.is_some(),
+            BClaw {
+                take_from: position,
+            }
+            .cost(position),
         ),
         &Action::PlaceClawEnd { take_from } => (
-            !maps.claws.is_occupied(cursor_state.world_pos)
+            !maps.claws.is_occupied(position)
                 && cursor_state.hovered_container.is_some()
-                && cursor_state.world_pos != take_from,
-            ItemList::new(),
+                && position != take_from,
+            BClaw { take_from }.cost(position),
         ),
         Action::PlaceBuildable(bld) => {
-            let shape = bld.shape(cursor_state.world_pos, cursor_state.direction);
+            let shape = bld.shape(position, cursor_state.direction);
             let space_ok = (|| {
                 for p in shape {
                     if maps.buildings.is_occupied(p) {
@@ -45,11 +48,10 @@ pub fn update_action_ok(
                 }
                 true
             })();
-            (space_ok, ItemList::new())
+            (space_ok, bld.cost(position))
         }
         Action::Destroy => (
-            maps.buildings.is_occupied(cursor_state.world_pos)
-                || maps.claws.is_occupied(cursor_state.world_pos),
+            maps.buildings.is_occupied(position) || maps.claws.is_occupied(position),
             ItemList::new(),
         ),
     };

@@ -1,15 +1,25 @@
 use bevy::prelude::*;
+use maplit::hashmap;
 
 use super::{Buildable, BuildingComponentsContext, BuildingContext, WhichMap};
 use crate::{
-    buildable::{claw::logic::ClawLogic, BuildingMaps},
+    buildable::{claw::logic::ClawLogic, storage::ItemList, BuildingMaps},
     iso::GRID_EDGE_LENGTH,
+    item::ReferenceItem,
     prelude::*,
 };
 
 #[derive(Clone, Debug)]
 pub struct BClaw {
     pub take_from: IsoPos,
+}
+
+fn distance(start: IsoPos, end: IsoPos) -> u8 {
+        let distance = start.centroid_pos().distance(end.centroid_pos());
+        let distance = distance + 0.01;
+        let distance = distance / GRID_EDGE_LENGTH * 2.0;
+        assert!(distance >= 0.0 && distance < 256.0);
+        (distance + 0.3).floor() as u8
 }
 
 impl Buildable for BClaw {
@@ -23,17 +33,20 @@ impl Buildable for BClaw {
         vec![WhichMap::Claws]
     }
 
+    fn cost(&self, position: IsoPos) -> ItemList {
+        let length = distance(self.take_from, position) as u32;
+        ItemList::from_counts(hashmap![
+            ReferenceItem::IronLump.as_item() => 1 + length,
+            ReferenceItem::PureAnimus.as_item() => 3,
+        ])
+    }
+
     fn extra_root_components(
         &self,
         ctx: &mut BuildingComponentsContext,
         (take_from, move_to): Self::ExtraData,
     ) {
-        let (start, end) = (ctx.position, self.take_from);
-        let distance = start.centroid_pos().distance(end.centroid_pos());
-        let distance = distance + 0.01;
-        let distance = distance / GRID_EDGE_LENGTH * 2.0;
-        assert!(distance > 0.0 && distance < 255.0);
-        let length = (distance + 0.3).floor() as u8;
+        let length = distance(self.take_from, ctx.position);
         assert!(length >= 1);
         ctx.commands
             .insert(ClawLogic {

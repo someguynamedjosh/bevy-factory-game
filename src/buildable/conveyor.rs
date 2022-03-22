@@ -1,8 +1,12 @@
 use bevy::prelude::*;
+use maplit::hashmap;
 
-use super::{Buildable, BuildingComponentsContext, BuildingContext, BuildingMaps, WhichMap};
+use super::{
+    storage::ItemList, Buildable, BuildingComponentsContext, BuildingContext, BuildingMaps,
+    WhichMap,
+};
 use crate::{
-    item::{ItemAnimator, ItemContainer, ItemContainerAlignment},
+    item::{ItemAnimator, ItemContainer, ItemContainerAlignment, ReferenceItem},
     prelude::*,
 };
 
@@ -22,6 +26,13 @@ impl Buildable for BConveyor {
             WhichMap::Conveyors,
             WhichMap::ItemContainers,
         ]
+    }
+
+    fn cost(&self, _position: IsoPos) -> ItemList {
+        ItemList::from_counts(hashmap![
+            ReferenceItem::IronLump.as_item() => 1,
+            ReferenceItem::PureAnimus.as_item() => 1,
+        ])
     }
 
     fn extra_root_components(&self, ctx: &mut BuildingComponentsContext, _data: ()) {

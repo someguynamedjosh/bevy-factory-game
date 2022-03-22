@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use bevy::prelude::*;
 use dyn_clone::DynClone;
 
-use super::{BuildingComponentsContext, BuildingContext, BuildingMaps, WhichMap};
+use super::{BuildingComponentsContext, BuildingContext, BuildingMaps, WhichMap, storage::ItemList};
 use crate::prelude::*;
 
 #[derive(Component)]
@@ -18,6 +18,8 @@ pub trait Buildable: Debug + DynClone + Sync + Send + 'static {
 
     fn shape(&self, position: IsoPos, direction: IsoDirection) -> Vec<IsoPos>;
     fn maps(&self) -> Vec<WhichMap>;
+    fn cost(&self, position: IsoPos) -> ItemList;
+
     fn extra_root_components(&self, ctx: &mut BuildingComponentsContext, data: Self::ExtraData);
     fn spawn_extras(
         &self,
@@ -32,6 +34,8 @@ pub trait Buildable: Debug + DynClone + Sync + Send + 'static {
 pub trait DynBuildable: Debug + DynClone + Sync + Send + 'static {
     fn shape(&self, position: IsoPos, direction: IsoDirection) -> Vec<IsoPos>;
     fn maps(&self) -> Vec<WhichMap>;
+    fn cost(&self, position: IsoPos) -> ItemList;
+
     fn spawn_self(
         &self,
         built: Built,
@@ -49,6 +53,10 @@ impl<B: Buildable> DynBuildable for B {
 
     fn maps(&self) -> Vec<WhichMap> {
         Buildable::maps(self)
+    }
+
+    fn cost(&self, position: IsoPos) -> ItemList {
+        Buildable::cost(self, position)
     }
 
     fn spawn_self(

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use super::{logic::MachineLogic, shape::Shape, typee::MachineType};
 use crate::{
-    buildable::{Buildable, BuildingComponentsContext, BuildingContext, BuildingMaps, WhichMap},
+    buildable::{Buildable, BuildingComponentsContext, BuildingContext, BuildingMaps, WhichMap, storage::ItemList},
     item::{ItemContainer, ItemContainerAlignment},
     prelude::*,
 };
@@ -27,6 +27,10 @@ impl Buildable for BMachine {
 
     fn maps(&self) -> Vec<WhichMap> {
         vec![WhichMap::Buildings]
+    }
+
+    fn cost(&self, _position: IsoPos) -> ItemList {
+        self.0.get_cost()
     }
 
     fn spawn_extras(

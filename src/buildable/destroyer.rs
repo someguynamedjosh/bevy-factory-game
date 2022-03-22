@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::Buildable;
+use super::{Buildable, storage::ItemList};
 use crate::{
     buildable::WhichMap,
     item::{ItemContainer, ItemContainerAlignment},
@@ -22,6 +22,10 @@ impl Buildable for BDestroyer {
 
     fn maps(&self) -> Vec<super::WhichMap> {
         vec![WhichMap::Buildings, WhichMap::ItemContainers]
+    }
+
+    fn cost(&self, _position: IsoPos) -> ItemList {
+        ItemList::new()
     }
 
     fn extra_root_components(
