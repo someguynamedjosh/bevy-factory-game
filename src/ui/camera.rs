@@ -33,10 +33,10 @@ pub fn update(
         camera_offset.y -= 1.0;
     }
     if key_input.pressed(KeyCode::D) {
-        camera_offset.x += 1.0;
+        camera_offset.x += 1.0 / (PI / 6.0).tan();
     }
     if key_input.pressed(KeyCode::A) {
-        camera_offset.x -= 1.0;
+        camera_offset.x -= 1.0 / (PI / 6.0).tan();
     }
     camera_offset *= time.delta_seconds() * 10.0;
     let mut cam_t = transforms.get_mut(camera_state.primary_camera).unwrap();
