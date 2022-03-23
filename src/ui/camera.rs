@@ -33,6 +33,9 @@ pub fn update(
         camera_offset.y -= 1.0;
     }
     if key_input.pressed(KeyCode::D) {
+        // This weird number is so that holding W and D travels along the
+        // negative C axis and so on instead of going in a 45 degree angle which
+        // does not align with the grid.
         camera_offset.x += 1.0 / (PI / 6.0).tan();
     }
     if key_input.pressed(KeyCode::A) {
