@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, input::mouse::MouseWheel};
 
 use crate::prelude::*;
 
@@ -24,6 +24,7 @@ pub fn update(
     key_input: Res<Input<KeyCode>>,
     time: Res<Time>,
     mut transforms: Query<&mut Transform>,
+    mut scroll_reader: EventReader<MouseWheel>,
 ) {
     let mut camera_offset = Vec2::ZERO;
     if key_input.pressed(KeyCode::W) {
@@ -41,8 +42,15 @@ pub fn update(
     if key_input.pressed(KeyCode::A) {
         camera_offset.x -= 1.0 / (PI / 6.0).tan();
     }
-    camera_offset *= time.delta_seconds() * 10.0;
     let mut cam_t = transforms.get_mut(camera_state.primary_camera).unwrap();
+    // Multiplying by Z is a hacky way of making the camera move faster when it's zoomed out.
+    camera_offset *= time.delta_seconds() * cam_t.translation.z;
     cam_t.translation.x += camera_offset.x;
     cam_t.translation.y += camera_offset.y;
+    for event in scroll_reader.iter() {
+        let old = cam_t.translation.z;
+        cam_t.translation.z *= 2.0f32.powf(-0.2 * event.y);
+        let delta = cam_t.translation.z - old;
+        cam_t.translation.y -= 0.5 * delta;
+    }
 }
