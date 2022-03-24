@@ -3,12 +3,17 @@ mod buildable;
 mod common;
 pub mod iso;
 mod item;
+pub mod mini_rand;
 pub mod prelude;
+pub mod resource_nodes;
 mod ui;
 
 use bevy::prelude::*;
 use buildable::{
-    destroyer::BDestroyer, spawn_buildable, spawner::BSpawner, storage::{BSmallWarehouse, ItemList},
+    destroyer::BDestroyer,
+    spawn_buildable,
+    spawner::BSpawner,
+    storage::{BSmallWarehouse, ItemList},
     BuildingContext, BuildingMaps,
 };
 use item::ReferenceItem;
@@ -51,6 +56,18 @@ fn test_scene(mut commands: Commands, common_assets: Res<CommonAssets>, mut maps
     items.add_bulk(ReferenceItem::IronLump.as_item(), 300);
     items.add_bulk(ReferenceItem::PureAnimus.as_item(), 300);
     spawn_buildable(Box::new(BSmallWarehouse(items)), &mut ctx, &mut maps);
+
+    for x in -10..10 {
+        for y in -10..10 {
+            resource_nodes::spawn_resource_node_for_chunk(
+                &mut commands,
+                &common_assets,
+                &mut maps,
+                x,
+                y,
+            );
+        }
+    }
 }
 
 fn main() {
@@ -68,6 +85,7 @@ fn main() {
         .add_plugin(ui::Plug)
         .add_plugin(buildable::Plug)
         .add_plugin(item::Plug)
+        .add_plugin(resource_nodes::Plug)
         .add_startup_system(test_scene.system())
         .run();
 }

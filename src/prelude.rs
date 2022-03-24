@@ -11,4 +11,5 @@ pub use crate::{
     common::{fstage, sprite_transform, start_tile, SetupNeeded, TickClock, TileVariant},
     iso::{BuildingMap, ConveyorMap, IsoAxis, IsoDirection, IsoPos, Snapping},
     item::Item,
+    mini_rand::rand,
 };

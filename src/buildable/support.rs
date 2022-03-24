@@ -4,8 +4,8 @@ use bevy::{
 };
 
 use crate::{
-    iso::{ItemContainerMap, SpatialMap, ClawMap},
-    prelude::*,
+    iso::{ItemContainerMap, SpatialMap, ClawMap, },
+    prelude::*, resource_nodes::ResourceNodeMap,
 };
 
 pub struct BuildingContext<'a, 'c1, 'c2> {
@@ -28,6 +28,7 @@ pub struct BuildingMaps<'w, 's> {
     pub claws: ResMut<'w, ClawMap>,
     pub item_containers: ResMut<'w, ItemContainerMap>,
     pub conveyors: ResMut<'w, ConveyorMap>,
+    pub resource_nodes: ResMut<'w, ResourceNodeMap>,
     #[allow(dead_code)]
     s: Query<'w, 's, ()>,
 }

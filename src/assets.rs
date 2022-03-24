@@ -13,10 +13,12 @@ pub struct CommonAssets {
     pub destroyer_mat: Handle<StandardMaterial>,
 
     pub magnetite_mat: Handle<StandardMaterial>,
+    pub magnetite_node_mat: Handle<StandardMaterial>,
     pub pure_ferrous_mat: Handle<StandardMaterial>,
     pub iron_lump_mat: Handle<StandardMaterial>,
 
     pub animite_mat: Handle<StandardMaterial>,
+    pub animite_node_mat: Handle<StandardMaterial>,
     pub pure_animus_mat: Handle<StandardMaterial>,
 
     pub debug_container_mat: Handle<StandardMaterial>,
@@ -68,10 +70,12 @@ fn startup(
     common_assets.destroyer_mat = make_mat("destroyer.png");
 
     common_assets.magnetite_mat = make_mat("magnetite.png");
+    common_assets.magnetite_node_mat = make_mat("magnetite_node.png");
     common_assets.pure_ferrous_mat = make_mat("pure_ferrous.png");
     common_assets.iron_lump_mat = make_mat("iron_lump.png");
 
     common_assets.animite_mat = make_mat("animite.png");
+    common_assets.animite_node_mat = make_mat("animite_node.png");
     common_assets.pure_animus_mat = make_mat("pure_animus.png");
 
     common_assets.debug_container_mat = make_mat("debug_container.png");

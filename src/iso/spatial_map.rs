@@ -48,22 +48,23 @@ impl<Data> SpatialMap<Data> {
     }
 }
 
+#[macro_export]
 macro_rules! map_newtype {
     ($name:ident, $data:ty) => {
-        pub struct $name(SpatialMap<$data>);
+        pub struct $name(crate::iso::SpatialMap<$data>);
         impl Default for $name {
             fn default() -> Self {
-                Self(SpatialMap::new())
+                Self(crate::iso::SpatialMap::new())
             }
         }
-        impl Deref for $name {
-            type Target = SpatialMap<Entity>;
+        impl std::ops::Deref for $name {
+            type Target = crate::iso::SpatialMap<$data>;
 
             fn deref(&self) -> &Self::Target {
                 &self.0
             }
         }
-        impl DerefMut for $name {
+        impl std::ops::DerefMut for $name {
             fn deref_mut(&mut self) -> &mut Self::Target {
                 &mut self.0
             }
