@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use super::{Action, ActionState};
 use crate::{
     buildable::{
+        drill::BDrill,
         machine::{BMachine, MachineType},
         storage::{BSmallWarehouse, ItemList, Storage},
         BuildingContext, BuildingMaps, Built,
@@ -61,6 +62,9 @@ fn handle_change_action_input(key_input: Res<Input<KeyCode>>, action_state: &mut
     }
     if key_input.just_pressed(KeyCode::Key5) {
         action_state.action = Action::PlaceBuildable(Box::new(BSmallWarehouse(ItemList::new())));
+    }
+    if key_input.just_pressed(KeyCode::Key6) {
+        action_state.action = Action::PlaceBuildable(Box::new(BDrill));
     }
 }
 

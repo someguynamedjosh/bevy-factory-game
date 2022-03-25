@@ -46,16 +46,16 @@ pub fn spawn_resource_node_for_chunk(
     x: i32,
     y: i32,
 ) {
-    let (dx, dy, of, rate): (i32, i32, u8, u8) = rand((x, y), (0..32, 0..32, 0..255, 1..255));
-    let x = x * 38 + dx;
-    let y = y * 38 + dy;
+    let (dx, dy, of, rate): (i32, i32, u8, u8) = rand((x, y), (0..96, 0..96, 0..255, 1..255));
+    let x = x * 110 + dx;
+    let y = y * 110 + dy;
     let pos = IsoPos::new(x, y);
     let of = match of {
         0..=127 => ReferenceItem::Magnetite,
         128..=255 => ReferenceItem::Animite,
     };
     let rate = match rate {
-        0..=255 => 1,
+        0..=255 => 4,
     };
     spawn_resource_node(commands, common_assets, maps, of, rate, pos)
 }

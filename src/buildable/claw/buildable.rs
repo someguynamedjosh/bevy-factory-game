@@ -3,7 +3,7 @@ use maplit::hashmap;
 
 use super::{Buildable, BuildingComponentsContext, BuildingContext, WhichMap};
 use crate::{
-    buildable::{claw::logic::ClawLogic, storage::ItemList, BuildingMaps},
+    buildable::{claw::logic::ClawLogic, storage::ItemList, BuildingDetails, BuildingMaps},
     iso::GRID_EDGE_LENGTH,
     item::ReferenceItem,
     prelude::*,
@@ -15,30 +15,31 @@ pub struct BClaw {
 }
 
 fn distance(start: IsoPos, end: IsoPos) -> u8 {
-        let distance = start.centroid_pos().distance(end.centroid_pos());
-        let distance = distance + 0.01;
-        let distance = distance / GRID_EDGE_LENGTH * 2.0;
-        assert!(distance >= 0.0 && distance < 256.0);
-        (distance + 0.3).floor() as u8
+    let distance = start.centroid_pos().distance(end.centroid_pos());
+    let distance = distance + 0.01;
+    let distance = distance / GRID_EDGE_LENGTH * 2.0;
+    assert!(distance >= 0.0 && distance < 256.0);
+    (distance + 0.3).floor() as u8
 }
 
 impl Buildable for BClaw {
     type ExtraData = (Entity, Entity);
 
-    fn shape(&self, position: IsoPos, direction: IsoDirection) -> Vec<IsoPos> {
-        vec![self.take_from, position]
-    }
-
-    fn maps(&self) -> Vec<WhichMap> {
-        vec![WhichMap::Claws]
-    }
-
-    fn cost(&self, position: IsoPos) -> ItemList {
+    fn details(
+        &self,
+        position: IsoPos,
+        direction: IsoDirection,
+        maps: &BuildingMaps,
+    ) -> Option<BuildingDetails> {
         let length = distance(self.take_from, position) as u32;
-        ItemList::from_counts(hashmap![
-            ReferenceItem::IronLump.as_item() => 1 + length,
-            ReferenceItem::PureAnimus.as_item() => 3,
-        ])
+        Some(BuildingDetails {
+            shape: vec![self.take_from, position],
+            maps: vec![WhichMap::Claws],
+            cost: ItemList::from_counts(hashmap![
+                ReferenceItem::IronLump.as_item() => 1 + length,
+                ReferenceItem::PureAnimus.as_item() => 3,
+            ]),
+        })
     }
 
     fn extra_root_components(

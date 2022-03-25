@@ -7,6 +7,7 @@ mod spawn;
 pub mod spawner;
 mod support;
 pub mod storage;
+pub mod drill;
 
 use bevy::prelude::{App, Plugin};
 

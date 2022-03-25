@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::{BuildingContext, Built, DynBuildable, BuildingMaps};
+use super::{BuildingContext, BuildingDetails, BuildingMaps, Built, DynBuildable};
 
 pub fn spawn_buildable(
     buildable: Box<dyn DynBuildable>,
@@ -23,10 +23,16 @@ fn set_positions_on_maps(
     ctx: &mut BuildingContext,
     root: Entity,
 ) {
-    let requested_maps = buildable.maps();
+    let BuildingDetails {
+        maps: requested_maps,
+        shape,
+        ..
+    } = buildable
+        .details(ctx.position, ctx.direction, maps)
+        .unwrap();
     for map in requested_maps {
         let map = map.get_from_maps_mut(maps);
-        for pos in buildable.shape(ctx.position, ctx.direction) {
+        for &pos in &shape {
             map.set(pos, root);
         }
     }
@@ -53,10 +59,16 @@ fn clear_positions_on_maps(
     maps: &mut BuildingMaps,
     ctx: &mut BuildingContext,
 ) {
-    let requested_maps = buildable.maps();
+    let BuildingDetails {
+        maps: requested_maps,
+        shape,
+        ..
+    } = buildable
+        .details(ctx.position, ctx.direction, maps)
+        .unwrap();
     for map in requested_maps {
         let map = map.get_from_maps_mut(maps);
-        for pos in buildable.shape(ctx.position, ctx.direction) {
+        for &pos in &shape {
             map.clear(pos);
         }
     }

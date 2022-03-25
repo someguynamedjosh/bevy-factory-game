@@ -1,8 +1,10 @@
 use bevy::prelude::*;
 
-use super::{Buildable, storage::ItemList};
+use super::{
+    storage::ItemList, Buildable, BuildingComponentsContext, BuildingContext, BuildingDetails,
+    BuildingMaps, WhichMap,
+};
 use crate::{
-    buildable::WhichMap,
     item::{ItemContainer, ItemContainerAlignment},
     prelude::*,
 };
@@ -16,23 +18,20 @@ pub struct DestroyerLogic;
 impl Buildable for BDestroyer {
     type ExtraData = ();
 
-    fn shape(&self, position: IsoPos, direction: IsoDirection) -> Vec<IsoPos> {
-        vec![position]
-    }
-
-    fn maps(&self) -> Vec<super::WhichMap> {
-        vec![WhichMap::Buildings, WhichMap::ItemContainers]
-    }
-
-    fn cost(&self, _position: IsoPos) -> ItemList {
-        ItemList::new()
-    }
-
-    fn extra_root_components(
+    fn details(
         &self,
-        ctx: &mut super::BuildingComponentsContext,
-        _data: Self::ExtraData,
-    ) {
+        position: IsoPos,
+        direction: IsoDirection,
+        maps: &BuildingMaps,
+    ) -> Option<BuildingDetails> {
+        Some(BuildingDetails {
+            shape: vec![position],
+            maps: vec![WhichMap::Buildings, WhichMap::ItemContainers],
+            cost: ItemList::new(),
+        })
+    }
+
+    fn extra_root_components(&self, ctx: &mut BuildingComponentsContext, _data: Self::ExtraData) {
         ctx.commands
             .insert(DestroyerLogic)
             .insert(ItemContainer::new_empty(ItemContainerAlignment::Centroid));
@@ -40,13 +39,13 @@ impl Buildable for BDestroyer {
 
     fn spawn_extras(
         &self,
-        _ctx: &mut super::BuildingContext,
-        _maps: &mut super::BuildingMaps,
+        _ctx: &mut BuildingContext,
+        _maps: &mut BuildingMaps,
     ) -> (Vec<bevy::prelude::Entity>, Self::ExtraData) {
         (vec![], ())
     }
 
-    fn spawn_art(&self, ctx: &mut super::BuildingContext) -> Vec<bevy::prelude::Entity> {
+    fn spawn_art(&self, ctx: &mut BuildingContext) -> Vec<bevy::prelude::Entity> {
         vec![ctx
             .commands
             .spawn()

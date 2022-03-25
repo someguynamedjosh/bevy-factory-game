@@ -2,8 +2,8 @@ use bevy::prelude::*;
 use maplit::hashmap;
 
 use super::{
-    storage::ItemList, Buildable, BuildingComponentsContext, BuildingContext, BuildingMaps,
-    WhichMap,
+    storage::ItemList, Buildable, BuildingComponentsContext, BuildingContext, BuildingDetails,
+    BuildingMaps, WhichMap,
 };
 use crate::{
     item::{ItemAnimator, ItemContainer, ItemContainerAlignment, ReferenceItem},
@@ -16,23 +16,24 @@ pub struct BConveyor;
 impl Buildable for BConveyor {
     type ExtraData = ();
 
-    fn shape(&self, position: IsoPos, direction: IsoDirection) -> Vec<IsoPos> {
-        vec![position]
-    }
-
-    fn maps(&self) -> Vec<WhichMap> {
-        vec![
-            WhichMap::Buildings,
-            WhichMap::Conveyors,
-            WhichMap::ItemContainers,
-        ]
-    }
-
-    fn cost(&self, _position: IsoPos) -> ItemList {
-        ItemList::from_counts(hashmap![
-            ReferenceItem::IronLump.as_item() => 1,
-            ReferenceItem::PureAnimus.as_item() => 1,
-        ])
+    fn details(
+        &self,
+        position: IsoPos,
+        direction: IsoDirection,
+        maps: &BuildingMaps,
+    ) -> Option<BuildingDetails> {
+        Some(BuildingDetails {
+            shape: vec![position],
+            maps: vec![
+                WhichMap::Buildings,
+                WhichMap::Conveyors,
+                WhichMap::ItemContainers,
+            ],
+            cost: ItemList::from_counts(hashmap![
+                ReferenceItem::IronLump.as_item() => 1,
+                ReferenceItem::PureAnimus.as_item() => 1,
+            ]),
+        })
     }
 
     fn extra_root_components(&self, ctx: &mut BuildingComponentsContext, _data: ()) {

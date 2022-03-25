@@ -2,7 +2,10 @@ use bevy::prelude::*;
 
 use super::{logic::MachineLogic, shape::Shape, typee::MachineType};
 use crate::{
-    buildable::{Buildable, BuildingComponentsContext, BuildingContext, BuildingMaps, WhichMap, storage::ItemList},
+    buildable::{
+        storage::ItemList, Buildable, BuildingComponentsContext, BuildingContext, BuildingDetails,
+        BuildingMaps, WhichMap,
+    },
     item::{ItemContainer, ItemContainerAlignment},
     prelude::*,
 };
@@ -18,19 +21,22 @@ pub struct MachineIo {
 impl Buildable for BMachine {
     type ExtraData = MachineIo;
 
-    fn shape(&self, position: IsoPos, direction: IsoDirection) -> Vec<IsoPos> {
-        self.0
+    fn details(
+        &self,
+        position: IsoPos,
+        direction: IsoDirection,
+        maps: &BuildingMaps,
+    ) -> Option<BuildingDetails> {
+        let shape = self
+            .0
             .get_shape()
             .all_positions(position, direction)
-            .collect()
-    }
-
-    fn maps(&self) -> Vec<WhichMap> {
-        vec![WhichMap::Buildings]
-    }
-
-    fn cost(&self, _position: IsoPos) -> ItemList {
-        self.0.get_cost()
+            .collect();
+        Some(BuildingDetails {
+            shape,
+            maps: vec![WhichMap::Buildings],
+            cost: self.0.get_cost(),
+        })
     }
 
     fn spawn_extras(

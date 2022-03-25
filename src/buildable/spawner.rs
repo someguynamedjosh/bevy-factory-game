@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::{Buildable, storage::ItemList};
+use super::{storage::ItemList, Buildable, BuildingDetails, BuildingMaps};
 use crate::{
     buildable::WhichMap,
     item::{spawn_item, ItemContainer, ItemContainerAlignment, ReferenceItem},
@@ -24,16 +24,17 @@ pub struct SpawnerLogic {
 impl Buildable for BSpawner {
     type ExtraData = ();
 
-    fn shape(&self, position: IsoPos, direction: IsoDirection) -> Vec<IsoPos> {
-        vec![position]
-    }
-
-    fn maps(&self) -> Vec<super::WhichMap> {
-        vec![WhichMap::Buildings, WhichMap::ItemContainers]
-    }
-
-    fn cost(&self, _position: IsoPos) -> ItemList {
-        ItemList::new()
+    fn details(
+        &self,
+        position: IsoPos,
+        direction: IsoDirection,
+        maps: &BuildingMaps,
+    ) -> Option<BuildingDetails> {
+        Some(BuildingDetails {
+            shape: vec![position],
+            maps: vec![WhichMap::Buildings, WhichMap::ItemContainers],
+            cost: ItemList::new(),
+        })
     }
 
     fn extra_root_components(

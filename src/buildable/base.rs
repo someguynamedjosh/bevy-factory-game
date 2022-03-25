@@ -3,7 +3,9 @@ use std::fmt::Debug;
 use bevy::prelude::*;
 use dyn_clone::DynClone;
 
-use super::{BuildingComponentsContext, BuildingContext, BuildingMaps, WhichMap, storage::ItemList};
+use super::{
+    storage::ItemList, BuildingComponentsContext, BuildingContext, BuildingMaps, WhichMap,
+};
 use crate::prelude::*;
 
 #[derive(Component)]
@@ -13,12 +15,22 @@ pub struct Built {
     pub direction: IsoDirection,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BuildingDetails {
+    pub shape: Vec<IsoPos>,
+    pub maps: Vec<WhichMap>,
+    pub cost: ItemList,
+}
+
 pub trait Buildable: Debug + DynClone + Sync + Send + 'static {
     type ExtraData;
 
-    fn shape(&self, position: IsoPos, direction: IsoDirection) -> Vec<IsoPos>;
-    fn maps(&self) -> Vec<WhichMap>;
-    fn cost(&self, position: IsoPos) -> ItemList;
+    fn details(
+        &self,
+        position: IsoPos,
+        direction: IsoDirection,
+        maps: &BuildingMaps,
+    ) -> Option<BuildingDetails>;
 
     fn extra_root_components(&self, ctx: &mut BuildingComponentsContext, data: Self::ExtraData);
     fn spawn_extras(
@@ -32,9 +44,12 @@ pub trait Buildable: Debug + DynClone + Sync + Send + 'static {
 }
 
 pub trait DynBuildable: Debug + DynClone + Sync + Send + 'static {
-    fn shape(&self, position: IsoPos, direction: IsoDirection) -> Vec<IsoPos>;
-    fn maps(&self) -> Vec<WhichMap>;
-    fn cost(&self, position: IsoPos) -> ItemList;
+    fn details(
+        &self,
+        position: IsoPos,
+        direction: IsoDirection,
+        maps: &BuildingMaps,
+    ) -> Option<BuildingDetails>;
 
     fn spawn_self(
         &self,
@@ -47,16 +62,13 @@ pub trait DynBuildable: Debug + DynClone + Sync + Send + 'static {
 }
 
 impl<B: Buildable> DynBuildable for B {
-    fn shape(&self, position: IsoPos, direction: IsoDirection) -> Vec<IsoPos> {
-        Buildable::shape(self, position, direction)
-    }
-
-    fn maps(&self) -> Vec<WhichMap> {
-        Buildable::maps(self)
-    }
-
-    fn cost(&self, position: IsoPos) -> ItemList {
-        Buildable::cost(self, position)
+    fn details(
+        &self,
+        position: IsoPos,
+        direction: IsoDirection,
+        maps: &BuildingMaps,
+    ) -> Option<BuildingDetails> {
+        Buildable::details(self, position, direction, maps)
     }
 
     fn spawn_self(

@@ -6,7 +6,7 @@ use maplit::hashmap;
 
 use super::{
     machine::{self, Shape},
-    Buildable, BuildingComponentsContext, BuildingContext, BuildingMaps, WhichMap,
+    Buildable, BuildingComponentsContext, BuildingContext, BuildingDetails, BuildingMaps, WhichMap,
 };
 use crate::{
     item::{Item, ItemContainer, ItemContainerAlignment, ReferenceItem},
@@ -170,19 +170,20 @@ const SHAPE: Shape = Shape {
 impl Buildable for BSmallWarehouse {
     type ExtraData = Vec<Entity>;
 
-    fn shape(&self, position: IsoPos, direction: IsoDirection) -> Vec<IsoPos> {
-        SHAPE.all_positions(position, direction).collect()
-    }
-
-    fn maps(&self) -> Vec<WhichMap> {
-        vec![WhichMap::Buildings]
-    }
-
-    fn cost(&self, _position: IsoPos) -> ItemList {
-        ItemList::from_counts(hashmap![
-            ReferenceItem::IronLump.as_item() => 10,
-            ReferenceItem::PureAnimus.as_item() => 1,
-        ])
+    fn details(
+        &self,
+        position: IsoPos,
+        direction: IsoDirection,
+        maps: &BuildingMaps,
+    ) -> Option<BuildingDetails> {
+        Some(BuildingDetails {
+            shape: SHAPE.all_positions(position, direction).collect(),
+            maps: vec![WhichMap::Buildings],
+            cost: ItemList::from_counts(hashmap![
+                ReferenceItem::IronLump.as_item() => 10,
+                ReferenceItem::PureAnimus.as_item() => 1,
+            ]),
+        })
     }
 
     fn extra_root_components(&self, ctx: &mut BuildingComponentsContext, data: Self::ExtraData) {
